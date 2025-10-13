@@ -11,6 +11,9 @@ class GasJetLongitudinal(InputStructure):
     def get_position(self) -> None:
         pass
 
+    def set_position(self, position: float) -> None:
+        pass
+
 if __name__ == "__main__":
     gas_jet_longitudinal = GasJetLongitudinal(bounds=(0, 4))
     print(gas_jet_longitudinal)

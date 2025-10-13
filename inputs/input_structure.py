@@ -38,6 +38,14 @@ class InputStructure(ABC):
         """
         pass
 
+    @abstractmethod
+    def set_position(self, position: float) -> None:
+        """
+        set the position of the input.
+        Must be implemented by subclasses.
+        """
+        pass
+
     def set_bounds(self, new_bounds: Sequence[float]) -> None:
         check_bounds_format(new_bounds)
         self._bounds = new_bounds
