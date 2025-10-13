@@ -51,4 +51,4 @@ class InputStructure(ABC):
         self._bounds = new_bounds
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}(name='{self.name}', bounds={self.bounds}, unit={self.unit})>"
+        return f"<{self.__class__.__name__}(name='{self.name}', bounds={self.bounds}, unit='{self.unit}')>"

@@ -2,8 +2,11 @@ from input_structure import InputStructure
 from typing import Sequence
 
 class GasJetHeight(InputStructure):
-
+    """Test"""
+    
     def __init__(self, bounds: Sequence[float]=(0, 5)):
+        "bounds defines the boundaries of the system"
+        
         name = "gas_jet_height"
         unit = "um"
         InputStructure.__init__(self, name, bounds, unit)
