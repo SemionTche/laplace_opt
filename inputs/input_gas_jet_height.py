@@ -4,8 +4,9 @@ from typing import Sequence
 class GasJetHeight(InputStructure):
 
     def __init__(self, bounds: Sequence[float]=(0, 5)):
-        name="gas_jet_height"
-        InputStructure.__init__(self, name, bounds)
+        name = "gas_jet_height"
+        unit = "um"
+        InputStructure.__init__(self, name, bounds, unit)
     
     def get_position(self) -> None:
         pass

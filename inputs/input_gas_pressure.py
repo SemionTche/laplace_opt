@@ -4,9 +4,10 @@ from typing import Sequence
 class GasPressure(InputStructure):
 
     def __init__(self, gas_type: str="N2", bounds: Sequence[float]=(0, 5)):
-        name="gas_pressure"
+        name = "gas_pressure"
+        unit = "um"
         self._gas_type = gas_type
-        InputStructure.__init__(self, name, bounds)
+        InputStructure.__init__(self, name, bounds, unit)
     
     @property
     def type(self) -> str:

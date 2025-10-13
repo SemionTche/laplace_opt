@@ -4,8 +4,9 @@ from typing import Sequence
 class LaserEnergy(InputStructure):
 
     def __init__(self, bounds: Sequence[float]=(0, 5)):
-        name="laser_energy"
-        InputStructure.__init__(self, name, bounds)
+        name = "laser_energy"
+        unit = "J"
+        InputStructure.__init__(self, name, bounds, unit)
     
     def get_position(self) -> None:
         pass

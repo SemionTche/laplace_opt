@@ -4,8 +4,9 @@ from typing import Sequence
 class GasJetTransverse(InputStructure):
 
     def __init__(self, bounds: Sequence[float]=(0, 5)):
-        name="gas_jet_transverse"
-        InputStructure.__init__(self, name, bounds)
+        name = "gas_jet_transverse"
+        unit = "um"
+        InputStructure.__init__(self, name, bounds, unit)
     
     def get_position(self) -> None:
         pass
