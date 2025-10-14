@@ -7,9 +7,8 @@ Run: python config_creator.py
 
 import json
 import sys
-import importlib.util, inspect
 from pathlib import Path
-from inputs.input_structure import InputStructure
+from utils.get_module_names import get_input_class_names
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -21,16 +20,16 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
-    QSpinBox,
     QVBoxLayout,
     QWidget,
-    QTextEdit,
     QCheckBox,
 )
 
 
 class ConfigCreatorWindow(QMainWindow):
+    
     def __init__(self):
+        
         QMainWindow.__init__(self)
         self.setWindowTitle("Config File Creator")
         self.setMinimumSize(640, 480)
@@ -42,13 +41,13 @@ class ConfigCreatorWindow(QMainWindow):
         main_layout.setContentsMargins(12, 12, 12, 12)
         main_layout.setSpacing(10)
 
+
         # --- Block 1: Path chooser ---
         self.path_group = QGroupBox("Destination")
         path_layout = QHBoxLayout()
 
         self.path_edit = QLineEdit()
         self.path_edit.setPlaceholderText("Choose where to create the config file (e.g. /home/user/config.json)")
-        self.path_edit.textChanged.connect(self.update_preview)
 
         browse_btn = QPushButton("Browse...")
         browse_btn.clicked.connect(self.on_browse)
@@ -60,56 +59,24 @@ class ConfigCreatorWindow(QMainWindow):
 
         main_layout.addWidget(self.path_group)
 
-        # --- Block 2: Options ---
-        self.options_group = QGroupBox("Options")
-        options_layout = QVBoxLayout()
 
-        # Example checkboxes
-        self.cb_logging = QCheckBox("Enable logging")
-        self.cb_logging.setToolTip("If enabled, the application will create logs")
-        self.cb_logging.stateChanged.connect(self.update_preview)
+        # --- Block 2: Inputs ---
+        input_class_names = get_input_class_names()
+        self.input_group = QGroupBox("Available Inputs")
+        self.input_layout = QVBoxLayout()
 
-        self.cb_cache = QCheckBox("Use cache")
-        self.cb_cache.setToolTip("If enabled, caching will be used for faster startup")
-        self.cb_cache.stateChanged.connect(self.update_preview)
+        # checkboxes
+        self.input_checkboxes = {}
+        for name in input_class_names:
+                cb = QCheckBox(name)
+                self.input_layout.addWidget(cb)
+                cb.setToolTip("Add this input to the model.")
+                tmp = cb.stateChanged.connect(self.collect_config)
+                self.input_checkboxes[name] = cb
 
-        self.cb_autoupdate = QCheckBox("Auto-update")
-        self.cb_autoupdate.setToolTip("If enabled, the app will check for updates automatically")
-        self.cb_autoupdate.stateChanged.connect(self.update_preview)
+        self.input_group.setLayout(self.input_layout)
+        main_layout.addWidget(self.input_group)
 
-        # Some additional inputs
-        row_username = QHBoxLayout()
-        row_username.addWidget(QLabel("Username:"))
-        self.username_edit = QLineEdit()
-        self.username_edit.setPlaceholderText("optional: user or service name")
-        self.username_edit.textChanged.connect(self.update_preview)
-        row_username.addWidget(self.username_edit)
-
-        row_timeout = QHBoxLayout()
-        row_timeout.addWidget(QLabel("Timeout (s):"))
-        self.timeout_spin = QSpinBox()
-        self.timeout_spin.setRange(1, 3600)
-        self.timeout_spin.setValue(30)
-        self.timeout_spin.valueChanged.connect(self.update_preview)
-        row_timeout.addWidget(self.timeout_spin)
-
-        options_layout.addWidget(self.cb_logging)
-        options_layout.addWidget(self.cb_cache)
-        options_layout.addWidget(self.cb_autoupdate)
-        options_layout.addLayout(row_username)
-        options_layout.addLayout(row_timeout)
-
-        self.options_group.setLayout(options_layout)
-        main_layout.addWidget(self.options_group)
-
-        # --- Live Preview ---
-        preview_group = QGroupBox("Preview (will be written as JSON)")
-        preview_layout = QVBoxLayout()
-        self.preview_text = QTextEdit()
-        self.preview_text.setReadOnly(True)
-        preview_layout.addWidget(self.preview_text)
-        preview_group.setLayout(preview_layout)
-        main_layout.addWidget(preview_group, stretch=1)
 
         # --- Bottom: Validate / Create button ---
         bottom_layout = QHBoxLayout()
@@ -120,8 +87,6 @@ class ConfigCreatorWindow(QMainWindow):
 
         main_layout.addLayout(bottom_layout)
 
-        # Initialize preview
-        self.update_preview()
 
     def on_browse(self):
         # Use getSaveFileName so user chooses filename and final path in one dialog
@@ -132,20 +97,17 @@ class ConfigCreatorWindow(QMainWindow):
 
     def collect_config(self):
         # Collect all inputs into a Python dict
-        cfg = {
-            "enable_logging": bool(self.cb_logging.isChecked()),
-            "use_cache": bool(self.cb_cache.isChecked()),
-            "auto_update": bool(self.cb_autoupdate.isChecked()),
-            "username": self.username_edit.text().strip() or None,
-            "timeout_seconds": int(self.timeout_spin.value()),
-        }
-        return cfg
+        inputs = {name: cb.isChecked() for name, cb in self.input_checkboxes.items()}
 
-    def update_preview(self):
-        cfg = self.collect_config()
-        # Convert None to null in JSON by normal serialization
-        pretty = json.dumps(cfg, indent=4, ensure_ascii=False)
-        self.preview_text.setPlainText(pretty)
+        # Check if at least one input is True
+        self.is_one_inout = True
+        if not any(inputs.values()):
+            # handle the case: no input selected
+            self.is_one_inout = False
+        
+        cfg = {"inputs": inputs}
+
+        return cfg
 
     def validate_inputs(self):
         target = self.path_edit.text().strip()
@@ -165,8 +127,8 @@ class ConfigCreatorWindow(QMainWindow):
             pass
         # Example check: at least one of logging/cache/autoupdate should be set or username provided
         cfg = self.collect_config()
-        if not (cfg["enable_logging"] or cfg["use_cache"] or cfg["auto_update"] or cfg["username"]):
-            return False, "Please enable at least one option or provide a username."
+        if not self.is_one_inout:
+            return False, "Please enable at least one input option."
         return True, ""
 
     def on_validate(self):
@@ -200,24 +162,6 @@ class ConfigCreatorWindow(QMainWindow):
 
 
 if __name__ == "__main__":
-
-    inputs_dir = Path(__file__).parent / "inputs"
-    class_names: list[str] = []
-
-    for py in inputs_dir.glob("*.py"):
-        if py.name in ("__init__.py", "input_structure.py"):
-            continue
-
-        spec = importlib.util.spec_from_file_location(py.stem, py)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-
-        for name, cls in inspect.getmembers(mod, inspect.isclass):
-            # ensure it's defined in this module and is a subclass of BaseInput
-            if cls.__module__ == mod.__name__ and issubclass(cls, InputStructure) and cls is not InputStructure:
-                class_names.append(name)
-
-    print(class_names)
 
     app = QApplication(sys.argv)
     w = ConfigCreatorWindow()
