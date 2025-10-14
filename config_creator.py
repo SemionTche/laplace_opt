@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 from utils.get_classes import get_input_classes
-from config.input_control_config import InputRow
+from config.input_qt_config import InputRow
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -95,19 +95,6 @@ class ConfigCreatorWindow(QMainWindow):
         if path:
             self.path_edit.setText(path)
 
-    # def collect_config(self):
-    #     # Collect all inputs into a Python dict
-    #     inputs = {name: cb.isChecked() for name, cb in self.input_checkboxes.items()}
-
-    #     # Check if at least one input is True
-    #     self.is_one_inout = True
-    #     if not any(inputs.values()):
-    #         # handle the case: no input selected
-    #         self.is_one_inout = False
-        
-    #     cfg = {"inputs": inputs}
-
-    #     return cfg
 
     def collect_config(self):
         """
@@ -206,7 +193,7 @@ class ConfigCreatorWindow(QMainWindow):
                 return
 
         try:
-            with target.open("w", encoding="utf-8") as f:
+            with target.open("w", encoding="utf-8"):
                 json.dumps(cfg, indent=4, ensure_ascii=False)
         except Exception as e:
             QMessageBox.critical(self, "Write error", f"Failed to write file: {e}")
