@@ -15,12 +15,8 @@ class GasJetHeight(InputStructure):
         
         name = "gas_jet_height"
         unit = "um"
-        self._safe_bounds = (0, 25)
-        InputStructure.__init__(self, name, bounds, unit)
-    
-    @property
-    def safe_bounds(self) -> Sequence[float]:
-        return self._safe_bounds
+        safe_bounds = (0, 25)
+        InputStructure.__init__(self, name, bounds, safe_bounds, unit)
 
     def get_position(self) -> None:
         pass

@@ -10,13 +10,9 @@ class GasJetLongitudinal(InputStructure):
 
     def __init__(self, bounds: Sequence[float]=(0, 5)):
         name = "gas_jet_longitudinal"
+        safe_bounds = (0, 25)
         unit = "um"
-        self._safe_bounds = (0, 25)
-        InputStructure.__init__(self, name, bounds, unit)
-    
-    @property
-    def safe_bounds(self) -> Sequence[float]:
-        return self._safe_bounds
+        InputStructure.__init__(self, name, bounds, safe_bounds, unit)
 
     def get_position(self) -> None:
         pass

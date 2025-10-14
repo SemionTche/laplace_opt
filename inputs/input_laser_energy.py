@@ -11,12 +11,8 @@ class LaserEnergy(InputStructure):
     def __init__(self, bounds: Sequence[float]=(0, 5)):
         name = "laser_energy"
         unit = "J"
-        self._safe_bounds = (0, 100)
-        InputStructure.__init__(self, name, bounds, unit)
-    
-    @property
-    def safe_bounds(self) -> Sequence[float]:
-        return self._safe_bounds
+        safe_bounds = (0, 100)
+        InputStructure.__init__(self, name, bounds, safe_bounds, unit)
 
     def get_position(self) -> None:
         pass
