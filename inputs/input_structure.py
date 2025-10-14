@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Sequence
+from typing import Sequence, cast
 
 def check_bounds_format(bounds: Sequence[float]):
     """
@@ -30,6 +30,12 @@ class InputStructure(ABC):
     def unit(self) -> str:
         return self._unit
 
+    @property
+    @abstractmethod
+    def safe_bounds(self):
+        """Subclasses must define the safe boundaries property."""
+        return cast(Sequence[float], ...)
+
     @abstractmethod
     def get_position(self) -> None:
         """
@@ -51,4 +57,4 @@ class InputStructure(ABC):
         self._bounds = new_bounds
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}(name='{self.name}', bounds={self.bounds}, unit='{self.unit}')>"
+        return f"<{self.__class__.__name__}(name='{self.name}', bounds={self.bounds}, unit='{self.unit}', safe_bounds={self.safe_bounds})>"

@@ -7,11 +7,16 @@ class GasPressure(InputStructure):
         name = "gas_pressure"
         unit = "bar"
         self._gas_type = gas_type
+        self._safe_bounds = (0, 300)
         InputStructure.__init__(self, name, bounds, unit)
     
     @property
     def gas_type(self) -> str:
         return self._gas_type
+
+    @property
+    def safe_bounds(self) -> Sequence[float]:
+        return self._safe_bounds
 
     def get_position(self) -> None:
         pass
