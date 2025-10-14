@@ -8,7 +8,8 @@ Run: python config_creator.py
 import json
 import sys
 from pathlib import Path
-from utils.get_module_names import get_input_class_names
+from utils.get_classes import get_input_classes
+from config.input_control_config import InputRow
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -22,7 +23,6 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
-    QCheckBox,
 )
 
 
@@ -61,18 +61,18 @@ class ConfigCreatorWindow(QMainWindow):
 
 
         # --- Block 2: Inputs ---
-        input_class_names = get_input_class_names()
+        self.input_classes = get_input_classes()
         self.input_group = QGroupBox("Available Inputs")
         self.input_layout = QVBoxLayout()
 
-        # checkboxes
         self.input_checkboxes = {}
-        for name in input_class_names:
-                cb = QCheckBox(name)
-                self.input_layout.addWidget(cb)
-                cb.setToolTip("Add this input to the model.")
-                tmp = cb.stateChanged.connect(self.collect_config)
-                self.input_checkboxes[name] = cb
+
+        self.input_rows: dict[str, InputRow] = {}
+
+        for name, cls in self.input_classes.items():
+            row = InputRow(name, cls)
+            self.input_layout.addWidget(row)
+            self.input_rows[name] = row
 
         self.input_group.setLayout(self.input_layout)
         main_layout.addWidget(self.input_group)
@@ -95,19 +95,56 @@ class ConfigCreatorWindow(QMainWindow):
         if path:
             self.path_edit.setText(path)
 
-    def collect_config(self):
-        # Collect all inputs into a Python dict
-        inputs = {name: cb.isChecked() for name, cb in self.input_checkboxes.items()}
+    # def collect_config(self):
+    #     # Collect all inputs into a Python dict
+    #     inputs = {name: cb.isChecked() for name, cb in self.input_checkboxes.items()}
 
-        # Check if at least one input is True
-        self.is_one_inout = True
-        if not any(inputs.values()):
-            # handle the case: no input selected
-            self.is_one_inout = False
+    #     # Check if at least one input is True
+    #     self.is_one_inout = True
+    #     if not any(inputs.values()):
+    #         # handle the case: no input selected
+    #         self.is_one_inout = False
         
-        cfg = {"inputs": inputs}
+    #     cfg = {"inputs": inputs}
+
+    #     return cfg
+
+    def collect_config(self):
+        """
+        Build structured config ready to be dumped as JSON.
+        Assumes self.input_rows: dict[name, InputRow]
+        """
+        inputs_list = []
+        for name, row in self.input_rows.items():
+            sel = bool(row.is_enabled())
+            val = row.get_value()            # -> (lo, hi) or None
+            safe = getattr(row, "safe_bounds", None)
+            inputs_list.append({
+                "name": name,
+                "selected": sel,
+                "bounds": list(val) if val is not None else None,
+                "safe_bounds": list(safe) if safe is not None else None,
+            })
+
+        # placeholder: collect objectives from UI (adapt to your widgets)
+        objectives_list = []  # fill this from your objective widgets later
+
+        other = {
+            "created_by": "user",
+            "notes": ""
+        }
+
+        cfg = {
+            "inputs": inputs_list,
+            "objectives": objectives_list,
+            "other": other,
+        }
+
+        # convenience boolean if you need it elsewhere
+        self.has_any_input_selected = any(item["selected"] for item in inputs_list)
 
         return cfg
+
 
     def validate_inputs(self):
         target = self.path_edit.text().strip()
@@ -127,7 +164,7 @@ class ConfigCreatorWindow(QMainWindow):
             pass
         # Example check: at least one of logging/cache/autoupdate should be set or username provided
         cfg = self.collect_config()
-        if not self.is_one_inout:
+        if not self.has_any_input_selected:
             return False, "Please enable at least one input option."
         return True, ""
 
@@ -136,11 +173,28 @@ class ConfigCreatorWindow(QMainWindow):
         if not ok:
             QMessageBox.warning(self, "Validation failed", msg)
             return
+        
+        cfg = self.collect_config()
+        if not self.has_any_input_selected:
+            QMessageBox.warning(self, "Validation failed", "Please enable at least one input option.")
+            return
+
+        # Ensure every selected input has valid bounds
+        missing_bounds = []
+        for name, row in self.input_rows.items():
+            if row.is_enabled() and row.get_value() is None:
+                missing_bounds.append(name)
+        if missing_bounds:
+            QMessageBox.warning(
+                self,
+                "Validation failed",
+                "The following selected inputs have missing or invalid bounds:\n" + ", ".join(missing_bounds)
+            )
+            return
 
         target = Path(self.path_edit.text().strip())
-        cfg = self.collect_config()
-        data = json.dumps(cfg, indent=4, ensure_ascii=False)
 
+        # Overwrite prompt if file exists
         if target.exists():
             reply = QMessageBox.question(
                 self,
@@ -153,7 +207,7 @@ class ConfigCreatorWindow(QMainWindow):
 
         try:
             with target.open("w", encoding="utf-8") as f:
-                f.write(data)
+                json.dumps(cfg, indent=4, ensure_ascii=False)
         except Exception as e:
             QMessageBox.critical(self, "Write error", f"Failed to write file: {e}")
             return
