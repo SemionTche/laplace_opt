@@ -1,5 +1,11 @@
-from input_structure import InputStructure
 from typing import Sequence
+
+try:
+    from inputs.input_structure import InputStructure
+except ModuleNotFoundError:
+    # allow running the module directly (in __main__)
+    from input_structure import InputStructure
+
 
 class GasJetHeight(InputStructure):
     """Test"""
