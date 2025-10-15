@@ -1,6 +1,6 @@
 from typing import Optional, Tuple
 
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QCheckBox, QLabel, QLineEdit
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QCheckBox, QLabel, QLineEdit, QComboBox
 from PyQt6.QtGui import QRegularExpressionValidator
 from PyQt6.QtCore import Qt, QRegularExpression
 
@@ -117,81 +117,38 @@ class InputRow(QWidget):
         return self.checkbox.isChecked()
 
 
+class ObjectiveRow(QWidget):
+    def __init__(self, name: str):
+        super().__init__()
+        self.name = name
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
 
+        # selected checkbox
+        self.checkbox = QCheckBox()
+        self.checkbox.setToolTip(f"Include objective '{name}' in config")
+        layout.addWidget(self.checkbox)
 
+        # name label
+        self.label = QLabel(name)
+        layout.addWidget(self.label)
 
+        # minimize/maximize selector
+        self.mode = QComboBox()
+        self.mode.addItems(["Minimize", "Maximize"])
+        self.mode.setToolTip("Choose whether to minimize or maximize this objective")
+        layout.addWidget(self.mode)
 
+    def is_selected(self) -> bool:
+        return self.checkbox.isChecked()
 
-# class InputControl(QWidget):
-#     def __init__(self, cls: type):
-#         super().__init__()
-#         self.cls = cls
-#         self.layout = QVBoxLayout(self)
-#         self.bounds_edit = QLineEdit()
-#         self.bounds_edit.setPlaceholderText("enter bounds as min,max (e.g. 1,3)")
-#         self.safe_label = QLabel("safe bounds: n/a")
-#         self.layout.addWidget(self.bounds_edit)
-#         self.layout.addWidget(self.safe_label)
+    def is_minimize(self) -> bool:
+        return self.mode.currentText() == "Minimize"
 
-#         # obtain safe bounds (prefer classmethod default or safe class attr)
-#         sb = None
-#         try:
-#             if hasattr(cls, "default") and callable(getattr(cls, "default")):
-#                 inst = cls.default()
-#             else:
-#                 inst = cls()
-#             sb = getattr(inst, "safe_bounds", None)
-#         except Exception:
-#             sb = None
-
-#         self.safe_bounds = tuple(sb) if sb is not None else None
-#         if self.safe_bounds:
-#             self.safe_label.setText(f"safe bounds: {self.safe_bounds}")
-
-#         # connect validation
-#         self.bounds_edit.textChanged.connect(self._on_text_changed)
-
-#     def _on_text_changed(self, text: str) -> None:
-#         # simple parsing + style update; same logic as you used before
-#         txt = text.strip()
-#         if not txt:
-#             self.bounds_edit.setStyleSheet("")
-#             self.safe_label.setStyleSheet("")
-#             return
-#         try:
-#             lo_str, hi_str = (p.strip() for p in txt.split(",", 1))
-#             lo, hi = float(lo_str), float(hi_str)
-#         except Exception:
-#             self.bounds_edit.setStyleSheet("border: 1px solid red;")
-#             return
-
-#         if self.safe_bounds is None:
-#             self.bounds_edit.setStyleSheet("")
-#             return
-
-#         safe_lo, safe_hi = self.safe_bounds
-#         if lo < safe_lo or hi > safe_hi or lo >= hi:
-#             self.bounds_edit.setStyleSheet("border: 1px solid red;")
-#             self.safe_label.setStyleSheet("color: red;")
-#         else:
-#             self.bounds_edit.setStyleSheet("")
-#             self.safe_label.setStyleSheet("color: black;")
-
-#     def get_value(self) -> Optional[Tuple[float, float]]:
-#         """Return (lo, hi) if parseable and valid, otherwise None."""
-#         txt = self.bounds_edit.text().strip()
-#         if not txt:
-#             return None
-#         try:
-#             lo_str, hi_str = (p.strip() for p in txt.split(",", 1))
-#             lo, hi = float(lo_str), float(hi_str)
-#         except Exception:
-#             return None
-#         if self.safe_bounds:
-#             safe_lo, safe_hi = self.safe_bounds
-#             if lo < safe_lo or hi > safe_hi or lo >= hi:
-#                 return None
-#         return (lo, hi)
-
-#     def is_valid(self) -> bool:
-#         return self.get_value() is not None
+    def get_dict(self) -> dict:
+        """Return JSON-serializable dict for this objective."""
+        return {
+            "name": self.name,
+            "selected": self.is_selected(),
+            "minimize": self.is_minimize(),
+        }

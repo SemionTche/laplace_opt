@@ -2,22 +2,30 @@ from pathlib import Path
 import importlib.util
 import inspect
 from inputs.input_structure import InputStructure
+from objectives.objective_structure import ObjectiveStructure
 
 
-def get_input_classes() -> dict[str, type]:
-    inputs_dir = Path(__file__).parent.parent / "inputs"
+def get_classes(category: str) -> dict[str, type]:
+    inputs_dir = Path(__file__).parent.parent / category
     result: dict[str, type] = {}
     
+    if category == "inputs":
+        structure = InputStructure
+    elif category == "objectives":
+        structure = ObjectiveStructure
+    else:
+        raise ValueError("The 'category' argument of 'get_classes' should be either 'inputs' or 'objectives'.")
+
     for py in inputs_dir.glob("*.py"):
-        if py.name in ("__init__.py", "input_structure.py"):
+        if py.name in ("__init__.py", "input_structure.py", "objective_structure.py"):
             continue
         
-        spec = importlib.util.spec_from_file_location(f"inputs.{py.stem}", py)
+        spec = importlib.util.spec_from_file_location(f"{category}.{py.stem}", py)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         
         for _, cls in inspect.getmembers(mod, inspect.isclass):
-            if cls.__module__ == mod.__name__ and issubclass(cls, InputStructure) and cls is not InputStructure:
+            if cls.__module__ == mod.__name__ and issubclass(cls, structure) and cls is not structure:
                 # choose display name here if you have one, else class.__name__
                 result[cls.__name__] = cls
     

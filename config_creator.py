@@ -8,8 +8,8 @@ Run: python config_creator.py
 import json
 import sys
 from pathlib import Path
-from utils.get_classes import get_input_classes
-from config.input_qt_config import InputRow
+from utils.getter import get_classes
+from config.input_qt_config import InputRow, ObjectiveRow
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QCheckBox,
 )
 
 
@@ -61,11 +62,9 @@ class ConfigCreatorWindow(QMainWindow):
 
 
         # --- Block 2: Inputs ---
-        self.input_classes = get_input_classes()
+        self.input_classes = get_classes("inputs")
         self.input_group = QGroupBox("Available Inputs")
         self.input_layout = QVBoxLayout()
-
-        self.input_checkboxes = {}
 
         self.input_rows: dict[str, InputRow] = {}
 
@@ -76,6 +75,25 @@ class ConfigCreatorWindow(QMainWindow):
 
         self.input_group.setLayout(self.input_layout)
         main_layout.addWidget(self.input_group)
+
+        # --- Block 3: Objectives ---
+        self.objective_classes = get_classes("objectives")
+        self.objective_group = QGroupBox("Available Objectives")
+        self.objective_layout = QVBoxLayout()
+
+        # for name, cls in self.objective_classes.items():
+        #     cb = QCheckBox(name)
+        #     self.objective_layout.addWidget(cb)
+        #     cb.setToolTip("Add this objective to the model.")
+
+        self.objective_rows: dict[str, ObjectiveRow] = {}
+        for name, cls in self.objective_classes.items():    # or objective_classes.keys()
+            row = ObjectiveRow(name)
+            self.objective_layout.addWidget(row)  # whatever layout/groupbox you created
+            self.objective_rows[name] = row
+        
+        self.objective_group.setLayout(self.objective_layout)
+        main_layout.addWidget(self.objective_group)
 
 
         # --- Bottom: Validate / Create button ---
@@ -101,20 +119,22 @@ class ConfigCreatorWindow(QMainWindow):
         Build structured config ready to be dumped as JSON.
         Assumes self.input_rows: dict[name, InputRow]
         """
-        inputs_list = []
+        input_list = []
         for name, row in self.input_rows.items():
             sel = bool(row.is_enabled())
             val = row.get_value()            # -> (lo, hi) or None
             safe = getattr(row, "safe_bounds", None)
-            inputs_list.append({
+            input_list.append({
                 "name": name,
                 "selected": sel,
                 "bounds": list(val) if val is not None else None,
                 "safe_bounds": list(safe) if safe is not None else None,
             })
 
-        # placeholder: collect objectives from UI (adapt to your widgets)
-        objectives_list = []  # fill this from your objective widgets later
+        objective_list = []
+        for name, row in self.objective_rows.items():
+            obj = row.get_dict()
+            objective_list.append(obj)
 
         other = {
             "created_by": "user",
@@ -122,13 +142,14 @@ class ConfigCreatorWindow(QMainWindow):
         }
 
         cfg = {
-            "inputs": inputs_list,
-            "objectives": objectives_list,
+            "inputs": input_list,
+            "objectives": objective_list,
             "other": other,
         }
 
         # convenience boolean if you need it elsewhere
-        self.has_any_input_selected = any(item["selected"] for item in inputs_list)
+        self.has_any_input_selected = any(item["selected"] for item in input_list)
+        self.has_any_objective_selected = any(item["selected"] for item in objective_list)
 
         return cfg
 
@@ -162,8 +183,12 @@ class ConfigCreatorWindow(QMainWindow):
             return
         
         cfg = self.collect_config()
+        
         if not self.has_any_input_selected:
             QMessageBox.warning(self, "Validation failed", "Please enable at least one input option.")
+            return
+        elif not self.has_any_objective_selected:
+            QMessageBox.warning(self, "Validation failed", "Please enable at least one objective option.")
             return
 
         # Ensure every selected input has valid bounds
@@ -191,10 +216,13 @@ class ConfigCreatorWindow(QMainWindow):
             )
             if reply != QMessageBox.StandardButton.Yes:
                 return
-
+        
+        tmp = target.with_suffix(target.suffix + ".tmp") # create a temporary (tmp) version
         try:
-            with target.open("w", encoding="utf-8"):
-                json.dumps(cfg, indent=4, ensure_ascii=False)
+            with tmp.open("w", encoding="utf-8") as f: # writing on tmp version to avoid Python buffer lost in case of exception, leading to truncating issues
+                json.dump(cfg, f, indent=4, ensure_ascii=False)
+                f.flush()  # forces the data out of the Python buffer to the OS, avoid empty json
+            tmp.replace(target)  # swap files
         except Exception as e:
             QMessageBox.critical(self, "Write error", f"Failed to write file: {e}")
             return

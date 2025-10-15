@@ -4,10 +4,10 @@ except ModuleNotFoundError:
     # allow running the module directly (in __main__)
     from objective_structure import ObjectiveStructure
 
-class ElectronEnergyMean(ObjectiveStructure):
+class ElectronEnergyStd(ObjectiveStructure):
 
     def __init__(self, minimize: bool):
-        name = r"$E_0$"
+        name = r"$\sigma_E$"
         unit = "MeV"
         ObjectiveStructure.__init__(self, name, minimize, unit)
 
@@ -17,5 +17,5 @@ class ElectronEnergyMean(ObjectiveStructure):
 
 
 if __name__ == "__main__":
-    e = ElectronEnergyMean(True)
+    e = ElectronEnergyStd(True)
     print(e)
