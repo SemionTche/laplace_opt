@@ -152,10 +152,12 @@ class ConfigCreatorWindow(QMainWindow):
         return cfg
 
 
-    def validate_inputs(self):
+    def validate_form(self):
         target = self.path_edit.text().strip()
+        
         if not target:
             return False, "Please choose a destination file path."
+        
         # Ensure parent dir is writable
         target_path = Path(target)
         parent = target_path.parent
@@ -164,43 +166,36 @@ class ConfigCreatorWindow(QMainWindow):
                 parent.mkdir(parents=True, exist_ok=True)
             except Exception as e:
                 return False, f"Cannot create directory {parent!s}: {e}"
+        
         # Basic filename check
         if target_path.suffix.lower() not in (".json", ".conf", ".cfg", ""):
             # allow files without extension, but warn if uncommon extension
             pass
+        
         # Example check: at least one of logging/cache/autoupdate should be set or username provided
         cfg = self.collect_config()
         if not self.has_any_input_selected:
             return False, "Please enable at least one input option."
-        return True, ""
-
-    def on_validate(self):
-        ok, msg = self.validate_inputs()
-        if not ok:
-            QMessageBox.warning(self, "Validation failed", msg)
-            return
-        
-        cfg = self.collect_config()
-        
-        if not self.has_any_input_selected:
-            QMessageBox.warning(self, "Validation failed", "Please enable at least one input option.")
-            return
         elif not self.has_any_objective_selected:
-            QMessageBox.warning(self, "Validation failed", "Please enable at least one objective option.")
-            return
-
+            return False, "Please enable at least one objective option."
+        
         # Ensure every selected input has valid bounds
         missing_bounds = []
         for name, row in self.input_rows.items():
             if row.is_enabled() and row.get_value() is None:
                 missing_bounds.append(name)
         if missing_bounds:
-            QMessageBox.warning(
-                self,
-                "Validation failed",
-                "The following selected inputs have missing or invalid bounds:\n" + ", ".join(missing_bounds)
-            )
+            return False, "The following selected inputs have missing or invalid bounds:\n" + ", ".join(missing_bounds)
+        
+        return True, ""
+
+    def on_validate(self):
+        ok, msg = self.validate_form()
+        if not ok:
+            QMessageBox.warning(self, "Validation failed", msg)
             return
+        
+        cfg = self.collect_config()
 
         target = Path(self.path_edit.text().strip())
 
