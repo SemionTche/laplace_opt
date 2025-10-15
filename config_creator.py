@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 from utils.getter import get_classes
-from config.input_qt_config import InputRow, ObjectiveRow
+from config.qt_config import InputRow, ObjectiveRow
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -23,7 +23,6 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
-    QCheckBox,
 )
 
 
@@ -31,6 +30,7 @@ class ConfigCreatorWindow(QMainWindow):
     
     def __init__(self):
         
+        # --- Initialization ---
         QMainWindow.__init__(self)
         self.setWindowTitle("Config File Creator")
         self.setMinimumSize(640, 480)
@@ -76,27 +76,23 @@ class ConfigCreatorWindow(QMainWindow):
         self.input_group.setLayout(self.input_layout)
         main_layout.addWidget(self.input_group)
 
+
         # --- Block 3: Objectives ---
         self.objective_classes = get_classes("objectives")
         self.objective_group = QGroupBox("Available Objectives")
         self.objective_layout = QVBoxLayout()
 
-        # for name, cls in self.objective_classes.items():
-        #     cb = QCheckBox(name)
-        #     self.objective_layout.addWidget(cb)
-        #     cb.setToolTip("Add this objective to the model.")
-
         self.objective_rows: dict[str, ObjectiveRow] = {}
-        for name, cls in self.objective_classes.items():    # or objective_classes.keys()
+        for name, cls in self.objective_classes.items():
             row = ObjectiveRow(name)
-            self.objective_layout.addWidget(row)  # whatever layout/groupbox you created
+            self.objective_layout.addWidget(row)
             self.objective_rows[name] = row
         
         self.objective_group.setLayout(self.objective_layout)
         main_layout.addWidget(self.objective_group)
 
 
-        # --- Bottom: Validate / Create button ---
+        # --- Bottom: Validate and Create Button ---
         bottom_layout = QHBoxLayout()
         bottom_layout.addStretch()
         self.validate_btn = QPushButton("Validate and Create")
@@ -121,20 +117,22 @@ class ConfigCreatorWindow(QMainWindow):
         """
         input_list = []
         for name, row in self.input_rows.items():
-            sel = bool(row.is_enabled())
             val = row.get_value()            # -> (lo, hi) or None
             safe = getattr(row, "safe_bounds", None)
             input_list.append({
                 "name": name,
-                "selected": sel,
+                "selected": bool(row.is_enabled()),
                 "bounds": list(val) if val is not None else None,
                 "safe_bounds": list(safe) if safe is not None else None,
             })
 
         objective_list = []
         for name, row in self.objective_rows.items():
-            obj = row.get_dict()
-            objective_list.append(obj)
+            objective_list.append({
+                "name": row.name,
+                "selected": row.is_selected(),
+                "minimize": row.is_minimize(),
+            })
 
         other = {
             "created_by": "user",

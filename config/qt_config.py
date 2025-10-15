@@ -139,16 +139,11 @@ class ObjectiveRow(QWidget):
         self.mode.setToolTip("Choose whether to minimize or maximize this objective")
         layout.addWidget(self.mode)
 
+        self.mode.setEnabled(False)  # disabled by default
+        self.checkbox.stateChanged.connect(self.mode.setEnabled)
+
     def is_selected(self) -> bool:
         return self.checkbox.isChecked()
 
     def is_minimize(self) -> bool:
         return self.mode.currentText() == "Minimize"
-
-    def get_dict(self) -> dict:
-        """Return JSON-serializable dict for this objective."""
-        return {
-            "name": self.name,
-            "selected": self.is_selected(),
-            "minimize": self.is_minimize(),
-        }
