@@ -1,12 +1,9 @@
+# libraries
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QLabel, QGridLayout,
-    QVBoxLayout, QHBoxLayout, QMessageBox, QLineEdit, QPushButton, QGroupBox, QFileDialog, QCheckBox
+    QMainWindow, QWidget, QLabel, QVBoxLayout, QHBoxLayout, 
+    QMessageBox, QPushButton, QGroupBox
 )
-from PyQt6.QtCore import Qt, QSettings, QTimer
 from PyQt6.QtGui import QIcon
-
-from utils.getter import get_classes
-from config.qt_config import InputRow, ObjectiveRow
 
 import qdarkstyle
 import pathlib
@@ -28,22 +25,19 @@ class OptWindow(QMainWindow):
         self.setWindowTitle("Optimization Window")
         p = pathlib.Path(__file__)
         icon_path = p.parent / 'icons'
-
-        # self.settings = QSettings(str(p.parent / "interface.ini"), QSettings.Format.IniFormat)
-
-        self.setWindowIcon(QIcon(str(icon_path / 'LOA.png')))
+        
+        # icon, style and geometry
+        self.setWindowIcon( QIcon( str(icon_path / 'LOA.png') ) )
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
         self.setGeometry(100, 30, 1000, 700)
 
+        # central widget and layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
         main_layout = QVBoxLayout(central_widget)
-        # main_layout.setContentsMargins(12, 12, 12, 12)
-        # main_layout.setSpacing(10)
 
-
-        # --- Block 1: Path chooser / Toggles ---
+        # Server and reader mode
         self.execution_panel = ExecutionPanel()
         main_layout.addWidget(self.execution_panel)
 
@@ -53,7 +47,6 @@ class OptWindow(QMainWindow):
             row_class=InputRow,
             get_classes_type="inputs"
         )
-        # main_layout.addWidget(self.input_panel)
 
         # --- Block 3: Objectives ---
         self.objective_panel = RowPanel(
@@ -61,14 +54,14 @@ class OptWindow(QMainWindow):
             row_class=ObjectiveRow,
             get_classes_type="objectives"
         )
-        # main_layout.addWidget(self.objective_panel)
-
+        
+        self.input_rows = self.input_panel.get_rows()
         self.objective_rows = self.objective_panel.get_rows()  # dict[str, ObjectiveRow]
 
+        # input / obj layout
         middle_layout = QHBoxLayout()
         middle_layout.addWidget(self.input_panel, stretch=3)
         middle_layout.addWidget(self.objective_panel, stretch=2)
-
         main_layout.addLayout(middle_layout)
 
         # Placeholders
@@ -96,41 +89,6 @@ class OptWindow(QMainWindow):
         bottom_layout.addWidget(self.validate_btn)
 
         main_layout.addLayout(bottom_layout)
-
-
-    def on_lock_toggled(self, locked: bool):
-        widgets = [
-            self.chk_online,
-            self.chk_file,
-            self.chk_server,
-            self.path_edit,
-            self.browse_btn,
-        ]
-
-        for w in widgets:
-            w.setEnabled(not locked)
-
-        # server address depends on online checkbox + lock state
-        self.server_addr_edit.setEnabled(self.chk_online.isChecked() and not locked)
-
-        self.lock_btn.setText("🔓 Unlock configuration" if locked else "🔒 Lock configuration")
-
-
-
-
-
-    def toggle_enable_state(self):
-        state = not self.toggle_left.isEnabled()
-        self.toggle_left.setEnabled(state)
-        self.toggle_right.setEnabled(state)
-
-
-    def on_browse(self):
-        # Use getSaveFileName so user chooses filename and final path in one dialog
-        suggested_name = "config.json"
-        path, _ = QFileDialog.getSaveFileName(self, "Choose destination file", suggested_name, "JSON files (*.json);;All files (*)")
-        if path:
-            self.path_edit.setText(path)
 
 
     def collect_config(self):
