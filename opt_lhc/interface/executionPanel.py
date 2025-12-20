@@ -132,8 +132,8 @@ class ExecutionPanel(QGroupBox):
     def set_path_reading(self, path: str):
         self.path_file.setText(path)
     
-    def set_server_ip(self, ip: str):
-        return self.server_label.setText(ip)
+    def set_server_address(self, address: str):
+        return self.server_label.setText(address)
 
     def is_locked(self) -> bool:
         return self.lock_button.isChecked()

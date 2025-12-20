@@ -105,7 +105,7 @@ class OptWindow(QMainWindow):
         if server_state:
             self.serv = ServerLHC(name="Optimization", address="tcp://*:1254", freedom=0, device="__BO__", data={})
             self.serv.start()
-            self.execution_panel.set_server_ip(self.serv.server_ip)
+            self.execution_panel.set_server_address(self.serv.address_for_client)
         else:
             self.serv.stop()
     
