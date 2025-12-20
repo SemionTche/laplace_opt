@@ -14,6 +14,9 @@ from interface.rowPanel import RowPanel
 from interface.inputRow import InputRow
 from interface.objectiveRow import ObjectiveRow
 
+from server_lhc.serverLHC import ServerLHC
+
+
 class OptWindow(QMainWindow):
     
     def __init__(self):
@@ -84,7 +87,35 @@ class OptWindow(QMainWindow):
         bottom_layout = QHBoxLayout()
         bottom_layout.addStretch()
         self.validate_btn = QPushButton("Validate and Create")
-        self.validate_btn.clicked.connect(self.on_validate)
+        # self.validate_btn.clicked.connect(self.on_validate)
         bottom_layout.addWidget(self.validate_btn)
 
         main_layout.addLayout(bottom_layout)
+
+        self.actions()
+
+        
+    
+    def actions(self):
+        self.execution_panel.server_state_changed.connect(
+            self.server_launch
+        )
+    
+    def server_launch(self, server_state: bool) -> None:
+        if server_state:
+            self.serv = ServerLHC(name="Optimization", address="tcp://*:1254", freedom=0, device="__BO__", data={})
+            self.serv.start()
+            self.execution_panel.set_server_ip(self.serv.server_ip)
+        else:
+            self.serv.stop()
+    
+    def closeEvent(self, event) -> None:
+        '''
+        Function called when the window is closing.
+        Close every client of client manager.
+        '''
+        if self.execution_panel.is_online_enabled():
+            self.serv.stop()
+        event.accept()
+    
+    
