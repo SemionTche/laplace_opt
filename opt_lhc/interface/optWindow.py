@@ -14,6 +14,9 @@ import json
 
 # project
 from interface.executionPanel import ExecutionPanel
+from interface.rowPanel import RowPanel
+from interface.inputRow import InputRow
+from interface.objectiveRow import ObjectiveRow
 
 class OptWindow(QMainWindow):
     
@@ -45,34 +48,44 @@ class OptWindow(QMainWindow):
         main_layout.addWidget(self.execution_panel)
 
         # --- Block 2: Inputs ---
-        self.input_classes = get_classes("inputs")
-        self.input_group = QGroupBox("Available Inputs")
-        self.input_layout = QVBoxLayout()
-
-        self.input_rows: dict[str, InputRow] = {}
-
-        for name, cls in self.input_classes.items():
-            row = InputRow(name, cls)
-            self.input_layout.addWidget(row)
-            self.input_rows[name] = row
-
-        self.input_group.setLayout(self.input_layout)
-        main_layout.addWidget(self.input_group)
-
+        self.input_panel = RowPanel(
+            title="Available Inputs",
+            row_class=InputRow,
+            get_classes_type="inputs"
+        )
+        # main_layout.addWidget(self.input_panel)
 
         # --- Block 3: Objectives ---
-        self.objective_classes = get_classes("objectives")
-        self.objective_group = QGroupBox("Available Objectives")
-        self.objective_layout = QVBoxLayout()
+        self.objective_panel = RowPanel(
+            title="Available Objectives",
+            row_class=ObjectiveRow,
+            get_classes_type="objectives"
+        )
+        # main_layout.addWidget(self.objective_panel)
 
-        self.objective_rows: dict[str, ObjectiveRow] = {}
-        for name, cls in self.objective_classes.items():
-            row = ObjectiveRow(name)
-            self.objective_layout.addWidget(row)
-            self.objective_rows[name] = row
-        
-        self.objective_group.setLayout(self.objective_layout)
-        main_layout.addWidget(self.objective_group)
+        self.objective_rows = self.objective_panel.get_rows()  # dict[str, ObjectiveRow]
+
+        middle_layout = QHBoxLayout()
+        middle_layout.addWidget(self.input_panel, stretch=3)
+        middle_layout.addWidget(self.objective_panel, stretch=2)
+
+        main_layout.addLayout(middle_layout)
+
+        # Placeholders
+        init_panel = QGroupBox("Initialization")
+        init_layout = QVBoxLayout(init_panel)
+        init_layout.addWidget(QLabel("Placeholder for initialization settings (Sobol, file, no init?)"))
+
+        model_panel = QGroupBox("Model")
+        model_layout = QVBoxLayout(model_panel)
+        model_layout.addWidget(QLabel("Placeholder for model settings (gridScan, qNEHVI)"))
+
+        # Layout for the placeholders
+        bottom_panels_layout = QHBoxLayout()
+        bottom_panels_layout.addWidget(init_panel, stretch=1)
+        bottom_panels_layout.addWidget(model_panel, stretch=1)
+
+        main_layout.addLayout(bottom_panels_layout)
 
 
         # --- Bottom: Validate and Create Button ---
