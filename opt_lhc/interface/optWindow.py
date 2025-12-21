@@ -103,7 +103,7 @@ class OptWindow(QMainWindow):
     
     def server_launch(self, server_state: bool) -> None:
         if server_state:
-            self.serv = ServerLHC(name="Optimization", address="tcp://*:1254", freedom=0, device="__BO__", data={})
+            self.serv = ServerLHC(name="Optimization", address="tcp://*:1254", freedom=0, device="__OPT__", data={})
             self.serv.start()
             self.execution_panel.set_server_address(self.serv.address_for_client)
         else:
