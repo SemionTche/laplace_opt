@@ -16,6 +16,7 @@ from interface.objectiveRow import ObjectiveRow
 
 from server_lhc.serverLHC import ServerLHC
 from server_lhc.protocol import DEVICE_OPT
+from server_lhc.serverController import ServerController
 
 
 class OptWindow(QMainWindow):
@@ -93,6 +94,8 @@ class OptWindow(QMainWindow):
 
         main_layout.addLayout(bottom_layout)
 
+        self.server_controller = ServerController()
+
         self.actions()
 
         
@@ -100,6 +103,10 @@ class OptWindow(QMainWindow):
     def actions(self):
         self.execution_panel.server_state_changed.connect(
             self.server_launch
+        )
+        
+        self.server_controller.saving_path_changed.connect(
+            self.execution_panel.saving_entry.setText
         )
     
     def server_launch(self, server_state: bool) -> None:
@@ -109,6 +116,10 @@ class OptWindow(QMainWindow):
                                   freedom=0, 
                                   device=DEVICE_OPT,
                                   data={})
+            # bridge server -> controller
+            self.serv.on_saving_path_changed = (
+                self.server_controller.on_server_save_path
+            )
             self.serv.start()
             self.execution_panel.set_server_address(self.serv.address_for_client)
         else:
