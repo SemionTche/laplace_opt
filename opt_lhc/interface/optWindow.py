@@ -15,6 +15,7 @@ from interface.inputRow import InputRow
 from interface.objectiveRow import ObjectiveRow
 
 from server_lhc.serverLHC import ServerLHC
+from server_lhc.protocol import DEVICE_OPT
 
 
 class OptWindow(QMainWindow):
@@ -103,7 +104,11 @@ class OptWindow(QMainWindow):
     
     def server_launch(self, server_state: bool) -> None:
         if server_state:
-            self.serv = ServerLHC(name="Optimization", address="tcp://*:1254", freedom=0, device="__OPT__", data={})
+            self.serv = ServerLHC(name="Optimization", 
+                                  address="tcp://*:1254", 
+                                  freedom=0, 
+                                  device=DEVICE_OPT,
+                                  data={})
             self.serv.start()
             self.execution_panel.set_server_address(self.serv.address_for_client)
         else:
