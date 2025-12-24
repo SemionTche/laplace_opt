@@ -1,12 +1,13 @@
 from pathlib import Path
 import importlib.util
 import inspect
-from inputs.input_structure import InputStructure
-from objectives.objective_structure import ObjectiveStructure
+from model_construction.inputs.input_structure import InputStructure
+from model_construction.objectives.objective_structure import ObjectiveStructure
 
 
 def get_classes(category: str) -> dict[str, type]:
-    inputs_dir = Path(__file__).parent.parent / category
+    inputs_dir = Path(__file__).parent.parent / "model_construction" / category
+    
     result: dict[str, type] = {}
     
     if category == "inputs":
@@ -17,6 +18,7 @@ def get_classes(category: str) -> dict[str, type]:
         raise ValueError("The 'category' argument of 'get_classes' should be either 'inputs' or 'objectives'.")
 
     for py in inputs_dir.glob("*.py"):
+
         if py.name in ("__init__.py", "input_structure.py", "objective_structure.py"):
             continue
         
