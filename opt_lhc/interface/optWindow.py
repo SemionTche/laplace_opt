@@ -16,6 +16,8 @@ from interface.objectiveRow import ObjectiveRow
 from interface.initializationPanel import InitializationPanel
 from interface.modelPanel import ModelPanel
 
+from core.optManager import OptManager
+
 from server_lhc.serverLHC import ServerLHC
 from server_lhc.protocol import DEVICE_OPT
 from server_lhc.serverController import ServerController
@@ -54,7 +56,7 @@ class OptWindow(QMainWindow):
             get_classes_type="inputs"
         )
 
-        # --- Block 3: Objectives ---
+        # --- Block 2: Objectives ---
         self.objective_panel = RowPanel(
             title="Available Objectives",
             row_class=ObjectiveRow,
@@ -70,21 +72,21 @@ class OptWindow(QMainWindow):
         middle_layout.addWidget(self.objective_panel, stretch=2)
         main_layout.addLayout(middle_layout)
 
+        # init
         self.init_panel = InitializationPanel()
+        main_layout.addWidget(self.init_panel, stretch=1)
+
+        # model
         self.model_panel = ModelPanel()
+        main_layout.addWidget(self.model_panel, stretch=1)
 
-        bottom_panels_layout = QVBoxLayout()
-        bottom_panels_layout.addWidget(self.init_panel, stretch=1)
-        bottom_panels_layout.addWidget(self.model_panel, stretch=1)
-
-        main_layout.addLayout(bottom_panels_layout)
-
-        # --- Bottom: Validate and Create Button ---
+        # Start and Stop buttons
         bottom_layout = QHBoxLayout()
         bottom_layout.addStretch()
-        self.validate_btn = QPushButton("Validate and Create")
-        # self.validate_btn.clicked.connect(self.on_validate)
-        bottom_layout.addWidget(self.validate_btn)
+        self.stop_button = QPushButton("Stop")
+        bottom_layout.addWidget(self.stop_button)
+        self.start_button = QPushButton("Start")
+        bottom_layout.addWidget(self.start_button)
 
         main_layout.addLayout(bottom_layout)
 
@@ -92,9 +94,11 @@ class OptWindow(QMainWindow):
 
         self.actions()
 
-        
     
     def actions(self):
+        # self.start_button.clicked.connect(self.on_validate)
+        # self.stop_button.clicked.connect(self.on_stop)
+
         self.execution_panel.server_state_changed.connect(
             self.server_launch
         )
@@ -120,25 +124,20 @@ class OptWindow(QMainWindow):
             self.serv.stop()
     
     def on_validated(self):
+        # init
         init, init_params = self.init_panel.get_initialization()
         X_init = init.generate(bounds, **init_params)
 
         model_cfg = self.model_panel.get_config()
-        if model_cfg is None:
-            return X_init  # init-only mode
 
-        classes, params = model_cfg
+        self.opt_manager = OptManager()
+        self.opt_manager.configure_model(model_cfg, bounds)
 
-        model_cls = classes["model"]
-        fitter_cls = classes["fitter"]
-        acq_cls = classes["acquisition"]
-        sampler_cls = classes["sampler"]
+        # init-only mode supported
+        self.opt_manager.initialize(X_init)
 
-        model = model_cls().build(train_X, train_Y, **params.get(model_cls, {}))
-        model = fitter_cls().fit(model)
-        sampler = sampler_cls().build(**params.get(sampler_cls, {}))
-        acquisition = acq_cls().build(model, sampler, **params.get(acq_cls, {}))
-
+        if model_cfg["enabled"]:
+            X_next = self.opt_manager.get_next_candidates(q=3)
 
     
     def closeEvent(self, event) -> None:
