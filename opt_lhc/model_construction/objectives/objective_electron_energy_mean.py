@@ -1,14 +1,14 @@
 try:
-    from objectives.objective_structure import ObjectiveStructure
+    from model_construction.objectives.objective_structure import ObjectiveStructure
 except ModuleNotFoundError:
     # allow running the module directly (in __main__)
     from objective_structure import ObjectiveStructure
 
-class ElectronCharge(ObjectiveStructure):
+class ElectronEnergyMean(ObjectiveStructure):
 
     def __init__(self, minimize: bool):
-        name = r"$Q$"
-        unit = "pC"
+        name = r"$E_0$"
+        unit = "MeV"
         ObjectiveStructure.__init__(self, name, minimize, unit)
 
 
@@ -17,5 +17,5 @@ class ElectronCharge(ObjectiveStructure):
 
 
 if __name__ == "__main__":
-    e = ElectronCharge(True)
+    e = ElectronEnergyMean(True)
     print(e)

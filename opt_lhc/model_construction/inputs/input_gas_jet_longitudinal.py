@@ -1,21 +1,17 @@
 from typing import Sequence
 
 try:
-    from inputs.input_structure import InputStructure
+    from model_construction.inputs.input_structure import InputStructure
 except ModuleNotFoundError:
     # allow running the module directly (in __main__)
     from input_structure import InputStructure
 
+class GasJetLongitudinal(InputStructure):
 
-class GasJetHeight(InputStructure):
-    """Test"""
-    
     def __init__(self, bounds: Sequence[float]=(0, 5)):
-        "bounds defines the boundaries of the system"
-        
-        name = "gas_jet_height"
-        unit = "um"
+        name = "gas_jet_longitudinal"
         safe_bounds = (0, 25)
+        unit = "um"
         InputStructure.__init__(self, name, bounds, safe_bounds, unit)
 
     def get_position(self) -> None:
@@ -25,9 +21,9 @@ class GasJetHeight(InputStructure):
         pass
 
 if __name__ == "__main__":
-    gas_jet_height = GasJetHeight(bounds=(0, 4))
-    print(gas_jet_height)
-    print("Position: ", gas_jet_height.get_position())
+    gas_jet_longitudinal = GasJetLongitudinal(bounds=(0, 4))
+    print(gas_jet_longitudinal)
+    print("Position: ", gas_jet_longitudinal.get_position())
 
-    gas_jet_height.set_bounds((1, 3))
-    print(gas_jet_height)
+    gas_jet_longitudinal.set_bounds((1, 3))
+    print(gas_jet_longitudinal)
