@@ -3,7 +3,11 @@ import importlib.util
 import inspect
 from model_construction.inputs.input_structure import InputStructure
 from model_construction.objectives.objective_structure import ObjectiveStructure
-
+from model_construction.initializations.initialization_structure import InitializationStructure
+from model_construction.models.model_structure import ModelStructure
+from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
+from model_construction.fitters.fitter_structure import FitterStructure
+from model_construction.samplers.sampler_structure import SamplerStructure
 
 def get_classes(category: str) -> dict[str, type]:
     inputs_dir = Path(__file__).parent.parent / "model_construction" / category
@@ -14,6 +18,16 @@ def get_classes(category: str) -> dict[str, type]:
         structure = InputStructure
     elif category == "objectives":
         structure = ObjectiveStructure
+    elif category == "initializations":
+        structure = InitializationStructure
+    elif category == "models":
+        structure = ModelStructure
+    elif category == "acquisitions":
+        structure = AcquisitionStructure
+    elif category == "fitters":
+        structure = FitterStructure
+    elif category == "samplers":
+        structure = SamplerStructure
     else:
         raise ValueError("The 'category' argument of 'get_classes' should be either 'inputs' or 'objectives'.")
 

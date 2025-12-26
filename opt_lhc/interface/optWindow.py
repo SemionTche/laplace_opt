@@ -13,6 +13,8 @@ from interface.executionPanel import ExecutionPanel
 from interface.rowPanel import RowPanel
 from interface.inputRow import InputRow
 from interface.objectiveRow import ObjectiveRow
+from interface.initializationPanel import InitializationPanel
+from interface.modelPanel import ModelPanel
 
 from server_lhc.serverLHC import ServerLHC
 from server_lhc.protocol import DEVICE_OPT
@@ -68,22 +70,14 @@ class OptWindow(QMainWindow):
         middle_layout.addWidget(self.objective_panel, stretch=2)
         main_layout.addLayout(middle_layout)
 
-        # Placeholders
-        init_panel = QGroupBox("Initialization")
-        init_layout = QVBoxLayout(init_panel)
-        init_layout.addWidget(QLabel("Placeholder for initialization settings (Sobol, file, no init?)"))
+        self.init_panel = InitializationPanel()
+        self.model_panel = ModelPanel()
 
-        model_panel = QGroupBox("Model")
-        model_layout = QVBoxLayout(model_panel)
-        model_layout.addWidget(QLabel("Placeholder for model settings (gridScan, qNEHVI)"))
-
-        # Layout for the placeholders
-        bottom_panels_layout = QHBoxLayout()
-        bottom_panels_layout.addWidget(init_panel, stretch=1)
-        bottom_panels_layout.addWidget(model_panel, stretch=1)
+        bottom_panels_layout = QVBoxLayout()
+        bottom_panels_layout.addWidget(self.init_panel, stretch=1)
+        bottom_panels_layout.addWidget(self.model_panel, stretch=1)
 
         main_layout.addLayout(bottom_panels_layout)
-
 
         # --- Bottom: Validate and Create Button ---
         bottom_layout = QHBoxLayout()
@@ -124,6 +118,28 @@ class OptWindow(QMainWindow):
             self.execution_panel.set_server_address(self.serv.address_for_client)
         else:
             self.serv.stop()
+    
+    def on_validated(self):
+        init, init_params = self.init_panel.get_initialization()
+        X_init = init.generate(bounds, **init_params)
+
+        model_cfg = self.model_panel.get_config()
+        if model_cfg is None:
+            return X_init  # init-only mode
+
+        classes, params = model_cfg
+
+        model_cls = classes["model"]
+        fitter_cls = classes["fitter"]
+        acq_cls = classes["acquisition"]
+        sampler_cls = classes["sampler"]
+
+        model = model_cls().build(train_X, train_Y, **params.get(model_cls, {}))
+        model = fitter_cls().fit(model)
+        sampler = sampler_cls().build(**params.get(sampler_cls, {}))
+        acquisition = acq_cls().build(model, sampler, **params.get(acq_cls, {}))
+
+
     
     def closeEvent(self, event) -> None:
         '''
