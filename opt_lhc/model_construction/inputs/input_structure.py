@@ -11,11 +11,12 @@ def check_bounds_format(bounds: Sequence[float]):
 
 class InputStructure(ABC):
     
-    def __init__(self, name: str, bounds: Sequence[float], safe_bounds: Sequence[float], unit: str):
+    def __init__(self, name: str, bounds: Sequence[float], safe_bounds: Sequence[float], unit: str, address: str):
         check_bounds_format(bounds)
         check_bounds_format(safe_bounds)
 
         self._name = name
+        self._address = address
         self._bounds = bounds
         self._safe_bounds = safe_bounds
         self._unit = unit
@@ -30,7 +31,11 @@ class InputStructure(ABC):
 
     @property
     def safe_bounds(self) -> Sequence[float]:
-        return self._safe_bounds
+        return self._safe_bounds    
+    
+    @property
+    def address(self) -> str:
+        return self._address
     
     @property
     def unit(self) -> str:
@@ -57,4 +62,4 @@ class InputStructure(ABC):
         self._bounds = new_bounds
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}(name='{self.name}', bounds={self.bounds}, unit='{self.unit}', safe_bounds={self.safe_bounds})>"
+        return f"<{self.__class__.__name__}(name='{self.name}', bounds={self.bounds}, unit='{self.unit}', safe_bounds={self.safe_bounds}, address={self.address})>"

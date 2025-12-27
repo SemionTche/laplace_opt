@@ -12,7 +12,8 @@ class GasJetTransverse(InputStructure):
         name = "gas_jet_transverse"
         unit = "um"
         safe_bounds = (0, 25)
-        InputStructure.__init__(self, name, bounds, safe_bounds, unit)
+        address = "tmp 3"
+        InputStructure.__init__(self, name, bounds, safe_bounds, unit, address)
 
     def get_position(self) -> None:
         pass

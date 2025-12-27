@@ -2,17 +2,18 @@ from typing import Dict, Type
 from PyQt6.QtWidgets import QWidget, QGroupBox, QVBoxLayout, QListWidget, QListWidgetItem
 from utils.getter import get_classes
 
+from interface.inputWidget import InputWidget
 
 class InOutPanel(QGroupBox):
     """
-    Generic panel that can display a list of row widgets (InputRow, ObjectiveRow, etc.)
+    Generic panel that can display a list of row widgets (InputWidget, ObjectiveRow, etc.)
     in a scrollable QListWidget.
     """
 
     def __init__(self, title: str, row_class: Type[QWidget], get_classes_type: str = None, parent=None):
         """
         :param title: QGroupBox title
-        :param row_class: class to instantiate for each row (InputRow or ObjectiveRow)
+        :param row_class: class to instantiate for each row (InputWidget or ObjectiveRow)
         :param get_classes_type: if provided, will call get_classes(get_classes_type)
         :param parent: optional parent widget
         """
@@ -53,6 +54,11 @@ class InOutPanel(QGroupBox):
             item.setSizeHint(row.sizeHint())
             self.list_widget.addItem(item)
             self.list_widget.setItemWidget(item, row)
+
+    def enable_addresses(self, enable: bool):
+        for i, widget in self.rows.items():
+            if isinstance(widget, InputWidget):
+                widget.enable_address(enable)
 
     # ------------------------ API ------------------------
     def get_rows(self) -> Dict[str, QWidget]:

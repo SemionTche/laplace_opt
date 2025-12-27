@@ -13,7 +13,8 @@ class GasPressure(InputStructure):
         unit = "bar"
         self._gas_type = gas_type
         safe_bounds = (0, 300)
-        InputStructure.__init__(self, name, bounds, safe_bounds, unit)
+        address = "tmp 4"
+        InputStructure.__init__(self, name, bounds, safe_bounds, unit, address)
     
     @property
     def gas_type(self) -> str:

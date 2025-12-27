@@ -12,7 +12,8 @@ class LaserEnergy(InputStructure):
         name = "laser_energy"
         unit = "J"
         safe_bounds = (0, 100)
-        InputStructure.__init__(self, name, bounds, safe_bounds, unit)
+        address = "tmp 5"
+        InputStructure.__init__(self, name, bounds, safe_bounds, unit, address)
 
     def get_position(self) -> None:
         pass

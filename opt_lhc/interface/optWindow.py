@@ -12,7 +12,7 @@ import torch
 # project
 from interface.executionPanel import ExecutionPanel
 from interface.inOutPanel import InOutPanel
-from interface.inputRow import InputRow
+from interface.inputWidget import InputWidget
 from interface.objectiveRow import ObjectiveRow
 from interface.initializationPanel import InitializationPanel
 from interface.modelPanel import ModelPanel
@@ -53,7 +53,7 @@ class OptWindow(QMainWindow):
         # Block 2: Inputs
         self.input_panel = InOutPanel(
             title="Available Inputs",
-            row_class=InputRow,
+            row_class=InputWidget,
             get_classes_type="inputs"
         )
 
@@ -107,6 +107,10 @@ class OptWindow(QMainWindow):
         # turn on / off the server according to the server signal
         self.execution_panel.server_state_changed.connect(
             self.server_launch
+        )
+
+        self.execution_panel.server_state_changed.connect(
+            self.input_panel.enable_addresses
         )
         
         # change the saving path when the server get the "SAVE" cmd
