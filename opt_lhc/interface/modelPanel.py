@@ -42,9 +42,14 @@ class ModelPanel(QGroupBox):
 
     def get_config(self):
         if not self.enable_checkbox.isChecked():
-            return None
+            return {"enabled": False, "classes": {}, "hyperparameters": {}}
 
         classes = self.pipeline.get_selection()
-        params = self.hyperparams.get_parameters()
+        hyperparams = self.hyperparams.get_parameters()
 
-        return classes, params
+        return {
+            "enabled": True,
+            "classes": classes,
+            "hyperparameters": hyperparams
+        }
+

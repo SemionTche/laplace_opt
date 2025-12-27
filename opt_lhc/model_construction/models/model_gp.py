@@ -11,7 +11,7 @@ class GaussianGP(ModelStructure):
         from botorch.models import SingleTaskGP
         from gpytorch.likelihoods import GaussianLikelihood
 
-        likelihood = GaussianLikelihood(noise_constraint=None)
-        likelihood.noise = noise
+        # likelihood = GaussianLikelihood(noise_constraint=None)
+        # likelihood.noise = noise
 
-        return SingleTaskGP(train_X, train_Y, likelihood=likelihood)
+        return SingleTaskGP(train_X, train_Y)#, likelihood=likelihood)

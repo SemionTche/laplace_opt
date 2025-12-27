@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QWidget, QGroupBox, QVBoxLayout, QListWidget, QListW
 from utils.getter import get_classes
 
 
-class RowPanel(QGroupBox):
+class InOutPanel(QGroupBox):
     """
     Generic panel that can display a list of row widgets (InputRow, ObjectiveRow, etc.)
     in a scrollable QListWidget.
