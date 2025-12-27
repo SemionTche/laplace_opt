@@ -69,7 +69,7 @@ class ExecutionPanel(QGroupBox):
         self.read_file.toggled.connect(self.update_file_state)
         self.lock_button.toggled.connect(self.set_locked)
 
-        self.browse_button.clicked.connect(self.browse_file)
+        self.browse_button.clicked.connect(self.browse_folder)
 
     def update_online_state(self, checked: bool):
         print("this is used")
@@ -104,14 +104,14 @@ class ExecutionPanel(QGroupBox):
             "🔓 Unlock configuration" if locked else "🔒 Lock configuration"
         )
 
-    def browse_file(self):
-        # Open file dialog
-        path, _ = QFileDialog.getOpenFileName(
+    def browse_folder(self):
+        path = QFileDialog.getExistingDirectory(
             self,
-            "Select file",
-            "",  # initial directory, empty string = current dir
-            "All files (*);;JSON files (*.json);;Text files (*.txt)"
+            "Select folder",
+            "",  # initial directory ("" = current working dir)
+            QFileDialog.Option.ShowDirsOnly
         )
+
         if path:
             self.path_file.setText(path)
 
