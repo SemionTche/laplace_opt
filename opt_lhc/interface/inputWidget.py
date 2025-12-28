@@ -1,5 +1,4 @@
 # libraries
-from typing import Optional, Tuple
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, QCheckBox, QLabel, QDoubleSpinBox
 )
@@ -177,7 +176,7 @@ class InputWidget(QWidget):
             self.safe_label.setStyleSheet("color: green;") # set the safe bound green color
 
 
-    def get_value(self) -> Optional[Tuple[float, float]]:
+    def get_value(self) -> tuple[float, float] | None:
         '''
         Return the values of the spin boxes if they are in the safe boundaries.
         Return None otherwise.

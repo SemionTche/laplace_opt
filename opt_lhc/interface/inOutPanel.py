@@ -1,5 +1,4 @@
 # librairies
-from typing import Dict
 from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QListWidget, QListWidgetItem
 
 # project
@@ -68,8 +67,8 @@ class InOutPanel(QGroupBox):
         for name, cls in items.items(): # for each class
             try :                       # try to
                 new_widget = self.widget_class(name, cls) # define a new widget
-            except:
-                raise ValueError("The line widget could not be resolved.")
+            except Exception as e:
+                raise ValueError("The line widget could not be resolved.") from e
 
             item = QListWidgetItem(self.list_widget)         # create a new list item
             item.setSizeHint(new_widget.sizeHint())          # set the size of the item
@@ -101,5 +100,5 @@ class InOutPanel(QGroupBox):
             if isinstance(widget, InputWidget):
                 widget.enable_address(enable)
 
-    def get_rows(self) -> Dict[str, InputWidget | ObjectiveWidget]:
+    def get_rows(self) -> dict[str, InputWidget | ObjectiveWidget]:
         return self.rows
