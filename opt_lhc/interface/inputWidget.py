@@ -8,20 +8,23 @@ from PyQt6.QtGui import QIcon
 
 import pathlib
 
+# project
+from utils.getter import get_from_cls
 
 class InputWidget(QWidget):
     '''
-    Docstring for InputWidget
+    InputWidget defines the line of an input. The input must 
+    have it's own class file in 'model_construction/inputs' 
+    and respect the InputStructure format.
     '''
     def __init__(self, name: str, cls: type):
         '''
-        Docstring for __init__
-        
-        :param self: Description
-        :param name: Description
-        :type name: str
-        :param cls: Description
-        :type cls: type
+            Args:
+                name: (str)
+                    name of the class used for this line.
+
+                cls: (type)
+                    the class of the inout.
         '''
         super().__init__() # heritage from QWidget
         
@@ -55,7 +58,7 @@ class InputWidget(QWidget):
 
         # address
         self.address_label = QLabel("Unkown")
-        address = self.get_from_cls("address") # get address from the class
+        address = get_from_cls(self.cls, "address") # get address from the class
         self.address = str(address) if address is not None else None
         if self.address:
             self.address_label.setText(self.address)
@@ -81,7 +84,7 @@ class InputWidget(QWidget):
 
         # Unit
         self.unit_label = QLabel("Unknown")
-        unit = self.get_from_cls("unit") # get unit from the class
+        unit = get_from_cls(self.cls, "unit") # get unit from the class
         self.unit = str(unit) if unit is not None else None
         if self.unit:
             self.unit_label.setText(self.unit)
@@ -95,7 +98,7 @@ class InputWidget(QWidget):
         self.safe_label.setFixedWidth(100)
         line_layout.addWidget(self.safe_label)
 
-        sb = self.get_from_cls("safe_bounds") # get safe bounds from the class
+        sb = get_from_cls(self.cls, "safe_bounds") # get safe bounds from the class
 
         self.safe_bounds = tuple(sb) if sb is not None else None
         if self.safe_bounds:
@@ -125,31 +128,11 @@ class InputWidget(QWidget):
         self.max_spin.valueChanged.connect(self.safe_bounds_checking)
 
 
-    def get_from_cls(self, attr: str):
-        '''
-        Get the 'attr' attribute from the 'self.cls' class.
-        If the attribute is not found, return 'None'. Otherwise,
-        return the attribue.
-        '''
-        try:
-            # if there is no 'cls' class.
-            if hasattr(self.cls, "default") and callable(getattr(self.cls, "default")):
-                inst = self.cls.default() # creates the default instance
-            else:
-                inst = self.cls()         # else use the 'cls' instance
-            val = getattr(inst, attr, None)  # if possible get the attribute value, else return None 
-        except Exception: # if the process failed
-            val = None # return None
-        return val
-
-
-    def on_state_changed(self, state: int) -> None:
+    def on_state_changed(self, enabled: bool) -> None:
         '''
         When the InputWidget state changes, enable / disable
         the spin boxes, change the icon and check the bounds.
         '''
-        enabled = bool(state) # current state
-
         # change the icon
         icon = self.connected_icon if enabled else self.disconnected_icon
         self.state_icon.setPixmap(icon.pixmap(16, 16))
@@ -212,6 +195,7 @@ class InputWidget(QWidget):
 
         return (lo, hi)
 
+    ### helpers
 
     def is_enabled(self) -> bool:
         return self.state_checkBox.isChecked()

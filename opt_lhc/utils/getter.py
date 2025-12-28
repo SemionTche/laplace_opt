@@ -48,6 +48,24 @@ def get_classes(category: str) -> dict[str, type]:
     return result
 
 
+def get_from_cls(cls: type, attr: str):
+    '''
+    Get the 'attr' attribute from the 'cls' class argument.
+    If the attribute is not found, return 'None'. Otherwise,
+    return the attribute.
+    '''
+    try:
+        # if there is no 'cls' class.
+        if hasattr(cls, "default") and callable(getattr(cls, "default")):
+            inst = cls.default() # creates the default instance
+        else:
+            inst = cls()         # else use the 'cls' instance
+        val = getattr(inst, attr, None)  # if possible get the attribute value, else return None 
+    except Exception: # if the process failed
+        val = None # return None
+    return val
+
+
 # def get_input_class_names() -> List[str]:
 #     """
 #     Scan the 'inputs' folder and return class names or a specific class attribute.

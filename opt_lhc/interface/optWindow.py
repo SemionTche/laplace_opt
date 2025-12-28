@@ -13,7 +13,7 @@ import torch
 from interface.executionPanel import ExecutionPanel
 from interface.inOutPanel import InOutPanel
 from interface.inputWidget import InputWidget
-from interface.objectiveRow import ObjectiveRow
+from interface.objectiveWidget import ObjectiveWidget
 from interface.initializationPanel import InitializationPanel
 from interface.modelPanel import ModelPanel
 
@@ -60,12 +60,12 @@ class OptWindow(QMainWindow):
         # Block 2: Objectives
         self.objective_panel = InOutPanel(
             title="Available Objectives",
-            row_class=ObjectiveRow,
+            row_class=ObjectiveWidget,
             get_classes_type="objectives"
         )
             # helpers input / obj rows
         self.input_rows = self.input_panel.get_rows()
-        self.objective_rows = self.objective_panel.get_rows()  # dict[str, ObjectiveRow]
+        self.objective_rows = self.objective_panel.get_rows()  # dict[str, ObjectiveWidget]
 
             # input / obj layout
         middle_layout = QHBoxLayout()

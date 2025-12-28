@@ -35,9 +35,6 @@ class InOutPanel(QGroupBox):
     def _populate_rows(self, get_classes_type: str = None):
         if get_classes_type:
             items = get_classes(get_classes_type)  # returns dict[name, class]
-        else:
-            # row_class handles creation itself, for ObjectiveRow
-            items = {row_class.__name__: self.row_class for row_class in []}
 
         for name, cls in items.items():
             if get_classes_type:
@@ -45,7 +42,7 @@ class InOutPanel(QGroupBox):
                     row = self.row_class(name, cls)
                 except TypeError:
                     # fallback for ObjectiveRow
-                    row = self.row_class(name)
+                    row = self.row_class(name, cls)
 
             self.rows[name] = row
 
