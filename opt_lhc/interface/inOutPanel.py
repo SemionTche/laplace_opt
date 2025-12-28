@@ -96,7 +96,7 @@ class InOutPanel(QGroupBox):
         Enable / disable all the InputWidget addresses
         of the panel.
         '''
-        for name, widget in self.rows.items():
+        for widget in self.rows.values():
             if isinstance(widget, InputWidget):
                 widget.enable_address(enable)
 

@@ -12,8 +12,6 @@ import torch
 # project
 from interface.executionPanel import ExecutionPanel
 from interface.inOutPanel import InOutPanel
-from interface.inputWidget import InputWidget
-from interface.objectiveWidget import ObjectiveWidget
 from interface.initializationPanel import InitializationPanel
 from interface.modelPanel import ModelPanel
 

@@ -13,7 +13,8 @@ class FileInitialization(InitializationStructure):
         "path": {
             "type": str,
             "default": "",
-            "label": "File path"
+            "label": "File path",
+            "description": "Use already sampled data"
         }
     }
 
