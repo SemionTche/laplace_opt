@@ -1,63 +1,105 @@
-from typing import Dict, Type
-from PyQt6.QtWidgets import QWidget, QGroupBox, QVBoxLayout, QListWidget, QListWidgetItem
+# librairies
+from typing import Dict
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QListWidget, QListWidgetItem
+
+# project
+from interface.inputWidget import InputWidget
+from interface.objectiveWidget import ObjectiveWidget
+
 from utils.getter import get_classes
 
-from interface.inputWidget import InputWidget
 
 class InOutPanel(QGroupBox):
-    """
-    Generic panel that can display a list of row widgets (InputWidget, ObjectiveRow, etc.)
-    in a scrollable QListWidget.
-    """
+    '''
+    Generic panel made to display inputs or objectives contained
+    in the 'model_construction/inputs' or 'model_construction/objectives'
+    folder.
 
-    def __init__(self, title: str, row_class: Type[QWidget], get_classes_type: str = None, parent=None):
-        """
-        :param title: QGroupBox title
-        :param row_class: class to instantiate for each row (InputWidget or ObjectiveRow)
-        :param get_classes_type: if provided, will call get_classes(get_classes_type)
-        :param parent: optional parent widget
-        """
-        super().__init__(title, parent)
+    Displaying the classes contained in these folders using InputWidget and 
+    ObjectiveWidget in a scrollable QListWidget.
+    '''
+    def __init__(self, title: str, folder_name: str):
+        '''
+            Args:
+                title: (str)
+                    the title of the Group Box.
+                
+                folder_name: (str)
+                    the folder in 'model_construction' from
+                    which the classes must be extracted.
+        '''
+        super().__init__(title)  # heritage from QGroupBox
 
-        self.row_class = row_class
-        self.rows: Dict[str, QWidget] = {}
+        self.folder_name = folder_name
+        self.verify_folder_name() # verify the folder_name
 
-        self._build_ui()
-        self._populate_rows(get_classes_type)
+        # define the widget type contained in the panel
+        self.widget_class = None
+        if folder_name == "inputs":
+            self.widget_class = InputWidget
+        elif folder_name == "objectives":
+            self.widget_class = ObjectiveWidget
+        else:
+            raise TypeError("The class widget could not be found.")
 
-    # ------------------------ UI ------------------------
-    def _build_ui(self):
-        layout = QVBoxLayout(self)
+        # dictionary of the widgets stored in the InOutPanel
+        self.rows: dict[str, InputWidget | ObjectiveWidget] = {}
+            
+        self.set_up() # construct the list widget
+        self.load_widgets() # add items to the list
+
+    
+    def set_up(self) -> None:
+        '''
+        Build the panel main widgets.
+        '''
+        panel_layout = QVBoxLayout(self)
         self.list_widget = QListWidget()
-        layout.addWidget(self.list_widget)
+        panel_layout.addWidget(self.list_widget)
 
-    # ------------------------ Populate ------------------------
-    def _populate_rows(self, get_classes_type: str = None):
-        if get_classes_type:
-            items = get_classes(get_classes_type)  # returns dict[name, class]
+    
+    def load_widgets(self) -> None:
+        '''
+        Load the classes from folder_name attribute as 
+        widgets and add them to the panel list.
+        '''
+        items = get_classes(self.folder_name) # dict[class_name, class] contained in 'folder_name'
 
-        for name, cls in items.items():
-            if get_classes_type:
-                try :
-                    row = self.row_class(name, cls)
-                except TypeError:
-                    # fallback for ObjectiveRow
-                    row = self.row_class(name, cls)
+        for name, cls in items.items(): # for each class
+            try :                       # try to
+                new_widget = self.widget_class(name, cls) # define a new widget
+            except:
+                raise ValueError("The line widget could not be resolved.")
 
-            self.rows[name] = row
+            item = QListWidgetItem(self.list_widget)         # create a new list item
+            item.setSizeHint(new_widget.sizeHint())          # set the size of the item
+            self.list_widget.addItem(item)                   # add the new item
+            self.list_widget.setItemWidget(item, new_widget) # assign new widget to item
 
-            # Wrap in QListWidgetItem
-            item = QListWidgetItem(self.list_widget)
-            item.setSizeHint(row.sizeHint())
-            self.list_widget.addItem(item)
-            self.list_widget.setItemWidget(item, row)
+            self.rows[name] = new_widget   # store the new widget in the dictionary
+    
+
+    def verify_folder_name(self) -> None:
+        '''
+        Checks if the folder_name attribute is among the
+        available folder names. Otherwise raise an error.
+        '''
+        available_folders = ["inputs", "objectives"]
+        if self.folder_name not in available_folders:
+            raise ValueError(
+                f"folder_name '{self.folder_name}' argument must be chosen among '{available_folders}'."
+            )
+
+    ### helpers
 
     def enable_addresses(self, enable: bool):
-        for i, widget in self.rows.items():
+        '''
+        Enable / disable all the InputWidget addresses
+        of the panel.
+        '''
+        for name, widget in self.rows.items():
             if isinstance(widget, InputWidget):
                 widget.enable_address(enable)
 
-    # ------------------------ API ------------------------
-    def get_rows(self) -> Dict[str, QWidget]:
-        """Return dictionary of name -> row widget"""
+    def get_rows(self) -> Dict[str, InputWidget | ObjectiveWidget]:
         return self.rows

@@ -53,15 +53,13 @@ class OptWindow(QMainWindow):
         # Block 2: Inputs
         self.input_panel = InOutPanel(
             title="Available Inputs",
-            row_class=InputWidget,
-            get_classes_type="inputs"
+            folder_name="inputs"
         )
 
         # Block 2: Objectives
         self.objective_panel = InOutPanel(
             title="Available Objectives",
-            row_class=ObjectiveWidget,
-            get_classes_type="objectives"
+            folder_name="objectives"
         )
             # helpers input / obj rows
         self.input_rows = self.input_panel.get_rows()
