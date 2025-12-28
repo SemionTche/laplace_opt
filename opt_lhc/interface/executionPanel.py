@@ -26,7 +26,7 @@ class ExecutionPanel(QGroupBox):
         Function made to create and set the elements
         of the ExecutionPanel class.
         '''
-        layout = QGridLayout(self)
+        exc_layout = QGridLayout(self)
 
         # Online execution
         self.server_checkbox = QCheckBox("Run online (start server)")
@@ -53,25 +53,25 @@ class ExecutionPanel(QGroupBox):
         self.lock_button = QPushButton("🔒 Lock configuration")
         self.lock_button.setCheckable(True)
 
-        # Layout
-        layout.addWidget(self.server_checkbox, 0, 0)
-        layout.addWidget(QLabel("Server address:"), 0, 1)
-        layout.addWidget(self.server_label, 0, 2)
+        # exc_layout
+        exc_layout.addWidget(self.server_checkbox, 0, 0)
+        exc_layout.addWidget(QLabel("Server address:"), 0, 1)
+        exc_layout.addWidget(self.server_label, 0, 2)
 
-        layout.addWidget(self.read_file, 1, 0)
-        layout.addWidget(QLabel("Reading path:"), 1, 1)
-        layout.addWidget(self.read_entry, 1, 2)
-        layout.addWidget(self.read_browse_button, 1, 3)
+        exc_layout.addWidget(self.read_file, 1, 0)
+        exc_layout.addWidget(QLabel("Reading path:"), 1, 1)
+        exc_layout.addWidget(self.read_entry, 1, 2)
+        exc_layout.addWidget(self.read_browse_button, 1, 3)
 
-        layout.addWidget(self.read_server, 2, 0)
+        exc_layout.addWidget(self.read_server, 2, 0)
 
-        layout.addWidget(QLabel("Saving path:"), 2, 1)
-        layout.addWidget(self.saving_entry, 2, 2)
-        layout.addWidget(self.save_browse_button, 2, 3)
+        exc_layout.addWidget(QLabel("Saving path:"), 2, 1)
+        exc_layout.addWidget(self.saving_entry, 2, 2)
+        exc_layout.addWidget(self.save_browse_button, 2, 3)
 
-        layout.addWidget(self.lock_button, 0, 3, alignment=Qt.AlignmentFlag.AlignRight)
+        exc_layout.addWidget(self.lock_button, 0, 3, alignment=Qt.AlignmentFlag.AlignRight)
 
-        layout.setColumnStretch(2, 1)
+        exc_layout.setColumnStretch(2, 1)
 
 
     def actions(self) -> None:
@@ -89,11 +89,13 @@ class ExecutionPanel(QGroupBox):
 
         # select the reading folder
         self.read_browse_button.clicked.connect(
-            lambda: self.browse_folder(is_read=True))
+            lambda: self.browse_folder(is_read=True)
+        )
         
         # select the saving folder
         self.save_browse_button.clicked.connect(
-            lambda: self.browse_folder(is_read=False))
+            lambda: self.browse_folder(is_read=False)
+        )
 
 
     def update_online_state(self, checked: bool) -> None:
