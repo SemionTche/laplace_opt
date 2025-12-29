@@ -36,7 +36,7 @@ class ModelList(StrategyStructure):
         },
         "noise": {
             "type": float,
-            "default": None,
+            "default": 0,
             "label": "Noise level",
             "description": (
                 "Observation noise variance. "

@@ -1,34 +1,34 @@
 from PyQt6.QtWidgets import (
-    QGroupBox, QFormLayout, QSpinBox, QDoubleSpinBox
+    QGroupBox, QGridLayout
 )
 
+from utils.standard_widgets import load_standard_widgets
 
 class HyperparameterPanel(QGroupBox):
     def __init__(self):
         super().__init__("Hyperparameters")
-        self.layout = QFormLayout(self)
+        self.layout = QGridLayout(self)
         self.widgets = {}
 
     def clear(self):
         while self.layout.count():
-            self.layout.removeRow(0)
+            item = self.layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
         self.widgets.clear()
 
     def load_from_classes(self, classes: list[type]):
         self.clear()
-
+        print(f"classes = {classes}")
         for cls in classes:
-            for name, meta in cls.parameters.items():
-                if meta["type"] is int:
-                    w = QSpinBox()
-                    w.setValue(meta.get("default", 0))
-                else:
-                    w = QDoubleSpinBox()
-                    w.setDecimals(6)
-                    # w.setValue(meta.get("default", 0.))
-
-                self.layout.addRow(f"{cls.display_name} — {name}", w)
+            widgets = load_standard_widgets(
+                self.layout,
+                cls.parameters,
+                max_per_row=6,
+            )
+            for name, w in widgets.items():
                 self.widgets[(cls, name)] = w
+
 
     def get_parameters(self):
         result = {}

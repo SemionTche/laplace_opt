@@ -1,13 +1,12 @@
 # libraries
 from PyQt6.QtWidgets import (
-    QGroupBox, QVBoxLayout, QComboBox, QWidget, QLabel, 
-    QSpinBox, QLineEdit, QGridLayout, QDoubleSpinBox
+    QGroupBox, QVBoxLayout, QComboBox, QWidget, 
+    QSpinBox, QGridLayout, QDoubleSpinBox
 )
-from PyQt6.QtCore import Qt
 
 # project
-from interface.pathSelectorWidget import PathSelectorWidget
 from utils.getter import get_classes
+from utils.standard_widgets import load_standard_widgets
 
 
 class InitializationPanel(QGroupBox):
@@ -72,58 +71,21 @@ class InitializationPanel(QGroupBox):
             if item.widget():
                 item.widget().deleteLater()
 
-        cls = list(self.init_cls.values())[index] # get the corresponding init class
-        parameters = cls.get_parameters() # get the class parameters
+        # get the corresponding init class
+        cls = list(self.init_cls.values())[index]
 
-        self.param_widgets = {} # dictionary that will contained every parameter widget
+        # get the class parameters
+        parameters = cls.get_parameters()
 
-        # grid structure
-        max_per_row = 6 # max number of column
-        col = 0
-        base_row = 0
+        # dictionary that will contained every parameter widget
+        self.param_widgets = {}
 
-        for name, meta in parameters.items():
-            if col >= max_per_row:
-                col = 0
-                base_row += 2  # if the column are full change the line
-
-            # label
-            label = QLabel(meta.get("label", name))
-            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            label.setToolTip(meta.get("description", ""))  # add description
-            self.param_layout.addWidget(label, base_row, col)
-
-            # widget
-            if meta["type"] is int:
-                w = QSpinBox()
-                w.setRange(meta.get("min", 1), meta.get("max", 10_000))
-                w.setValue(meta.get("default", 1))
-
-            elif meta["type"] is float:
-                w = QDoubleSpinBox()
-                w.setDecimals(meta.get("decimals", 3))
-                w.setSingleStep(meta.get("step", 0.1))
-                w.setRange(meta.get("min", -1e9), meta.get("max", 1e9))
-                w.setValue(meta.get("default", 0.))
-            
-            elif meta["type"] is bool:
-                w = QComboBox()
-                w.addItems(["True", "False"])
-                default = meta.get("default", False)
-                w.setCurrentIndex(0 if default else 1)
-
-            elif meta["type"] is str and name == "path":
-                w = PathSelectorWidget(
-                    str(meta.get("default", "")), 
-                    "Init Browse", 
-                    mode="file"
-                )
-
-            self.param_layout.addWidget(w, base_row + 1, col)
-            self.param_widgets[name] = w
-
-            col += 1
-
+        # create and place the standard widgets
+        self.param_widgets = load_standard_widgets(
+            self.param_layout,
+            parameters,
+            max_per_row=6,  # max number of column
+        )
 
     ### helpers
 
