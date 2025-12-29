@@ -21,11 +21,11 @@ class HyperparameterPanel(QGroupBox):
             for name, meta in cls.parameters.items():
                 if meta["type"] is int:
                     w = QSpinBox()
-                    w.setValue(meta["default"])
+                    w.setValue(meta.get("default", 0))
                 else:
                     w = QDoubleSpinBox()
                     w.setDecimals(6)
-                    w.setValue(meta["default"])
+                    # w.setValue(meta.get("default", 0.))
 
                 self.layout.addRow(f"{cls.display_name} — {name}", w)
                 self.widgets[(cls, name)] = w

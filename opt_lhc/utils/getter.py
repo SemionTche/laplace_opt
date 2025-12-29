@@ -10,10 +10,8 @@ from model_construction.objectives.objective_structure import ObjectiveStructure
     # init
 from model_construction.initializations.initialization_structure import InitializationStructure
     # pipeline
-from model_construction.models.model_structure import ModelStructure
+from model_construction.strategies.strategy_structure import StrategyStructure
 from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
-from model_construction.fitters.fitter_structure import FitterStructure
-from model_construction.samplers.sampler_structure import SamplerStructure
 
 
 def get_classes(category: str) -> dict[str, type]:
@@ -68,10 +66,8 @@ def verify_category(category: str):
         "inputs",
         "objectives",
         "initializations",
-        "models",
+        "strategies",
         "acquisitions",
-        "fitters",
-        "samplers"
     ]
     if category not in available_categories:
         raise ValueError(f"category '{category}' invalid."
@@ -90,12 +86,8 @@ def get_structure(category: str):
         structure = ObjectiveStructure
     elif category == "initializations":
         structure = InitializationStructure
-    elif category == "models":
-        structure = ModelStructure
+    elif category == "strategies":
+        structure = StrategyStructure
     elif category == "acquisitions":
         structure = AcquisitionStructure
-    elif category == "fitters":
-        structure = FitterStructure
-    elif category == "samplers":
-        structure = SamplerStructure
     return structure

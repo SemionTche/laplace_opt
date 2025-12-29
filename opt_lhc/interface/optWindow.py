@@ -13,7 +13,7 @@ import torch
 from interface.executionPanel import ExecutionPanel
 from interface.inOutPanel import InOutPanel
 from interface.initializationPanel import InitializationPanel
-from interface.modelPanel import ModelPanel
+from interface.optPanel import OptPanel
 
 from core.optManager import OptManager
 
@@ -74,7 +74,7 @@ class OptWindow(QMainWindow):
         main_layout.addWidget(self.init_panel, stretch=1)
 
         # Block 4: Pipeline
-        self.model_panel = ModelPanel()
+        self.model_panel = OptPanel()
         main_layout.addWidget(self.model_panel, stretch=1)
 
         # Block 5: Start and Stop buttons
