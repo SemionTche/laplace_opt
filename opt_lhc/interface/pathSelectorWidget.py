@@ -8,7 +8,7 @@ from typing import Literal
 import pathlib
 
 
-class PathSelector(QWidget):
+class PathSelectorWidget(QWidget):
     '''
     Widget made a QLineEdit and a QPushButton in order
     to indicate a file or folder path. Allows to filter

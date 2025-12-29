@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 
 # project
-from interface.pathSelector import PathSelector
+from interface.pathSelectorWidget import PathSelectorWidget
 from utils.getter import get_classes
 
 
@@ -113,7 +113,7 @@ class InitializationPanel(QGroupBox):
                 w.setCurrentIndex(0 if default else 1)
 
             elif meta["type"] is str and name == "path":
-                w = PathSelector(
+                w = PathSelectorWidget(
                     str(meta.get("default", "")), 
                     "Init Browse", 
                     mode="file"
