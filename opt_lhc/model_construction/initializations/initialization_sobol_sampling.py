@@ -16,7 +16,7 @@ class SobolInitialization(InitializationStructure):
             "min": 1,
             "max": 1024,
             "label": "Number of samples",
-            "description": "Number of point to sample"
+            "description": "Number of points to sample"
         },
         "q_candidates": {
             "type": int,
@@ -25,6 +25,14 @@ class SobolInitialization(InitializationStructure):
             "max": 1024,
             "label": "Number of candidates",
             "description": "Number of proposal for each sample"
+        },
+        "seed": {
+            "type": int,
+            "default": 0,
+            "min": 0,
+            "max": 999_999,
+            "label": "Seed",
+            "description": "Seed for random generation"
         }
     }
 
