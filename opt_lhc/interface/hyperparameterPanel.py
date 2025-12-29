@@ -19,7 +19,7 @@ class HyperparameterPanel(QGroupBox):
 
     def load_from_classes(self, classes: list[type]):
         self.clear()
-        print(f"classes = {classes}")
+
         for cls in classes:
             widgets = load_standard_widgets(
                 self.layout,

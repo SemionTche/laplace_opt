@@ -9,6 +9,7 @@ from PyQt6.QtCore import pyqtSignal, Qt
 
 # project
 from utils.getter import get_classes
+from utils.standard_widgets import place_labeled_widgets
 
 
 class ModelPanel(QGroupBox):
@@ -48,30 +49,41 @@ class ModelPanel(QGroupBox):
         self.model_layout = QGridLayout(self)
         self.model_layout.setHorizontalSpacing(20)
 
-        # headers
-        for col, (stage, (title, _)) in enumerate(self.stages.items()):
-            label = QLabel(title)
-            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.model_layout.addWidget(label, 0, col)
+        items = []  # list of (label, widget) to be placed in the grid
 
-        # combo boxes
-        for col, (stage, (_, category)) in enumerate(self.stages.items()):
+        # for each stage (strategy, acquisition, ...)
+        for stage, (title, category) in self.stages.items():
+
+            # create the combo box
             combo = QComboBox()
             combo.setSizeAdjustPolicy(
                 QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
             )
 
-            cls_dict = get_classes(category) # dict{class_names, classes}
-            self.classes[stage] = cls_dict   # keep an acces to the classes
+            # read the available classes
+            cls_dict = get_classes(category)  # dict{class_names, classes}
+            self.classes[stage] = cls_dict    # keep an acces to the classes
 
-            for name, cls in cls_dict.items():  # for each class
-                combo.addItem(cls.display_name, userData=name) # add an item in the combo box
+            # add an item in the combo box for each class
+            for name, cls in cls_dict.items():
+                combo.addItem(cls.display_name, userData=name)
 
             # emit a signal when any combo box is changed 
             combo.currentIndexChanged.connect(self.selection_changed.emit)
 
             self.combos[stage] = combo  # keep an acces to the combo box
-            self.model_layout.addWidget(combo, 1, col)  # add the widget to the layout
+
+            # store the (label, widget) pair for layout
+            items.append((title, combo))
+
+        # place the widgets with a maximum of 6 per row,
+        # label on top and centered above the combo box
+        place_labeled_widgets(
+            self.model_layout,
+            items,
+            max_per_row=6,
+        )
+
 
     ### helpers
 

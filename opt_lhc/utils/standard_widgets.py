@@ -1,18 +1,58 @@
-# libraries
+# utils/standard_widgets.py
+
 from PyQt6.QtWidgets import (
-    QLabel, QSpinBox, QDoubleSpinBox, QComboBox,
+    QLabel,
+    QSpinBox,
+    QDoubleSpinBox,
+    QComboBox,
 )
 from PyQt6.QtCore import Qt
 
-# project
 from utils.pathSelectorWidget import PathSelectorWidget
 
 
-def create_standard_widget(name: str, 
-                           meta: dict,):
-    '''
+# ---------------------------------------------------------------------
+# 1. PLACE (LABEL, WIDGET) PAIRS IN A GRID
+# ---------------------------------------------------------------------
+
+def place_labeled_widgets(
+    layout,
+    items: list[tuple[str, object]],
+    *,
+    max_per_row: int = 6,
+):
+    """
+    Place (label, widget) pairs in a QGridLayout.
+
+    Layout pattern:
+        label  label  label
+        widget widget widget
+    """
+    col = 0
+    base_row = 0
+
+    for label_text, widget in items:
+        if col >= max_per_row:
+            col = 0
+            base_row += 2
+
+        label = QLabel(label_text)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        layout.addWidget(label, base_row, col)
+        layout.addWidget(widget, base_row + 1, col)
+
+        col += 1
+
+
+# ---------------------------------------------------------------------
+# 2. STANDARD PARAMETER WIDGET FACTORY
+# ---------------------------------------------------------------------
+
+def create_standard_widget(name: str, meta: dict):
+    """
     Create a widget from a parameter metadata dict.
-    '''
+    """
     ptype = meta["type"]
 
     if ptype is int:
@@ -46,42 +86,36 @@ def create_standard_widget(name: str,
     return w
 
 
-def load_standard_widgets(layout,
-                          parameters: dict,
-                          *,
-                          max_per_row: int = 6,):
-    '''
-    Layout helper
-    Populate a QGridLayout with standard widgets.
+# ---------------------------------------------------------------------
+# 3. LOAD STANDARD PARAMETER WIDGETS (USES THE PLACER)
+# ---------------------------------------------------------------------
 
-    Layout pattern:
-        label label label
-        widget widget widget
+def load_standard_widgets(
+    layout,
+    parameters: dict,
+    *,
+    max_per_row: int = 6,
+):
+    """
+    Create and place parameter widgets using a standard layout.
 
     Returns:
         dict[str, QWidget]
-    '''
+    """
+    items = []
     widgets = {}
 
-    col = 0
-    base_row = 0
-
     for name, meta in parameters.items():
-        if col >= max_per_row:
-            col = 0
-            base_row += 2
-
-        # --- label ---
-        label = QLabel(meta.get("label", name))
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        label.setToolTip(meta.get("description", ""))
-        layout.addWidget(label, base_row, col)
-
-        # --- widget ---
         w = create_standard_widget(name, meta)
-        layout.addWidget(w, base_row + 1, col)
+        label = meta.get("label", name)
 
+        items.append((label, w))
         widgets[name] = w
-        col += 1
+
+    place_labeled_widgets(
+        layout,
+        items,
+        max_per_row=max_per_row,
+    )
 
     return widgets
