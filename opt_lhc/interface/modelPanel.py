@@ -75,7 +75,7 @@ class ModelPanel(QGroupBox):
 
     ### helpers
 
-    def get_selection(self):
+    def get_selection(self) -> dict[str, type]:
         '''
         Return selected classes for each stage.
         '''
