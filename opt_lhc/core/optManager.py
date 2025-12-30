@@ -61,8 +61,7 @@ class OptManager(QObject):
             
             self.serv.start() # start the server
 
-            # update the address in execution panel
-            # self.execution_panel.set_server_address(self.serv.address_for_client)
+            # emit a signal to transmit the server address to the ExecutionPanel
             self.on_server_address.emit(self.serv.address_for_client)
         
         else: # if off

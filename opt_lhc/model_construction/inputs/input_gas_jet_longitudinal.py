@@ -8,10 +8,10 @@ except ModuleNotFoundError:
 
 class GasJetLongitudinal(InputStructure):
 
-    def __init__(self, bounds: Sequence[float]=(0, 5)):
+    def __init__(self, bounds: Sequence[float]=(0, 15)):
         name = "gas_jet_longitudinal"
-        safe_bounds = (0, 25)
-        unit = "um"
+        safe_bounds = (0, 15)
+        unit = "mm"
         address = "tmp 2"
         InputStructure.__init__(self, name, bounds, safe_bounds, unit, address)
 

@@ -9,8 +9,8 @@ class ElectronEnergyStd(ObjectiveStructure):
     def __init__(self):
         name = r"$\sigma_E$"
         unit = "MeV"
-        default_minimize = True
-        ObjectiveStructure.__init__(self, name, unit, default_minimize)
+        minimize = True
+        ObjectiveStructure.__init__(self, name, unit, minimize)
 
 
     def get_value(self) -> None:

@@ -6,7 +6,8 @@ from interface.inputWidget import InputWidget
 from interface.objectiveWidget import ObjectiveWidget
 
 from utils.getter import get_classes
-
+from model_construction.inputs.input_structure import InputStructure
+from model_construction.objectives.objective_structure import ObjectiveStructure
 
 class InOutPanel(QGroupBox):
     '''
@@ -102,3 +103,11 @@ class InOutPanel(QGroupBox):
 
     def get_rows(self) -> dict[str, InputWidget | ObjectiveWidget]:
         return self.rows
+
+    def get_enabled_rows(self) -> dict[str, InputStructure | ObjectiveStructure]:
+        enabled = {}
+        for name, widget in self.rows.items():
+            if widget.is_enabled():
+                enabled[name] = widget.instance
+        return enabled
+

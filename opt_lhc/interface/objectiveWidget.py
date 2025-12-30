@@ -8,15 +8,15 @@ from PyQt6.QtGui import QIcon
 import pathlib
 
 # project
-from utils.getter import get_from_cls
+from model_construction.objectives.objective_structure import ObjectiveStructure
 
 class ObjectiveWidget(QWidget):
     '''
     ObjectiveWidget defines the line of an objective. The objective 
     must have it's own class file in 'model_construction/objectives' 
-    and respect the ObjectiveStructure format.
+    and respect the 'ObjectiveStructure' format.
     '''
-    def __init__(self, name: str, cls: type):
+    def __init__(self, name: str, cls: type[ObjectiveStructure]):
         '''
             Args:
                 name: (str)
@@ -28,7 +28,7 @@ class ObjectiveWidget(QWidget):
         super().__init__() # heritage from QWidget
 
         self.name = name
-        self.cls = cls
+        self.instance: ObjectiveStructure = cls()  # make an instance
 
         # main objective line layout
         line_layout = QHBoxLayout(self)
@@ -67,10 +67,8 @@ class ObjectiveWidget(QWidget):
         line_layout.addWidget(self.mode)
 
         # defines the default combo box display
-        default_is_minize = get_from_cls(self.cls, "default_minimize")
-        if default_is_minize is not None:       # if the attribute was found in the class
-            if not default_is_minize:           # if not minimize
-                self.mode.setCurrentIndex(1)    # set maximize
+        if self.instance.minimize is False:
+            self.mode.setCurrentIndex(1)  # set maximize
 
         self.mode.setEnabled(False)  # disabled by default
 
@@ -83,6 +81,9 @@ class ObjectiveWidget(QWidget):
         '''
         # when the state changes, enable / disable the mode and change the icon
         self.state_checkBox.stateChanged.connect(self.on_state_changed)
+        
+        # when the mode changes, update the instance
+        self.mode.currentTextChanged.connect(self.on_mode_changed)
 
 
     def on_state_changed(self, enabled: bool) -> None:
@@ -96,9 +97,19 @@ class ObjectiveWidget(QWidget):
 
         self.mode.setEnabled(enabled)
 
+
+    def on_mode_changed(self) -> None:
+        '''
+        Update the instance when the user selects Minimize/Maximize.
+        '''
+        if self.is_minimize():
+            self.instance.set_minimize(True)
+        else:
+            self.instance.set_minimize(False)
+
     ### helpers
 
-    def is_selected(self) -> bool:
+    def is_enabled(self) -> bool:
         return self.state_checkBox.isChecked()
 
     def is_minimize(self) -> bool:

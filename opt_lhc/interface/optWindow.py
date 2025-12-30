@@ -125,31 +125,42 @@ class OptWindow(QMainWindow):
             self.execution_panel.set_server_saving
         )
 
+        # transmit the server address from the server to the ExecutionPanel
         self.opt_manager.on_server_address.connect(
             self.execution_panel.set_server_address
         )
 
     
-    def on_start(self):
+    def on_start(self) -> None:
+        inputs = self.input_panel.get_enabled_rows()
+        print(inputs)
+
+        objectives = self.objective_panel.get_enabled_rows()
+        print(objectives)
+        # get selected inputs
+        # get selected objectives
+        # init
+        # strategy
+        # hyperparams
+
         # bounds
-        bounds = self.get_bounds_from_inputs()
+        # bounds = self.get_bounds_from_inputs()
 
-        # model config
-        model_cfg = self.opt_panel.get_config()
+        # # model config
+        # model_cfg = self.opt_panel.get_config()
 
-        # data path
-        data_path = pathlib.Path(
-            self.execution_panel.saving_entry.text()
-        )
+        # # data path
+        # data_path = pathlib.Path(
+        #     self.execution_panel.saving_entry.text()
+        # )
 
-        self.opt_manager = OptManager()
-        self.opt_manager.configure_model(model_cfg, bounds)
+        # # self.opt_manager.configure_model(model_cfg, bounds)
 
-        if data_path.exists():
-            self.opt_manager.configure_data_source(
-                data_path,
-                parent=self  # important for Qt ownership
-            )
+        # if data_path.exists():
+        #     self.opt_manager.configure_data_source(
+        #         data_path,
+        #         parent=self  # important for Qt ownership
+        #     )
 
     def on_stop(self):
         pass

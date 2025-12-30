@@ -22,14 +22,11 @@ def get_classes(category: str) -> dict[str, type]:
     # folder path
     dir = Path(__file__).parent.parent / "model_construction" / category
     
-    result: dict[str, type] = {}
+    result: dict[str, type] = {} # {class_name: class}
 
-    structure = get_structure(category) # class to use depending on the category
+    structure = get_structure(category) # structure class to use depending on the category
 
     for py in dir.glob("*.py"): # for every python file in this folder
-
-        if py.name in ("__init__.py", "input_structure.py", "objective_structure.py"):
-            continue
         
         # load the module
         spec = importlib.util.spec_from_file_location(f"{category}.{py.stem}", py)
@@ -46,19 +43,7 @@ def get_classes(category: str) -> dict[str, type]:
     return result
 
 
-def get_from_cls(cls: type, attr: str):
-    '''
-    Get the 'attr' attribute from the 'cls' class argument.
-    If the attribute is not found, return 'None'. Otherwise,
-    return the attribute.
-    '''
-    try:
-        return getattr(cls(), attr, None)  # if possible get the attribute value, else return None
-    except TypeError:                      # except if the instance failed
-        return None                        # return None
-
-
-def verify_category(category: str):
+def verify_category(category: str) -> None:
     '''
     Check if the 'category' is among the available ones.
     '''

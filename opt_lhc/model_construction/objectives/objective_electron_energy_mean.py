@@ -9,8 +9,8 @@ class ElectronEnergyMean(ObjectiveStructure):
     def __init__(self):
         name = r"$E_0$"
         unit = "MeV"
-        default_minimize = False
-        ObjectiveStructure.__init__(self, name, unit, default_minimize)
+        minimize = False
+        ObjectiveStructure.__init__(self, name, unit, minimize)
 
 
     def get_value(self) -> None:

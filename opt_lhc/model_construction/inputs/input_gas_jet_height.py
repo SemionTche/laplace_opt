@@ -9,12 +9,12 @@ except ModuleNotFoundError:
 
 class GasJetHeight(InputStructure):
     
-    def __init__(self, bounds: Sequence[float]=(0, 5)):
+    def __init__(self, bounds: Sequence[float]=(0, 15)):
         "bounds defines the boundaries of the system"
         
         name = "gas_jet_height"
-        unit = "um"
-        safe_bounds = (0, 25)
+        unit = "mm"
+        safe_bounds = (0, 15)
         address = "tmp 1"
         InputStructure.__init__(self, name, bounds, safe_bounds, unit, address)
 
