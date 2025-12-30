@@ -103,4 +103,3 @@ class OptPanel(QGroupBox):
             "pipeline": classes,
             "hyperparameters": hyperparams
         }
-

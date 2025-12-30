@@ -1,3 +1,4 @@
+# libraries
 from PyQt6.QtWidgets import (
     QGroupBox, QGridLayout, QRadioButton,
     QCheckBox, QLineEdit, QPushButton, QLabel, QFileDialog
@@ -6,10 +7,10 @@ from PyQt6.QtCore import Qt, pyqtSignal
 
 
 class ExecutionPanel(QGroupBox):
-    """
+    '''
     Panel handling execution mode and data source configuration.
     A lock button allows to enable / disable every widget.
-    """
+    '''
     # signal indicating that that the server state changed
     # connected to "launch_server" in OptWindow
     server_state_changed = pyqtSignal(bool)

@@ -140,8 +140,10 @@ def load_standard_widgets(layout: QGridLayout,
         widgets[name] = w         # add the widget in the dictionary
 
     # place the widget in the layout
-    place_labeled_widgets(layout,
-                          items,
-                          max_per_row=max_per_row,)
+    place_labeled_widgets(
+        layout,
+        items,
+        max_per_row=max_per_row,
+    )
 
     return widgets

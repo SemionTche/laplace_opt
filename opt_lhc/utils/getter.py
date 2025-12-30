@@ -77,7 +77,7 @@ def verify_category(category: str):
 def get_structure(category: str):
     '''
     Return the corresponding structure class 
-    to use depending on the category.
+    to use depending on the 'category'.
     '''
     verify_category(category)
     if category == "inputs":
