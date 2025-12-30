@@ -1,61 +1,81 @@
-# utils/standard_widgets.py
-
+# libraries
 from PyQt6.QtWidgets import (
-    QLabel,
-    QSpinBox,
-    QDoubleSpinBox,
-    QComboBox,
+    QLabel, QSpinBox, QDoubleSpinBox,
+    QComboBox, QWidget, QGridLayout
 )
 from PyQt6.QtCore import Qt
 
-from utils.pathSelectorWidget import PathSelectorWidget
+# project
+from utils.path_standard_widget import PathStandardWidget
 
 
-# ---------------------------------------------------------------------
-# 1. PLACE (LABEL, WIDGET) PAIRS IN A GRID
-# ---------------------------------------------------------------------
-
-def place_labeled_widgets(
-    layout,
-    items: list[tuple[str, object]],
-    *,
-    max_per_row: int = 6,
-):
-    """
+def place_labeled_widgets(layout: QGridLayout,
+                          items: list[tuple[str, QWidget]],
+                          *,
+                          max_per_row: int = 6) -> None:
+    '''
     Place (label, widget) pairs in a QGridLayout.
 
     Layout pattern:
         label  label  label
         widget widget widget
-    """
+        
+        label     ...
+        widget    ...
+    
+        Args:
+            layout: (QGridLayout)
+                the layout in which place the items.
+            
+            items: (list of tuple(str, QWidget))
+                list of the label and widget pairs to place.
+            
+            max_per_row: (int)
+                the maximum number of element per row.
+                (default 6)
+    '''
     col = 0
     base_row = 0
 
-    for label_text, widget in items:
-        if col >= max_per_row:
-            col = 0
-            base_row += 2
+    for label_text, widget in items: # for every widget
+        if col >= max_per_row:       # if the line is full
+            col = 0                  # restart from first column
+            base_row += 2            # skip 2 lines (label and widget were placed)
 
+        # create the label
         label = QLabel(label_text)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        # place label and widget
         layout.addWidget(label, base_row, col)
         layout.addWidget(widget, base_row + 1, col)
 
-        col += 1
+        col += 1  # update the column
 
 
-# ---------------------------------------------------------------------
-# 2. STANDARD PARAMETER WIDGET FACTORY
-# ---------------------------------------------------------------------
+def create_standard_widget(name: str, meta: dict) -> QWidget:
+    '''
+    Create a widget from a parameter metadata dictionary.
+    The dictionary must contained a 'type' field in order to
+    define the corresponding widget.
 
-def create_standard_widget(name: str, meta: dict):
-    """
-    Create a widget from a parameter metadata dict.
-    """
-    ptype = meta["type"]
+        Args:
+            name: (str)
+                the parameter name. (used for path widget)
+            
+            meta: (dict)
+                the metadata containing the parameter default options.
+        
+        Returns:
+            w: (QWidget)
+                the standard widget build according to the meta 'type' field.
+    '''
+    ptype = meta.get("type", None)
 
-    if ptype is int:
+    if ptype is None:
+        raise ValueError(f"'type' field is missing in the meta dict: {meta}.")
+
+    elif ptype is int:
         w = QSpinBox()
         w.setRange(meta.get("min", 1), meta.get("max", 10_000))
         w.setValue(meta.get("default", 1))
@@ -73,8 +93,8 @@ def create_standard_widget(name: str, meta: dict):
         default = meta.get("default", False)
         w.setCurrentIndex(0 if default else 1)
 
-    elif ptype is str and name == "path":
-        w = PathSelectorWidget(
+    elif ptype is str and name == "path":   # if making a path widget
+        w = PathStandardWidget(
             str(meta.get("default", "")),
             meta.get("label", "Browse"),
             mode=meta.get("mode", "file"),
@@ -86,36 +106,42 @@ def create_standard_widget(name: str, meta: dict):
     return w
 
 
-# ---------------------------------------------------------------------
-# 3. LOAD STANDARD PARAMETER WIDGETS (USES THE PLACER)
-# ---------------------------------------------------------------------
+def load_standard_widgets(layout: QGridLayout,
+                          parameters: dict[str, dict],
+                          *,
+                          max_per_row: int = 6) -> dict[str, QWidget]:
+    '''
+    Create and place parameter widgets in a given grid layout.
 
-def load_standard_widgets(
-    layout,
-    parameters: dict,
-    *,
-    max_per_row: int = 6,
-):
-    """
-    Create and place parameter widgets using a standard layout.
+        Args:
+            layout: (QGridLayout)
+                the layout in which the parameters must be placed.
+            
+            parameters: (dict[str, dict])
+                the parameters dictionary, containing a dictionary of
+                default configurations for each parameter name.
+            
+            max_per_row: (int)
+                the maximum number of element per row.
+                (default 6)
+        
+        Returns:
+            widgets: (dict[str, QWidget])
+                the dictionary {param_name, widget} of the placed widgets.
+    '''
+    items: list[tuple[str, QWidget]] = []    # list of (label, widget) to place in the layout
+    widgets: dict[str, QWidget] = {}         # dict{param_name: widget}
 
-    Returns:
-        dict[str, QWidget]
-    """
-    items = []
-    widgets = {}
+    for name, meta in parameters.items():        # for each parameter
+        w = create_standard_widget(name, meta)   # create the corresponding widget
+        label = meta.get("label", name)          # create the label to use (default is param name)
 
-    for name, meta in parameters.items():
-        w = create_standard_widget(name, meta)
-        label = meta.get("label", name)
+        items.append((label, w))  # add the tuple (label, widget) in the list
+        widgets[name] = w         # add the widget in the dictionary
 
-        items.append((label, w))
-        widgets[name] = w
-
-    place_labeled_widgets(
-        layout,
-        items,
-        max_per_row=max_per_row,
-    )
+    # place the widget in the layout
+    place_labeled_widgets(layout,
+                          items,
+                          max_per_row=max_per_row,)
 
     return widgets

@@ -12,6 +12,7 @@ class FileInitialization(InitializationStructure):
     parameters = {
         "path": {
             "type": str,
+            "mode": "file",
             "default": "",
             "label": "File path",
             "description": "Use already sampled data"
