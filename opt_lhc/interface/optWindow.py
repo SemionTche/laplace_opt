@@ -191,5 +191,3 @@ class OptWindow(QMainWindow):
         if self.execution_panel.is_online_enabled():
             self.serv.stop()
         event.accept()
-    
-    

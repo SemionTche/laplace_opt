@@ -1,11 +1,8 @@
 # libraries
 from PyQt6.QtWidgets import (
-    QGroupBox,
-    QGridLayout,
-    QLabel,
-    QComboBox,
+    QGroupBox, QGridLayout, QComboBox,
 )
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal
 
 # project
 from utils.getter import get_classes
@@ -89,7 +86,7 @@ class ModelPanel(QGroupBox):
 
     def get_selection(self) -> dict[str, type]:
         '''
-        Return selected classes for each stage.
+        Return the selected classes for each stage.
         '''
         result = {}
         for stage, combo in self.combos.items():

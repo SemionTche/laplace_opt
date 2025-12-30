@@ -10,7 +10,8 @@ from utils.standard_widgets import load_standard_widgets
 
 class HyperparameterPanel(QGroupBox):
     '''
-    Docstring for HyperparameterPanel
+    Panel displaying the available hyperparameters, depending on a
+    class list given in 'load_from_classes'.
     '''
     def __init__(self):
         super().__init__("Hyperparameters")   # heritage from QGroupBox
