@@ -8,7 +8,6 @@ except ModuleNotFoundError:
 
 
 class GasJetHeight(InputStructure):
-    """Test"""
     
     def __init__(self, bounds: Sequence[float]=(0, 5)):
         "bounds defines the boundaries of the system"
@@ -16,7 +15,8 @@ class GasJetHeight(InputStructure):
         name = "gas_jet_height"
         unit = "um"
         safe_bounds = (0, 25)
-        InputStructure.__init__(self, name, bounds, safe_bounds, unit)
+        address = "tmp 1"
+        InputStructure.__init__(self, name, bounds, safe_bounds, unit, address)
 
     def get_position(self) -> None:
         pass

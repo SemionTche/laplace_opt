@@ -6,10 +6,11 @@ except ModuleNotFoundError:
 
 class ElectronEnergyMean(ObjectiveStructure):
 
-    def __init__(self, minimize: bool):
+    def __init__(self):
         name = r"$E_0$"
         unit = "MeV"
-        ObjectiveStructure.__init__(self, name, minimize, unit)
+        default_minimize = False
+        ObjectiveStructure.__init__(self, name, unit, default_minimize)
 
 
     def get_value(self) -> None:

@@ -44,7 +44,8 @@ class Optimizer:
 
         models = []
         for i in range(self.train_Y.shape[-1]):
-            gp = self.model_cls(
+            gp = self.model_cls()
+            gp.build(
                 X_norm,
                 self.train_Y[:, i : i + 1],
                 **self.params.get(self.model_cls, {})

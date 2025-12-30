@@ -12,7 +12,8 @@ class GasJetLongitudinal(InputStructure):
         name = "gas_jet_longitudinal"
         safe_bounds = (0, 25)
         unit = "um"
-        InputStructure.__init__(self, name, bounds, safe_bounds, unit)
+        address = "tmp 2"
+        InputStructure.__init__(self, name, bounds, safe_bounds, unit, address)
 
     def get_position(self) -> None:
         pass

@@ -2,11 +2,12 @@ from abc import ABC, abstractmethod
 
 class ObjectiveStructure(ABC):
     
-    def __init__(self, name: str, minimize: bool, unit: str):
+    def __init__(self, name: str, unit: str, default_minimize: bool):
 
         self._name = name
-        self._minimize = minimize  
         self._unit = unit
+        self.default_minimize = default_minimize
+        self._minimize = default_minimize
     
     @property
     def name(self) -> str:
@@ -19,6 +20,9 @@ class ObjectiveStructure(ABC):
     @property
     def unit(self) -> str:
         return self._unit
+    
+    def set_minimize(self, minimize: bool) -> None:
+        self._minimize = minimize
 
     @abstractmethod
     def get_value(self) -> None:
