@@ -186,5 +186,8 @@ class ExecutionPanel(QGroupBox):
     def set_server_address(self, address: str):
         return self.server_label.setText(address)
 
+    def set_server_saving(self, path: str):
+        self.saving_entry.setText(path)
+
     def is_locked(self) -> bool:
         return self.lock_button.isChecked()

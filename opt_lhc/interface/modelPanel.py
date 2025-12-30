@@ -81,7 +81,6 @@ class ModelPanel(QGroupBox):
             max_per_row=6,
         )
 
-
     ### helpers
 
     def get_selection(self) -> dict[str, type]:

@@ -1,16 +1,30 @@
-# core/optManager.py
+# libraries
 from typing import Optional
 import pathlib
 import torch
 import h5py
+from PyQt6.QtCore import pyqtSignal, QObject
 
+from server_lhc.serverLHC import ServerLHC
+from server_lhc.protocol import DEVICE_OPT
+from server_lhc.serverController import ServerController
+
+# project
 from core.optimizer import Optimizer
 from core.dataWatcher import DataWatcher
 from core.modelSaver import ModelSaver
 
 
-class OptManager:
+class OptManager(QObject):
+
+    on_server_address = pyqtSignal(str)     # is_on and server_address
+
     def __init__(self):
+        super().__init__() # heritage from QObject
+
+        # controller to emit signals from server
+        self.server_controller = ServerController()
+
         self.optimizer: Optional[Optimizer] = None
         self.model_config = None
         self.bounds = None
@@ -24,6 +38,39 @@ class OptManager:
 
         self.model_saver = None
         self.step = 0
+
+
+    def server_launch(self, server_state: bool) -> None:
+        '''
+        Function made to turn on / off the OPT server according
+        to the state given in argument.
+        '''
+        if server_state: # if on
+            
+            # create the server
+            self.serv = ServerLHC(name="Optimization", 
+                                  address="tcp://*:1254", 
+                                  freedom=0, 
+                                  device=DEVICE_OPT,
+                                  data={})
+            
+            # bridge server -> controller (to emit signal when the saving path is changed)
+            self.serv.set_on_saving_path_changed(
+                self.server_controller.on_server_save_path
+            )
+            
+            self.serv.start() # start the server
+
+            # update the address in execution panel
+            # self.execution_panel.set_server_address(self.serv.address_for_client)
+            self.on_server_address.emit(self.serv.address_for_client)
+        
+        else: # if off
+            self.serv.stop() # stop the server
+
+
+
+
 
     # ---------- configuration ----------
     def configure_model(self, model_config: dict, bounds: torch.Tensor):
