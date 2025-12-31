@@ -44,6 +44,7 @@ class ExecutionPanel(QGroupBox):
 
             # server
         self.read_server = QRadioButton("Read data from server")
+        self.read_server.setEnabled(False)
 
         # Saving entry
         self.saving_entry = QLineEdit()
@@ -74,6 +75,9 @@ class ExecutionPanel(QGroupBox):
 
         exc_layout.setColumnStretch(2, 1)
 
+        self.update_read_server_state() # enable / disable the read_server radiobutton
+        self.update_read_file_state()   # enable / disable the read_entry
+
 
     def actions(self) -> None:
         '''
@@ -83,7 +87,7 @@ class ExecutionPanel(QGroupBox):
         self.server_checkbox.toggled.connect(self.update_online_state)
         
         # read from file
-        self.read_file.toggled.connect(self.update_file_state)
+        self.read_file.toggled.connect(self.update_read_file_state)
         
         # lock the widgets
         self.lock_button.toggled.connect(self.set_locked)
@@ -104,18 +108,38 @@ class ExecutionPanel(QGroupBox):
         Change the server state and emit signal realted.
         '''
         if not self.lock_button.isChecked():
-            self.server_label.setEnabled(checked)
-        self.server_state_changed.emit(checked)
+            self.server_label.setEnabled(checked) # enable / disable the server address label
+        
+        self.update_read_server_state()  # enable / disable the read_server radiobutton
+        
+        self.server_state_changed.emit(checked) # emit a signal to start / stop the server
 
 
-    def update_file_state(self, checked: bool) -> None:
+    def update_read_server_state(self) -> None:
         '''
-        Change the reading state. Enable / disable the 
-        reading element depending on the state
+        Enable read_server only if:
+            - server is enabled
+            - configuration is not locked
         '''
-        if not self.lock_button.isChecked():
-            self.read_entry.setEnabled(checked)
-            self.read_browse_button.setEnabled(checked)
+        enabled = (
+            self.server_checkbox.isChecked()
+            and not self.lock_button.isChecked()
+        )
+        self.read_server.setEnabled(enabled)
+    
+
+    def update_read_file_state(self) -> None:
+        '''
+        Enable file reading widgets only if:
+            - read_file is selected
+            - configuration is not locked
+        '''
+        enabled = (
+            self.read_file.isChecked()
+            and not self.lock_button.isChecked()
+        )
+        self.read_entry.setEnabled(enabled)
+        self.read_browse_button.setEnabled(enabled)
 
 
     def set_locked(self, locked: bool) -> None:
@@ -126,7 +150,6 @@ class ExecutionPanel(QGroupBox):
         widgets = [   # list of all widgets of the panel
             self.server_checkbox,
             self.read_file,
-            self.read_server,
             self.read_entry,
             self.read_browse_button,
             self.saving_entry,
@@ -142,6 +165,9 @@ class ExecutionPanel(QGroupBox):
         self.server_label.setEnabled(
             self.server_checkbox.isChecked() and not locked
         )
+
+        self.update_read_server_state()
+        self.update_read_file_state()
 
         # change the text of the button
         self.lock_button.setText(
