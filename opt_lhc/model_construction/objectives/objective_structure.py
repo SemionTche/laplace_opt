@@ -2,11 +2,14 @@ from abc import ABC, abstractmethod
 
 class ObjectiveStructure(ABC):
     
-    def __init__(self, name: str, unit: str, minimize: bool):
+    def __init__(self, name: str, unit: str, minimize: bool, description: str, symbol:str):
 
         self._name = name
         self._unit = unit
         self._minimize = minimize
+
+        self.description = description
+        self.symbol = symbol
     
     @property
     def name(self) -> str:

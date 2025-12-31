@@ -9,11 +9,25 @@ except ModuleNotFoundError:
 class GasJetTransverse(InputStructure):
 
     def __init__(self, bounds: Sequence[float]=(0, 15)):
+        
         name = "gas_jet_transverse"
         unit = "mm"
-        safe_bounds = (0, 15)
+        safe_bounds = (0.0, 15.0)
         address = "tmp 3"
-        InputStructure.__init__(self, name, bounds, safe_bounds, unit, address)
+        
+        description = "Transverse position of the gas jet."
+        symbol = "x_gas"
+        
+        InputStructure.__init__(
+            self, 
+            name=name, 
+            bounds=bounds, 
+            safe_bounds=safe_bounds, 
+            unit=unit, 
+            address=address, 
+            description=description,
+            symbol=symbol
+        )
 
     def get_position(self) -> None:
         pass

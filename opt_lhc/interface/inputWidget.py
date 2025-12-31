@@ -54,6 +54,7 @@ class InputWidget(QWidget):
         self.state_icon = QLabel() # create a blank label
         self.state_icon.setFixedWidth(20)
         self.state_icon.setPixmap(self.disconnected_icon.pixmap(16, 16)) # add an image
+        self.state_icon.setToolTip("Current state")
         line_layout.addWidget(self.state_icon)
 
         # address
@@ -61,10 +62,13 @@ class InputWidget(QWidget):
         self.address = self.instance.address      # get address from the instance
         self.address_label.setText(self.address or "Unknown")
         self.address_label.setEnabled(False)
+        self.address_label.setToolTip("The address of the input device used by the server")
         line_layout.addWidget(self.address_label)
 
         # name
         self.name_label = QLabel(name)
+        self.tip = self.instance.description
+        self.name_label.setToolTip(self.tip)    # add a description
         self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         line_layout.addWidget(self.name_label)
 
@@ -72,12 +76,14 @@ class InputWidget(QWidget):
         self.min_spin = QDoubleSpinBox()
         self.min_spin.setDecimals(6)
         self.min_spin.setEnabled(False)
+        self.min_spin.setToolTip("Minimal boundary")
         line_layout.addWidget(self.min_spin)
 
         # Max spinBox
         self.max_spin = QDoubleSpinBox()
         self.max_spin.setDecimals(6)
         self.max_spin.setEnabled(False)
+        self.max_spin.setToolTip("Maximal boundary")
         line_layout.addWidget(self.max_spin)
 
         # Unit
@@ -86,12 +92,14 @@ class InputWidget(QWidget):
         self.unit_label.setText(self.unit or "Unknown")
         self.unit_label.setFixedWidth(25)
         self.unit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.unit_label.setToolTip("Input unit")
         line_layout.addWidget(self.unit_label)
 
         # Safe bounds
         self.safe_label = QLabel("safe: n/a")
         self.safe_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.safe_label.setFixedWidth(100)
+        self.safe_label.setToolTip("The intervalle available")
         line_layout.addWidget(self.safe_label)
 
         self.safe_bounds = self.instance.safe_bounds   # get safe bounds from the instance

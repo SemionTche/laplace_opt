@@ -66,11 +66,9 @@ class InOutPanel(QGroupBox):
         items = get_classes(self.folder_name) # dict[class_name, class] contained in 'folder_name'
 
         for name, cls in items.items(): # for each class
-            try :                       # try to
-                new_widget = self.widget_class(name, cls) # define a new widget
-            except Exception as e:
-                raise ValueError("The line widget could not be resolved.") from e
-
+            
+            new_widget = self.widget_class(name, cls) # define a new widget
+            
             item = QListWidgetItem(self.list_widget)         # create a new list item
             item.setSizeHint(new_widget.sizeHint())          # set the size of the item
             self.list_widget.addItem(item)                   # add the new item

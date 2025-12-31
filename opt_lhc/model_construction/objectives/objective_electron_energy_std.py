@@ -7,10 +7,15 @@ except ModuleNotFoundError:
 class ElectronEnergyStd(ObjectiveStructure):
 
     def __init__(self):
-        name = r"$\sigma_E$"
+        
+        name = "electron_energy_std"
         unit = "MeV"
         minimize = True
-        ObjectiveStructure.__init__(self, name, unit, minimize)
+        
+        description = "The spectrum energy standard deviation"
+        symbol = r"$\sigma_E$"
+        
+        ObjectiveStructure.__init__(self, name, unit, minimize, description, symbol)
 
 
     def get_value(self) -> None:

@@ -7,10 +7,14 @@ except ModuleNotFoundError:
 class ElectronEnergyMean(ObjectiveStructure):
 
     def __init__(self):
-        name = r"$E_0$"
+        name = "electron_energy_mean"
         unit = "MeV"
         minimize = False
-        ObjectiveStructure.__init__(self, name, unit, minimize)
+
+        description = "The spectrum mean energy"
+        symbol = r"$E_0$"
+
+        ObjectiveStructure.__init__(self, name, unit, minimize, description, symbol)
 
 
     def get_value(self) -> None:

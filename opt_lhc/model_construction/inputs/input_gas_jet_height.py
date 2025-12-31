@@ -14,9 +14,22 @@ class GasJetHeight(InputStructure):
         
         name = "gas_jet_height"
         unit = "mm"
-        safe_bounds = (0, 15)
+        safe_bounds = (0.0, 15.0)
         address = "tmp 1"
-        InputStructure.__init__(self, name, bounds, safe_bounds, unit, address)
+        
+        description = "Vertical position of the gas jet."
+        symbol = "y_gas"
+        
+        InputStructure.__init__(
+            self, 
+            name=name, 
+            bounds=bounds, 
+            safe_bounds=safe_bounds, 
+            unit=unit, 
+            address=address, 
+            description=description,
+            symbol=symbol
+        )
 
     def get_position(self) -> None:
         pass

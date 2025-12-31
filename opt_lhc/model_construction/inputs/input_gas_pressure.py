@@ -8,13 +8,27 @@ except ModuleNotFoundError:
 
 class GasPressure(InputStructure):
 
-    def __init__(self, gas_type: str="N2", bounds: Sequence[float]=(0, 5)):
+    def __init__(self, gas_type: str = "N2", bounds: Sequence[float]=(0, 5)):
+        
         name = "gas_pressure"
         unit = "bar"
         self._gas_type = gas_type
-        safe_bounds = (0, 300)
+        safe_bounds = (0.0, 300.0)
         address = "tmp 4"
-        InputStructure.__init__(self, name, bounds, safe_bounds, unit, address)
+
+        description = "Gas pressure"
+        symbol = "P_gas"
+        
+        InputStructure.__init__(
+            self, 
+            name=name, 
+            bounds=bounds, 
+            safe_bounds=safe_bounds, 
+            unit=unit, 
+            address=address, 
+            description=description,
+            symbol=symbol
+        )
     
     @property
     def gas_type(self) -> str:

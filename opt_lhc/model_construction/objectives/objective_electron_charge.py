@@ -7,10 +7,14 @@ except ModuleNotFoundError:
 class ElectronCharge(ObjectiveStructure):
 
     def __init__(self):
-        name = r"$Q$"
+        name = "electron_charge"
         unit = "pC"
         minimize = False
-        ObjectiveStructure.__init__(self, name, unit, minimize)
+
+        description = "The electron charge"
+        symbol = r"$Q$"
+
+        ObjectiveStructure.__init__(self, name, unit, minimize, description, symbol)
 
 
     def get_value(self) -> None:

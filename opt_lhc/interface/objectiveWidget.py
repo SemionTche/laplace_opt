@@ -53,11 +53,14 @@ class ObjectiveWidget(QWidget):
         self.state_icon = QLabel() # create a blank label
         self.state_icon.setFixedWidth(20)
         self.state_icon.setPixmap(self.disconnected_icon.pixmap(16, 16)) # add an image
+        self.state_icon.setToolTip("Current state")
         line_layout.addWidget(self.state_icon)
 
         # name label
         self.name_label = QLabel(name)
         self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.tip = self.instance.description
+        self.name_label.setToolTip(self.tip)
         line_layout.addWidget(self.name_label)
 
         # minimize/maximize selector
