@@ -4,13 +4,13 @@ from PyQt6.QtWidgets import (
 )
 
 # project
-from interface.modelPanel import ModelPanel
+from interface.pipelinePanel import PipelinePanel
 from interface.hyperparameterPanel import HyperparameterPanel
 
 
 class OptPanel(QGroupBox):
     '''
-    Optimization Panel contained two panels, the ModelPanel,
+    Optimization Panel contained two panels, the PipelinePanel,
     enabling the strategy and acquisition function choice and
     the HyperparameterPanel, updated depending on the active
     strategy and acquisition function, allowing to define the
@@ -30,7 +30,7 @@ class OptPanel(QGroupBox):
         '''
         Build the widgets of the OptPanel class.
         A check box to enable / disable the widgets
-        A ModelPanel to decide the strategy / acq func
+        A PipelinePanel to decide the strategy / acq func
         A HyperparameterPanel to define the hyperparameters
         of the model.
         '''
@@ -41,7 +41,7 @@ class OptPanel(QGroupBox):
         self.enable_checkbox.setChecked(True)
 
         # creating the panels
-        self.pipeline = ModelPanel()
+        self.pipeline = PipelinePanel()
         self.hyperparams = HyperparameterPanel()
 
         # add the widgets to the layout
@@ -85,11 +85,11 @@ class OptPanel(QGroupBox):
         self.hyperparams.load_from_classes(selected.values()) # load the corresponding widgets
 
 
-    def get_config(self) -> dict[str, bool, dict]:
+    def get_opt(self) -> dict[str, bool, dict]:
         '''
         Return the OptPanel configuration, including a
         boolean 'enabled' to define if the OptPanel should be used,
-        and two dictionaries, one for the Pipeline, the other one for
+        and two dictionaries, one for the strategy, the other one for
         the hyperparameters.
         '''
         if not self.enable_checkbox.isChecked():

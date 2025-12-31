@@ -9,10 +9,6 @@ import qdarkstyle
 import pathlib
 import torch
 
-from server_lhc.serverLHC import ServerLHC
-from server_lhc.protocol import DEVICE_OPT
-from server_lhc.serverController import ServerController
-
 # project
 from interface.executionPanel import ExecutionPanel
 from interface.inOutPanel import InOutPanel
@@ -137,9 +133,12 @@ class OptWindow(QMainWindow):
 
         objectives = self.objective_panel.get_enabled_rows()
         print(objectives)
-        # get selected inputs
-        # get selected objectives
-        # init
+
+        init = self.init_panel.get_initialization()
+        print(init)
+
+        opt = self.opt_panel.get_opt()
+        print(opt)
         # strategy
         # hyperparams
 

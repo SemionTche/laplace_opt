@@ -9,7 +9,7 @@ from utils.getter import get_classes
 from utils.standard_widgets import place_labeled_widgets
 
 
-class ModelPanel(QGroupBox):
+class PipelinePanel(QGroupBox):
     '''
     Panel enabling the selection of the optimization strategy and
     acquisition function.
@@ -21,7 +21,7 @@ class ModelPanel(QGroupBox):
     selection_changed = pyqtSignal()
 
     def __init__(self):
-        super().__init__("Models") # heritage from QGroupBox
+        super().__init__("Pipeline") # heritage from QGroupBox
         
         # dictionary representing a tuple per column
         # the first element is the title, the second the folder
