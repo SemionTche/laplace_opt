@@ -168,8 +168,26 @@ class ExecutionPanel(QGroupBox):
 
     ### helpers
 
+    def get_execution(self) -> dict[str, bool]:
+        '''
+        Return the execution dictionary defining the
+        online / offline, reading and saving procedures. 
+        '''
+        execution = {}
+        execution["in_online"] = self.is_online_enabled()
+        execution["is_reading_file"] = self.read_from_file()
+        execution["reading_path"] = self.get_path_reading()
+        execution["saving_path"] = self.get_path_saving()
+        execution["server_address"] = self.get_server_address()
+
+        return execution
+
+
     def is_online_enabled(self) -> bool:
         return self.server_checkbox.isChecked()
+
+    def is_locked(self) -> bool:
+        return self.lock_button.isChecked()
 
     def read_from_file(self) -> bool:
         return self.read_file.isChecked()
@@ -180,14 +198,17 @@ class ExecutionPanel(QGroupBox):
     def get_path_reading(self) -> str:
         return self.read_entry.text().strip()
 
-    def set_path_reading(self, path: str):
+    def get_path_saving(self) -> str:
+        return self.saving_entry.text().strip()
+    
+    def get_server_address(self) -> str:
+        return self.server_label.text().strip()
+
+    def set_path_reading(self, path: str) -> None:
         self.read_entry.setText(path)
     
-    def set_server_address(self, address: str):
-        return self.server_label.setText(address)
-
-    def set_server_saving(self, path: str):
+    def set_path_saving(self, path: str) -> None:
         self.saving_entry.setText(path)
-
-    def is_locked(self) -> bool:
-        return self.lock_button.isChecked()
+    
+    def set_server_address(self, address: str) -> None:
+        return self.server_label.setText(address)

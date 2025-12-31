@@ -7,6 +7,11 @@ from PyQt6.QtWidgets import (
 # project
 from utils.standard_widgets import load_standard_widgets
 
+from model_construction.strategies.strategy_structure import StrategyStructure
+from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
+
+StratOrAcq = StrategyStructure | AcquisitionStructure
+
 
 class HyperparameterPanel(QGroupBox):
     '''
@@ -17,7 +22,7 @@ class HyperparameterPanel(QGroupBox):
         super().__init__("Hyperparameters")   # heritage from QGroupBox
         
         self.hyper_layout = QGridLayout(self) # main hyperparameter layout
-        self.widgets: dict[tuple[type, str], QWidget] = {} # dict{(class, class_name): widget}
+        self.widgets: dict[tuple[StratOrAcq, str], QWidget] = {} # dict{(class, class_name): widget}
 
 
     def clear(self) -> None:
@@ -31,7 +36,7 @@ class HyperparameterPanel(QGroupBox):
         self.widgets.clear()                    # clear the widgets dictionary
 
 
-    def load_from_classes(self, classes: list[type]) -> None:
+    def load_from_classes(self, classes: list[StratOrAcq]) -> None:
         '''
         Clear the current widgets and load the standard widgets of 
         the given 'classes' using there 'parameters' dictionay. 
@@ -53,7 +58,7 @@ class HyperparameterPanel(QGroupBox):
 
     ### helpers
 
-    def get_parameters(self) -> dict[type, dict[str, float, int, bool]] :
+    def get_parameters(self) -> dict[StratOrAcq, dict[str, int, float, bool]] :
         '''
         Get a dictionary of the current hyperparameter widget values
         ordered as {class: {param_name: value}}.

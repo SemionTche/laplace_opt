@@ -1,7 +1,7 @@
 # libraries
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, 
-    QHBoxLayout, QPushButton
+    QHBoxLayout, QPushButton, QMessageBox
 )
 from PyQt6.QtGui import QIcon
 
@@ -17,6 +17,8 @@ from interface.optPanel import OptPanel
 
 from core.optManager import OptManager
 
+from utils.model_form import make_form, ValidationLevel
+
 
 class OptWindow(QMainWindow):
     
@@ -29,6 +31,8 @@ class OptWindow(QMainWindow):
         self.set_up()  # build the window panels and buttons
 
         self.actions() # defines the actions of the window
+
+        self.form_number = -1
 
 
     def set_up(self) -> None:
@@ -118,7 +122,7 @@ class OptWindow(QMainWindow):
         
         # change the saving path when the server get the "SAVE" cmd
         self.opt_manager.server_controller.saving_path_changed.connect(
-            self.execution_panel.set_server_saving
+            self.execution_panel.set_path_saving
         )
 
         # transmit the server address from the server to the ExecutionPanel
@@ -128,38 +132,45 @@ class OptWindow(QMainWindow):
 
     
     def on_start(self) -> None:
+        self.form_number += 1
+        
+        execution = self.execution_panel.get_execution()
         inputs = self.input_panel.get_enabled_rows()
-        print(inputs)
-
         objectives = self.objective_panel.get_enabled_rows()
-        print(objectives)
-
         init = self.init_panel.get_initialization()
-        print(init)
-
         opt = self.opt_panel.get_opt()
-        print(opt)
-        # strategy
-        # hyperparams
 
-        # bounds
-        # bounds = self.get_bounds_from_inputs()
+        form, (level, message) = make_form(
+            form_number=self.form_number, 
+            exec=execution,
+            inputs=inputs,
+            obj=objectives,
+            init=init,
+            opt=opt
+        )
 
-        # # model config
-        # model_cfg = self.opt_panel.get_config()
+        if level == ValidationLevel.ERROR:
+            QMessageBox.critical(
+                self,
+                "Invalid configuration",
+                message
+            )
+            return
+        
+        if level == ValidationLevel.WARNING:
+            reply = QMessageBox.warning(
+                self,
+                "Configuration warning",
+                message + "\n\nDo you want to continue?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.No:
+                return
+            
+        print("Starting optimization with form:")
+        print(form)
 
-        # # data path
-        # data_path = pathlib.Path(
-        #     self.execution_panel.saving_entry.text()
-        # )
-
-        # # self.opt_manager.configure_model(model_cfg, bounds)
-
-        # if data_path.exists():
-        #     self.opt_manager.configure_data_source(
-        #         data_path,
-        #         parent=self  # important for Qt ownership
-        #     )
 
     def on_stop(self):
         pass

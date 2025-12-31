@@ -43,9 +43,9 @@ def get_classes(category: str) -> dict[str, type]:
     return result
 
 
-def verify_category(category: str) -> None:
+def check_category(category: str) -> None:
     '''
-    Check if the 'category' is among the available ones.
+    Verify if the 'category' is among the available ones.
     '''
     available_categories = [
         "inputs",
@@ -64,7 +64,7 @@ def get_structure(category: str):
     Return the corresponding structure class 
     to use depending on the 'category'.
     '''
-    verify_category(category)
+    check_category(category)
     if category == "inputs":
         structure = InputStructure
     elif category == "objectives":

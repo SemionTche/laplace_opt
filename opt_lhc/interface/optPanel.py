@@ -7,6 +7,10 @@ from PyQt6.QtWidgets import (
 from interface.pipelinePanel import PipelinePanel
 from interface.hyperparameterPanel import HyperparameterPanel
 
+from model_construction.strategies.strategy_structure import StrategyStructure
+from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
+
+StratOrAcq = StrategyStructure | AcquisitionStructure
 
 class OptPanel(QGroupBox):
     '''
@@ -85,7 +89,8 @@ class OptPanel(QGroupBox):
         self.hyperparams.load_from_classes(selected.values()) # load the corresponding widgets
 
 
-    def get_opt(self) -> dict[str, bool, dict]:
+    def get_opt(self) -> dict[str, bool, dict[str, StratOrAcq], 
+                              dict[StratOrAcq, dict[str, int, float, bool]]]:
         '''
         Return the OptPanel configuration, including a
         boolean 'enabled' to define if the OptPanel should be used,

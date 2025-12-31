@@ -87,7 +87,7 @@ class InitializationPanel(QGroupBox):
 
     ### helpers
 
-    def get_initialization(self) -> dict[str, dict[type[InitializationStructure], dict[str, int, float, bool]]]:
+    def get_initialization(self) -> dict[str, dict[InitializationStructure, dict[str, int, float, bool]]]:
         cls = list(self.init_cls.values())[self.selector.currentIndex()]
         params = {}
 
