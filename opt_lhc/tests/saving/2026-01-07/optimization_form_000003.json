@@ -1,0 +1,63 @@
+{
+    "exec": {
+        "in_online": false,
+        "is_reading_file": true,
+        "reading_path": "",
+        "saving_path": "C:/Users/semio/Documents/GitHub/bo_laplace/opt_lhc/tests/saving/2026-01-07",
+        "server_address": ""
+    },
+    "inputs": {
+        "GasJetHeight": {
+            "__type__": "instance",
+            "class": "inputs.input_gas_jet_height.GasJetHeight",
+            "repr": "<GasJetHeight(name='gas_jet_height', bounds=(0, 15), unit='mm', safe_bounds=(0.0, 15.0), address=tmp 1)>"
+        }
+    },
+    "obj": {
+        "ElectronCharge": {
+            "__type__": "instance",
+            "class": "objectives.objective_electron_charge.ElectronCharge",
+            "repr": "<ElectronCharge(name='electron_charge', minimize='False', unit='pC')>"
+        }
+    },
+    "init": {
+        "SobolInitialization": {
+            "cls": {
+                "__type__": "class",
+                "module": "initializations.initialization_sobol_sampling",
+                "name": "SobolInitialization"
+            },
+            "params": {
+                "n_samples": 16,
+                "q_candidates": 1,
+                "seed": 0
+            }
+        }
+    },
+    "opt": {
+        "enabled": true,
+        "pipeline": {
+            "strategy": {
+                "cls": {
+                    "__type__": "class",
+                    "module": "strategies.strategy_model_list",
+                    "name": "ModelList"
+                },
+                "params": {
+                    "standardize_outputs": true,
+                    "noise": 0.0
+                }
+            },
+            "acquisition": {
+                "cls": {
+                    "__type__": "class",
+                    "module": "acquisitions.acquisition_qlognevhi",
+                    "name": "qLogNEHVI"
+                },
+                "params": {
+                    "mc_samples": 128
+                }
+            }
+        }
+    }
+}

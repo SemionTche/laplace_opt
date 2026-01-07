@@ -1,5 +1,14 @@
 # libraries
 from enum import Enum
+from datetime import date, datetime
+import pathlib
+
+def is_date_folder(path: pathlib.Path) -> bool:
+    try:
+        datetime.strptime(path.name, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
 
 class ValidationLevel(Enum): # helping class to define the state
     OK = "ok"
@@ -17,8 +26,7 @@ StratOrAcq = StrategyStructure | AcquisitionStructure
 
 from model_construction.initializations.initialization_file import FileInitialization
 
-def make_form(form_number: int, 
-              exec, 
+def make_form(exec, 
               inputs: dict[str, InputStructure], 
               obj: dict[str, ObjectiveStructure], 
               init: dict[str, dict[InitializationStructure, dict[str, int, float, bool]]], 
@@ -28,7 +36,6 @@ def make_form(form_number: int,
     Create the form dictionary of an optimization.
     '''
     form = {
-        "form_number": form_number,
         "exec": exec,
         "inputs": inputs,
         "obj": obj,
@@ -61,7 +68,8 @@ def check_form(form: dict) -> tuple[ValidationLevel, str]:
     execution = form["exec"]
 
     # saving_path warning / error
-    if execution.get("saving_path", "") == "":
+    saving_path = execution.get("saving_path", "")
+    if saving_path == "":
         parts: list[str] = []
 
         # initialization
@@ -89,6 +97,17 @@ def check_form(form: dict) -> tuple[ValidationLevel, str]:
                 "No action is required. Please enable at least an initialization or an optimization.",
             )
 
-        return ValidationLevel.WARNING, msg        
+        return ValidationLevel.WARNING, msg
+
+
+    path = pathlib.Path(saving_path).expanduser()
+    if is_date_folder(path):
+        today = date.today().isoformat()
+        if path.name != today:
+            return (
+                ValidationLevel.WARNING,
+                f"The saving path points to a past date folder ({path.name}). "
+                f"Results will be saved in that folder instead of today's ({today})."
+            ) 
 
     return ValidationLevel.OK, ""

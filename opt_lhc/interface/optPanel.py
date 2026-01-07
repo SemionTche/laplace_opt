@@ -89,22 +89,51 @@ class OptPanel(QGroupBox):
         self.hyperparams.load_from_classes(selected.values()) # load the corresponding widgets
 
 
-    def get_opt(self) -> dict[str, bool, dict[str, StratOrAcq], 
-                              dict[StratOrAcq, dict[str, int, float, bool]]]:
-        '''
-        Return the OptPanel configuration, including a
-        boolean 'enabled' to define if the OptPanel should be used,
-        and two dictionaries, one for the strategy, the other one for
-        the hyperparameters.
-        '''
-        if not self.enable_checkbox.isChecked():
-            return {"enabled": False, "pipeline": {}, "hyperparameters": {}}
+    # def get_opt(self) -> dict[str, bool, dict[str, StratOrAcq], 
+    #                           dict[StratOrAcq, dict[str, int, float, bool]]]:
+    #     '''
+    #     Return the OptPanel configuration, including a
+    #     boolean 'enabled' to define if the OptPanel should be used,
+    #     and two dictionaries, one for the strategy, the other one for
+    #     the hyperparameters.
+    #     '''
+    #     if not self.enable_checkbox.isChecked():
+    #         return {"enabled": False, "pipeline": {}, "hyperparameters": {}}
 
-        classes = self.pipeline.get_selection()
+    #     classes = self.pipeline.get_selection()
+    #     hyperparams = self.hyperparams.get_parameters()
+
+    #     return {
+    #         "enabled": True,
+    #         "pipeline": classes,
+    #         "hyperparameters": hyperparams
+    #     }
+
+
+    def get_opt(self) -> dict:
+        """
+        Return a JSON-serializable optimization configuration.
+        """
+        if not self.enable_checkbox.isChecked():
+            return {"enabled": False, "pipeline": {}}
+
+        pipeline_classes = self.pipeline.get_selection()
         hyperparams = self.hyperparams.get_parameters()
+
+        pipeline_cfg = {}
+
+        for stage, cls in pipeline_classes.items():
+            pipeline_cfg[stage] = {
+                "cls": cls, #self.class_to_path(cls),
+                "params": hyperparams.get(cls, {})
+            }
 
         return {
             "enabled": True,
-            "pipeline": classes,
-            "hyperparameters": hyperparams
+            "pipeline": pipeline_cfg
         }
+
+
+    def class_to_path(self, cls: type) -> str:
+        """helper to convert a class to a stable identifier"""
+        return f"{cls.__module__}.{cls.__qualname__}"

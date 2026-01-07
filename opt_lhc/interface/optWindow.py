@@ -32,9 +32,6 @@ class OptWindow(QMainWindow):
 
         self.actions() # defines the actions of the window
 
-        self.form_number = -1
-
-
     def set_up(self) -> None:
         '''
         Build the panels and buttons of the main opt window.
@@ -131,9 +128,7 @@ class OptWindow(QMainWindow):
         )
 
     
-    def on_start(self) -> None:
-        self.form_number += 1
-        
+    def on_start(self) -> None:        
         execution = self.execution_panel.get_execution()
         inputs = self.input_panel.get_enabled_rows()
         objectives = self.objective_panel.get_enabled_rows()
@@ -141,7 +136,6 @@ class OptWindow(QMainWindow):
         opt = self.opt_panel.get_opt()
 
         form, (level, message) = make_form(
-            form_number=self.form_number, 
             exec=execution,
             inputs=inputs,
             obj=objectives,
@@ -170,6 +164,7 @@ class OptWindow(QMainWindow):
             
         print("Starting optimization with form:")
         print(form)
+        self.opt_manager.set_form(form)
 
 
     def on_stop(self):

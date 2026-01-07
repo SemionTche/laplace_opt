@@ -1,5 +1,6 @@
 # libraries
 from typing import Optional
+from datetime import date
 import pathlib
 import torch
 import h5py
@@ -13,7 +14,7 @@ from server_lhc.serverController import ServerController
 from core.optimizer import Optimizer
 from core.dataWatcher import DataWatcher
 from core.modelSaver import ModelSaver
-
+from utils.save_config import save_config
 
 class OptManager(QObject):
 
@@ -38,6 +39,12 @@ class OptManager(QObject):
 
         self.model_saver = None
         self.step = 0
+
+        self.is_saving = False
+
+    def set_form(self, opt_form: dict):
+        self.opt_form = opt_form
+        self.is_saving = save_config(opt_form)
 
 
     def server_launch(self, server_state: bool) -> None:
