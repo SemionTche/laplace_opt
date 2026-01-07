@@ -48,7 +48,7 @@ class OptManager(QObject):
         return self._opt_form
 
     def init_process(self, opt_form: dict) -> None:
-        self.is_online = self.opt_form["exec"]["is_online"]
+        self.is_online = opt_form["exec"]["is_online"]
         self.set_form(opt_form)
         self.init_opt()
 
