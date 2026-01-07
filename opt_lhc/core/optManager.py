@@ -14,7 +14,7 @@ from server_lhc.serverController import ServerController
 from core.optimizer import Optimizer
 from core.dataWatcher import DataWatcher
 from core.modelSaver import ModelSaver
-from utils.save_config import save_config
+from utils.save_configuration import save_config
 
 class OptManager(QObject):
 
@@ -41,6 +41,7 @@ class OptManager(QObject):
         self.step = 0
 
         self.is_saving = False
+
 
     def set_form(self, opt_form: dict):
         self.opt_form = opt_form

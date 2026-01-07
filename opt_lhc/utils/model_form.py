@@ -3,11 +3,6 @@ from enum import Enum
 from datetime import date, datetime
 import pathlib
 
-class ValidationLevel(Enum): # helping class to define the state
-    OK = "ok"
-    WARNING = "warning"
-    ERROR = "error"
-
 # project
 from model_construction.inputs.input_structure import InputStructure
 from model_construction.objectives.objective_structure import ObjectiveStructure
@@ -17,10 +12,19 @@ from model_construction.acquisitions.acquisition_structure import AcquisitionStr
 
 StratOrAcq = StrategyStructure | AcquisitionStructure
 
-from model_construction.initializations.initialization_file import FileInitialization
+
+class ValidationLevel(Enum):
+    '''Helping class to define validation state.'''
+    OK = "ok"
+    WARNING = "warning"
+    ERROR = "error"
 
 
 def is_date_folder(path: pathlib.Path) -> bool:
+    '''
+    Helper that return True if there is a 'yyyy-mm-dd' expression
+    in the given path and False otherwise.
+    '''
     try:
         datetime.strptime(path.name, "%Y-%m-%d")
         return True
@@ -32,8 +36,8 @@ def make_form(exec,
               inputs: dict[str, InputStructure], 
               obj: dict[str, ObjectiveStructure], 
               init: dict[str, dict[InitializationStructure, dict[str, int, float, bool]]], 
-              opt: dict[str, bool, dict[str, StratOrAcq], 
-                              dict[StratOrAcq, dict[str, int, float, bool]]]) -> tuple[dict, tuple[ValidationLevel, str]]:
+              opt: dict[str, bool, dict[str, dict[str, StratOrAcq, dict[str, int, float, bool]]]]
+            ) -> tuple[dict, tuple[ValidationLevel, str]]:
     '''
     Create the form dictionary of an optimization.
     '''
@@ -101,11 +105,11 @@ def check_form(form: dict) -> tuple[ValidationLevel, str]:
 
         return ValidationLevel.WARNING, msg
 
-    path = pathlib.Path(saving_path).expanduser()
-    if is_date_folder(path):
-        today = date.today().isoformat()
-        if path.name != today:
-            return (
+    path = pathlib.Path(saving_path).expanduser() # making a user path
+    if is_date_folder(path):                      # if there is a 'yyyy-mm-dd' patern in the path
+        today = date.today().isoformat()          # get today
+        if path.name != today:                    # if the date patern does not correspond
+            return (                              # make a warning
                 ValidationLevel.WARNING,
                 f"The saving path points to a past date folder ({path.name}). "
                 f"Results will be saved in that folder instead of today's ({today})."
