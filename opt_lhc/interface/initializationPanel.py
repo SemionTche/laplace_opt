@@ -99,4 +99,4 @@ class InitializationPanel(QGroupBox):
             else:
                 params[k] = w.text()
 
-        return {cls.__name__: {"cls": cls, "params": params}}
+        return {"cls": cls, "params": params}

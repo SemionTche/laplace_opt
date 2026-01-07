@@ -1,6 +1,5 @@
 # libraries
 from typing import Optional
-from datetime import date
 import pathlib
 import torch
 import h5py
@@ -41,11 +40,49 @@ class OptManager(QObject):
         self.step = 0
 
         self.is_saving = False
+        self._opt_form = {}
+        self.is_online = False
+    
+    @property
+    def opt_form(self) -> dict:
+        return self._opt_form
 
+    def init_process(self, opt_form: dict) -> None:
+        self.is_online = self.opt_form["exec"]["is_online"]
+        self.set_form(opt_form)
+        self.init_opt()
 
-    def set_form(self, opt_form: dict):
-        self.opt_form = opt_form
+    def set_form(self, opt_form: dict) -> None:
+        self._opt_form = opt_form
         self.is_saving = save_config(opt_form)
+
+    def init_opt(self) -> None:
+        self.bounds = self.get_boundaries()
+        init = self.opt_form["init"]
+        init_cls, params = init.values()
+        self.init_x = init_cls.generate(bounds = self.bounds, **params)
+
+        print(self.init_x)
+
+        data = {
+            "is_init": True,
+            "is_opt": False,
+            "data": self.init_x.tolist()
+        }
+        
+        if self.is_online:
+            self.serv.set_data(data)
+        # Doesn't work for q = 1
+        # making the string with sobol proposal to sent it to log.
+        # sobol_candidate = []
+        # for i in range(init_x.shape[0]):
+        #     batch_lines = [f"Sobol batch {i + 1}:"]
+        #     for j in range(init_x.shape[1]):
+        #         coords = ", ".join(f"{init_x[i, j, k].item()}" for k in range(self.bounds.shape[-1]))
+        #         batch_lines.append(f"  Candidate {j + 1}: {coords}")
+        #     sobol_candidate.append("\n".join(batch_lines))
+        
+        # print("Sobol suggestion:\n", "\n\n".join(sobol_candidate)) # for logs add %s after first \n
 
 
     def server_launch(self, server_state: bool) -> None:
@@ -76,6 +113,15 @@ class OptManager(QObject):
             self.serv.stop() # stop the server
 
 
+    def get_boundaries(self) -> torch.Tensor:
+        bounds = []
+        if self.opt_form:
+            inputs = self.opt_form["inputs"]
+        
+        for name, cls in inputs.items():
+            bounds.append(cls.bounds)
+        
+        return torch.Tensor(bounds).T # tensor must be 2 x d
 
 
 

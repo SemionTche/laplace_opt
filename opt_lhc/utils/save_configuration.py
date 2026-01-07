@@ -8,6 +8,7 @@ from datetime import date
 from utils.json_encoder import OptimizationJSONEncoder
 from utils.model_form import is_date_folder
 
+
 def save_config(opt_form: dict) -> bool:
     '''
     Function made to save a dictionary optimization 

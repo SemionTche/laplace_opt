@@ -80,10 +80,10 @@ def check_form(form: dict) -> tuple[ValidationLevel, str]:
 
         # initialization
         init_dict = form["init"]
-        init_data = next(iter(init_dict.values()), None)
+        # init_data = next(iter(init_dict.values()), None)
 
-        if init_data is not None:
-            init_cls = init_data["cls"]
+        if init_dict is not None:
+            init_cls = init_dict["cls"]
             if not init_cls.__name__.endswith("FileInitialization"):
                 parts.append("the initialization")
 

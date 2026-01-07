@@ -112,6 +112,11 @@ class ExecutionPanel(QGroupBox):
         
         self.update_read_server_state()  # enable / disable the read_server radiobutton
         
+        if checked:
+            self.read_server.setChecked(checked) # check the server reading radio button
+        else:
+            self.read_file.setChecked(True)      # check the file reading radio button
+        
         self.server_state_changed.emit(checked) # emit a signal to start / stop the server
 
 
@@ -200,7 +205,7 @@ class ExecutionPanel(QGroupBox):
         online / offline, reading and saving procedures. 
         '''
         execution = {}
-        execution["in_online"] = self.is_online_enabled()
+        execution["is_online"] = self.is_online_enabled()
         execution["is_reading_file"] = self.read_from_file()
         execution["reading_path"] = self.get_path_reading()
         execution["saving_path"] = self.get_path_saving()

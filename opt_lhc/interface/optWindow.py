@@ -128,7 +128,7 @@ class OptWindow(QMainWindow):
         )
 
     
-    def on_start(self) -> None:        
+    def on_start(self) -> None:
         execution = self.execution_panel.get_execution()
         inputs = self.input_panel.get_enabled_rows()
         objectives = self.objective_panel.get_enabled_rows()
@@ -164,7 +164,8 @@ class OptWindow(QMainWindow):
             
         print("Starting optimization with form:")
         print(form)
-        self.opt_manager.set_form(form)
+        self.execution_panel.set_locked(True)
+        self.opt_manager.init_process(form)
 
 
     def on_stop(self):
