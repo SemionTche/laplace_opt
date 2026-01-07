@@ -2,15 +2,22 @@
 import pathlib
 import json
 import re
-from datetime import date, datetime
+from datetime import date
 
 # project
 from utils.json_encoder import OptimizationJSONEncoder
+from utils.model_form import is_date_folder
 
-
-def save_config(opt_form: dict):
+def save_config(opt_form: dict) -> bool:
+    '''
+    Function made to save a dictionary optimization 
+    form as a json file. Assumes the optimization form
+    is correct, including a 'saving_path' entry in the 'exec' 
+    dictionary indicating if and where the form should be saved.
+    Return a boolean indicating if the configuration was saved.
+    '''
     execution = opt_form.get("exec", {})
-    saving_path_str = execution.get("saving_path")
+    saving_path_str = execution.get("saving_path")  # get the saving path from the execution dictionary
     if not saving_path_str:
         return False
     
@@ -22,9 +29,6 @@ def save_config(opt_form: dict):
     
     if not base_path.is_dir():
         raise ValueError(f"saving_path is not a directory: {base_path}")
-
-    # if is_date_folder(base_path) and base_path.name != date.today().isoformat():
-    #     raise ValueError("Saving into a past date folder is not allowed")
 
     if is_date_folder(base_path):
         date_folder = base_path
@@ -45,21 +49,16 @@ def save_config(opt_form: dict):
 
 
 def get_next_optimization_index(folder: pathlib.Path) -> int:
-    pattern = re.compile(r"optimization_form_(\d+)\.json")
+    '''
+    Given a folder path, return the index of the next
+    'optimization_form_******.json'.
+    '''
+    pattern = re.compile(r"optimization_form_(\d+)\.json") # load the patern
 
     indices = []
-    for file in folder.glob("optimization_form_*.json"):
-        match = pattern.fullmatch(file.name)
-        if match:
-            indices.append(int(match.group(1)))
+    for file in folder.glob("optimization_form_*.json"): # for each file
+        match = pattern.fullmatch(file.name)             # make the match
+        if match:                                        # if match
+            indices.append(int(match.group(1)))          # increment the index (last element)
 
     return max(indices, default=0) + 1
-
-
-
-def is_date_folder(path: pathlib.Path) -> bool:
-    try:
-        datetime.strptime(path.name, "%Y-%m-%d")
-        return True
-    except ValueError:
-        return False

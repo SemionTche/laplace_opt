@@ -3,13 +3,6 @@ from enum import Enum
 from datetime import date, datetime
 import pathlib
 
-def is_date_folder(path: pathlib.Path) -> bool:
-    try:
-        datetime.strptime(path.name, "%Y-%m-%d")
-        return True
-    except ValueError:
-        return False
-
 class ValidationLevel(Enum): # helping class to define the state
     OK = "ok"
     WARNING = "warning"
@@ -25,6 +18,15 @@ from model_construction.acquisitions.acquisition_structure import AcquisitionStr
 StratOrAcq = StrategyStructure | AcquisitionStructure
 
 from model_construction.initializations.initialization_file import FileInitialization
+
+
+def is_date_folder(path: pathlib.Path) -> bool:
+    try:
+        datetime.strptime(path.name, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
 
 def make_form(exec, 
               inputs: dict[str, InputStructure], 
@@ -98,7 +100,6 @@ def check_form(form: dict) -> tuple[ValidationLevel, str]:
             )
 
         return ValidationLevel.WARNING, msg
-
 
     path = pathlib.Path(saving_path).expanduser()
     if is_date_folder(path):
