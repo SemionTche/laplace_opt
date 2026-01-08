@@ -8,8 +8,12 @@ from PyQt6.QtCore import pyqtSignal
 from utils.getter import get_classes
 from utils.standard_widgets import place_labeled_widgets
 
+from model_construction.strategies.strategy_structure import StrategyStructure
+from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
 
-class ModelPanel(QGroupBox):
+StratOrAcq = StrategyStructure | AcquisitionStructure
+
+class PipelinePanel(QGroupBox):
     '''
     Panel enabling the selection of the optimization strategy and
     acquisition function.
@@ -21,7 +25,7 @@ class ModelPanel(QGroupBox):
     selection_changed = pyqtSignal()
 
     def __init__(self):
-        super().__init__("Models") # heritage from QGroupBox
+        super().__init__("Pipeline") # heritage from QGroupBox
         
         # dictionary representing a tuple per column
         # the first element is the title, the second the folder
@@ -30,8 +34,8 @@ class ModelPanel(QGroupBox):
             "strategy": ("Strategy", "strategies"),
             "acquisition": ("Acquisition", "acquisitions"),
         }
-
-        self.classes: dict[str, dict] = {} # for each stage, there is a dictionary of the corresponding classes
+        # for each stage, there is a dictionary of the corresponding classes
+        self.classes: dict[str, dict[str, StratOrAcq]] = {}
         self.combos: dict[str, QComboBox] = {} # for each stage, there is a combo box
 
         self.set_up()  # build the widgets
@@ -81,10 +85,9 @@ class ModelPanel(QGroupBox):
             max_per_row=6,
         )
 
-
     ### helpers
 
-    def get_selection(self) -> dict[str, type]:
+    def get_selection(self) -> dict[str, StratOrAcq]:
         '''
         Return the selected classes for each stage.
         '''

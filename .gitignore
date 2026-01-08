@@ -1,5 +1,6 @@
 # test saves
 opt_lhc/tests/bo/save/
+opt_lhc/tests/saving/
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks

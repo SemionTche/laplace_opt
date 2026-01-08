@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
 # project
 from utils.getter import get_classes
 from utils.standard_widgets import load_standard_widgets
+from model_construction.initializations.initialization_structure import InitializationStructure
 
 
 class InitializationPanel(QGroupBox):
@@ -22,7 +23,7 @@ class InitializationPanel(QGroupBox):
 
         super().__init__("Initialization") # heritage from QGroupBox
 
-        self.init_cls = get_classes("initializations") # dict{class_name: class}
+        self.init_cls: dict[str, InitializationStructure] = get_classes("initializations") # dict{class_name: class}
 
         self.set_up() # create and set the panel elements
 
@@ -86,7 +87,7 @@ class InitializationPanel(QGroupBox):
 
     ### helpers
 
-    def get_initialization(self):
+    def get_initialization(self) -> dict[str, dict[InitializationStructure, dict[str, int, float, bool]]]:
         cls = list(self.init_cls.values())[self.selector.currentIndex()]
         params = {}
 
@@ -98,5 +99,4 @@ class InitializationPanel(QGroupBox):
             else:
                 params[k] = w.text()
 
-        return cls(), params
-
+        return {"cls": cls, "params": params}

@@ -8,7 +8,7 @@ from PyQt6.QtGui import QIcon
 import pathlib
 
 # project
-from utils.getter import get_from_cls
+from model_construction.inputs.input_structure import InputStructure
 
 class InputWidget(QWidget):
     '''
@@ -16,19 +16,20 @@ class InputWidget(QWidget):
     have it's own class file in 'model_construction/inputs' 
     and respect the InputStructure format.
     '''
-    def __init__(self, name: str, cls: type):
+    def __init__(self, name: str, cls: type[InputStructure]):
         '''
             Args:
                 name: (str)
                     name of the class used for this line.
 
                 cls: (type)
-                    the class of the inout.
+                    the class of the inpout. 
+                    (must heritate from 'InputStructure')
         '''
         super().__init__() # heritage from QWidget
         
         self.name = name
-        self.cls = cls
+        self.instance: InputStructure = cls()  # create a class instance
 
         # main input line layout
         line_layout = QHBoxLayout(self)
@@ -53,19 +54,21 @@ class InputWidget(QWidget):
         self.state_icon = QLabel() # create a blank label
         self.state_icon.setFixedWidth(20)
         self.state_icon.setPixmap(self.disconnected_icon.pixmap(16, 16)) # add an image
+        self.state_icon.setToolTip("Current state")
         line_layout.addWidget(self.state_icon)
 
         # address
-        self.address_label = QLabel("Unkown")
-        address = get_from_cls(self.cls, "address") # get address from the class
-        self.address = str(address) if address is not None else None
-        if self.address:
-            self.address_label.setText(self.address)
+        self.address_label = QLabel()
+        self.address = self.instance.address      # get address from the instance
+        self.address_label.setText(self.address or "Unknown")
         self.address_label.setEnabled(False)
+        self.address_label.setToolTip("The address of the input device used by the server")
         line_layout.addWidget(self.address_label)
 
         # name
         self.name_label = QLabel(name)
+        self.tip = self.instance.description
+        self.name_label.setToolTip(self.tip)    # add a description
         self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         line_layout.addWidget(self.name_label)
 
@@ -73,45 +76,45 @@ class InputWidget(QWidget):
         self.min_spin = QDoubleSpinBox()
         self.min_spin.setDecimals(6)
         self.min_spin.setEnabled(False)
+        self.min_spin.setToolTip("Minimal boundary")
         line_layout.addWidget(self.min_spin)
 
         # Max spinBox
         self.max_spin = QDoubleSpinBox()
         self.max_spin.setDecimals(6)
         self.max_spin.setEnabled(False)
+        self.max_spin.setToolTip("Maximal boundary")
         line_layout.addWidget(self.max_spin)
 
         # Unit
-        self.unit_label = QLabel("Unknown")
-        unit = get_from_cls(self.cls, "unit") # get unit from the class
-        self.unit = str(unit) if unit is not None else None
-        if self.unit:
-            self.unit_label.setText(self.unit)
-            self.unit_label.setFixedWidth(25)
-            self.unit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.unit_label = QLabel()
+        self.unit = self.instance.unit   # get unit from the instance
+        self.unit_label.setText(self.unit or "Unknown")
+        self.unit_label.setFixedWidth(25)
+        self.unit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.unit_label.setToolTip("Input unit")
         line_layout.addWidget(self.unit_label)
 
         # Safe bounds
         self.safe_label = QLabel("safe: n/a")
         self.safe_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.safe_label.setFixedWidth(100)
+        self.safe_label.setToolTip("The intervalle available")
         line_layout.addWidget(self.safe_label)
 
-        sb = get_from_cls(self.cls, "safe_bounds") # get safe bounds from the class
+        self.safe_bounds = self.instance.safe_bounds   # get safe bounds from the instance
 
-        self.safe_bounds = tuple(sb) if sb is not None else None
         if self.safe_bounds:
             safe_lo, safe_hi = self.safe_bounds
-            # min spin
-            self.min_spin.setMinimum(safe_lo)
-            self.min_spin.setMaximum(safe_hi)
-            self.min_spin.setValue(safe_lo)
-            # max spin
-            self.max_spin.setMinimum(safe_lo)
-            self.max_spin.setMaximum(safe_hi)
-            self.max_spin.setValue(safe_hi)
-            # set label safe bounds
-            self.safe_label.setText(f"safe: {self.safe_bounds}")
+            self.min_spin.setRange(safe_lo, safe_hi) # min / max spin
+            self.max_spin.setRange(safe_lo, safe_hi)
+
+            lo, hi = self.instance.bounds
+            self.min_spin.setValue(lo)
+            self.max_spin.setValue(hi)
+        
+        # set label safe bounds
+        self.safe_label.setText(f"safe: {self.safe_bounds}")
 
         self.actions() # defines the actions of InputWidget
 
@@ -125,6 +128,9 @@ class InputWidget(QWidget):
         # when the spin boxes are updated, verify the safe bounds
         self.min_spin.valueChanged.connect(self.safe_bounds_checking)
         self.max_spin.valueChanged.connect(self.safe_bounds_checking)
+        
+        self.min_spin.valueChanged.connect(self.update_instance_bounds)
+        self.max_spin.valueChanged.connect(self.update_instance_bounds)
 
 
     def on_state_changed(self, enabled: bool) -> None:
@@ -148,20 +154,28 @@ class InputWidget(QWidget):
         self.safe_bounds_checking() # verify if the spin boxes are valid.
 
 
+    def update_instance_bounds(self) -> None:
+        '''
+        Update the bounds in the class instance.
+        '''
+        if not self.is_enabled():
+            return
+
+        bounds = self.get_value()
+        if bounds is not None:
+            self.instance.set_bounds(bounds)
+
+
     def safe_bounds_checking(self) -> None:
         '''
         Verify the boundaries provided in the spin boxes.
         Update safe bounds label accordingly.
         '''
         # if the InputWidget is not selected
-        if not self.state_checkBox.isChecked():
+        if not self.is_enabled():
             return  # do not check the boundaries
-        
-        valid = True
-        sb = self.get_value() # get the spin box values
-        
-        if sb is None: # if there is no safe bounds
-            valid = False # the format is invalid
+
+        valid = self.get_value() is not None
 
         # Update styles
         if not valid:

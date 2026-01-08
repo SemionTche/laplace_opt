@@ -6,7 +6,8 @@ from interface.inputWidget import InputWidget
 from interface.objectiveWidget import ObjectiveWidget
 
 from utils.getter import get_classes
-
+from model_construction.inputs.input_structure import InputStructure
+from model_construction.objectives.objective_structure import ObjectiveStructure
 
 class InOutPanel(QGroupBox):
     '''
@@ -65,11 +66,9 @@ class InOutPanel(QGroupBox):
         items = get_classes(self.folder_name) # dict[class_name, class] contained in 'folder_name'
 
         for name, cls in items.items(): # for each class
-            try :                       # try to
-                new_widget = self.widget_class(name, cls) # define a new widget
-            except Exception as e:
-                raise ValueError("The line widget could not be resolved.") from e
-
+            
+            new_widget = self.widget_class(name, cls) # define a new widget
+            
             item = QListWidgetItem(self.list_widget)         # create a new list item
             item.setSizeHint(new_widget.sizeHint())          # set the size of the item
             self.list_widget.addItem(item)                   # add the new item
@@ -102,3 +101,11 @@ class InOutPanel(QGroupBox):
 
     def get_rows(self) -> dict[str, InputWidget | ObjectiveWidget]:
         return self.rows
+
+    def get_enabled_rows(self) -> dict[str, InputStructure | ObjectiveStructure]:
+        enabled = {}
+        for name, widget in self.rows.items():
+            if widget.is_enabled():
+                enabled[name] = widget.instance
+        return enabled
+

@@ -1,7 +1,7 @@
 # libraries
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, 
-    QHBoxLayout, QPushButton
+    QHBoxLayout, QPushButton, QMessageBox
 )
 from PyQt6.QtGui import QIcon
 
@@ -17,9 +17,7 @@ from interface.optPanel import OptPanel
 
 from core.optManager import OptManager
 
-from server_lhc.serverLHC import ServerLHC
-from server_lhc.protocol import DEVICE_OPT
-from server_lhc.serverController import ServerController
+from utils.model_form import make_form, ValidationLevel
 
 
 class OptWindow(QMainWindow):
@@ -28,15 +26,26 @@ class OptWindow(QMainWindow):
 
         super().__init__() # heritage from QMainWindow
 
-        # Set window title
-        self.setWindowTitle("Optimization Window")
-        p = pathlib.Path(__file__)
-        icon_path = p.parent / 'icons'
+        self.opt_manager = OptManager()
         
-        # icon, style and geometry
-        self.setWindowIcon( QIcon( str(icon_path / 'LOA.png') ) )
+        self.set_up()  # build the window panels and buttons
+
+        self.actions() # defines the actions of the window
+
+    def set_up(self) -> None:
+        '''
+        Build the panels and buttons of the main opt window.
+        '''        
+        p = pathlib.Path(__file__) # path to the current file
+        
+        # set title, geometry and style
+        self.setWindowTitle("Optimization Window")
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
         self.setGeometry(100, 30, 1000, 700)
+
+        # icon
+        icon_path = p.parent / 'icons' # path to the icon folder
+        self.setWindowIcon( QIcon( str(icon_path / 'LOA.png') ) )
 
         # central widget and layout
         central_widget = QWidget()
@@ -59,9 +68,6 @@ class OptWindow(QMainWindow):
             title="Available Objectives",
             folder_name="objectives"
         )
-            # helpers input / obj rows
-        self.input_rows = self.input_panel.get_rows()
-        self.objective_rows = self.objective_panel.get_rows()  # dict[str, ObjectiveWidget]
 
             # input / obj layout
         middle_layout = QHBoxLayout()
@@ -74,93 +80,92 @@ class OptWindow(QMainWindow):
         main_layout.addWidget(self.init_panel, stretch=1)
 
         # Block 4: Pipeline
-        self.model_panel = OptPanel()
-        main_layout.addWidget(self.model_panel, stretch=1)
+        self.opt_panel = OptPanel()
+        main_layout.addWidget(self.opt_panel, stretch=1)
 
         # Block 5: Start and Stop buttons
         bottom_layout = QHBoxLayout()
         bottom_layout.addStretch()
-        
+            # Stop
         self.stop_button = QPushButton("Stop")
+        self.stop_button.setFixedWidth(120)
         bottom_layout.addWidget(self.stop_button)
-        
+            # Start
         self.start_button = QPushButton("Start")
+        self.start_button.setFixedWidth(120)
         bottom_layout.addWidget(self.start_button)
 
         main_layout.addLayout(bottom_layout)
 
-        # controller to emit signals from server
-        self.server_controller = ServerController()
-
-        self.actions() # defines the actions of the window
-
     
-    def actions(self):
+    def actions(self) -> None:
+        '''
+        Defines the actions between the several panels and
+        make the bridget with the optimization manager.
+        '''
         # Start and Stop buttons
         self.start_button.clicked.connect(self.on_start)
         self.stop_button.clicked.connect(self.on_stop)
 
         # turn on / off the server according to the server signal
         self.execution_panel.server_state_changed.connect(
-            self.server_launch
+            self.opt_manager.server_launch
         )
 
+        # enable / disable input addresses with respect to the server signal
         self.execution_panel.server_state_changed.connect(
             self.input_panel.enable_addresses
         )
         
         # change the saving path when the server get the "SAVE" cmd
-        self.server_controller.saving_path_changed.connect(
-            self.execution_panel.saving_entry.setText
+        self.opt_manager.server_controller.saving_path_changed.connect(
+            self.execution_panel.set_path_saving
+        )
+
+        # transmit the server address from the server to the ExecutionPanel
+        self.opt_manager.on_server_address.connect(
+            self.execution_panel.set_server_address
         )
     
+    def on_start(self) -> None:
+        execution = self.execution_panel.get_execution()
+        inputs = self.input_panel.get_enabled_rows()
+        objectives = self.objective_panel.get_enabled_rows()
+        init = self.init_panel.get_initialization()
+        opt = self.opt_panel.get_opt()
 
-    def server_launch(self, server_state: bool) -> None:
-        '''
-        Function made to turn on / off the OPT server according
-        to the state given in argument.
-        '''
-        if server_state: # if on
-            
-            # create the server
-            self.serv = ServerLHC(name="Optimization", 
-                                  address="tcp://*:1254", 
-                                  freedom=0, 
-                                  device=DEVICE_OPT,
-                                  data={})
-            
-            # bridge server -> controller (to emit signal when the saving path is changing)
-            self.serv.on_saving_path_changed = (
-                self.server_controller.on_server_save_path
+        form, (level, message) = make_form(
+            exec=execution,
+            inputs=inputs,
+            obj=objectives,
+            init=init,
+            opt=opt
+        )
+
+        if level == ValidationLevel.ERROR:
+            QMessageBox.critical(
+                self,
+                "Invalid configuration",
+                message
             )
-            
-            self.serv.start() # start the server
-            # update the address in execution panel
-            self.execution_panel.set_server_address(self.serv.address_for_client)
+            return
         
-        else: # if off
-            self.serv.stop() # stop the server
-    
-    def on_start(self):
-        # bounds
-        bounds = self.get_bounds_from_inputs()
-
-        # model config
-        model_cfg = self.model_panel.get_config()
-
-        # data path
-        data_path = pathlib.Path(
-            self.execution_panel.saving_entry.text()
-        )
-
-        self.opt_manager = OptManager()
-        self.opt_manager.configure_model(model_cfg, bounds)
-
-        if data_path.exists():
-            self.opt_manager.configure_data_source(
-                data_path,
-                parent=self  # important for Qt ownership
+        if level == ValidationLevel.WARNING:
+            reply = QMessageBox.warning(
+                self,
+                "Configuration warning",
+                message + "\n\nDo you want to continue?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
             )
+            if reply == QMessageBox.StandardButton.No:
+                return
+            
+        print("Starting optimization with form:")
+        print(form)
+        self.execution_panel.set_locked(True)
+        self.opt_manager.init_process(form)
+
 
     def on_stop(self):
         pass
@@ -189,5 +194,5 @@ class OptWindow(QMainWindow):
         Close every client of client manager.
         '''
         if self.execution_panel.is_online_enabled():
-            self.serv.stop()
+            self.opt_manager.serv.stop()
         event.accept()

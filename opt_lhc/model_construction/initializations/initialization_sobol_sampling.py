@@ -36,11 +36,14 @@ class SobolInitialization(InitializationStructure):
         }
     }
 
-    def generate(self, bounds, n_samples: int = 16, q_candidates: int = 1):
+    def generate(self, bounds, n_samples: int = 16, q_candidates: int = 1, seed: int = 0):
         # bounds: Tensor [2, d]
         X = draw_sobol_samples(
             bounds=bounds,
             n=n_samples,
-            q=q_candidates
+            q=q_candidates,
+            seed=seed
         ).squeeze(1)
+        if X.dim() == 2:
+            X = X.unsqueeze(1)  # n x d  → n x 1 x d
         return X

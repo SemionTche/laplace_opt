@@ -9,11 +9,25 @@ except ModuleNotFoundError:
 class LaserEnergy(InputStructure):
 
     def __init__(self, bounds: Sequence[float]=(0, 5)):
+        
         name = "laser_energy"
         unit = "J"
-        safe_bounds = (0, 100)
+        safe_bounds = (0.0, 100.0)
         address = "tmp 5"
-        InputStructure.__init__(self, name, bounds, safe_bounds, unit, address)
+
+        description = "Laser energy"
+        symbol = "E_laser"
+        
+        InputStructure.__init__(
+            self, 
+            name=name, 
+            bounds=bounds, 
+            safe_bounds=safe_bounds, 
+            unit=unit, 
+            address=address, 
+            description=description,
+            symbol=symbol
+        )
 
     def get_position(self) -> None:
         pass

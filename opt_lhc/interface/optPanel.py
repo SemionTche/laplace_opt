@@ -4,13 +4,17 @@ from PyQt6.QtWidgets import (
 )
 
 # project
-from interface.modelPanel import ModelPanel
+from interface.pipelinePanel import PipelinePanel
 from interface.hyperparameterPanel import HyperparameterPanel
 
+from model_construction.strategies.strategy_structure import StrategyStructure
+from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
+
+StratOrAcq = StrategyStructure | AcquisitionStructure
 
 class OptPanel(QGroupBox):
     '''
-    Optimization Panel contained two panels, the ModelPanel,
+    Optimization Panel contained two panels, the PipelinePanel,
     enabling the strategy and acquisition function choice and
     the HyperparameterPanel, updated depending on the active
     strategy and acquisition function, allowing to define the
@@ -30,7 +34,7 @@ class OptPanel(QGroupBox):
         '''
         Build the widgets of the OptPanel class.
         A check box to enable / disable the widgets
-        A ModelPanel to decide the strategy / acq func
+        A PipelinePanel to decide the strategy / acq func
         A HyperparameterPanel to define the hyperparameters
         of the model.
         '''
@@ -41,7 +45,7 @@ class OptPanel(QGroupBox):
         self.enable_checkbox.setChecked(True)
 
         # creating the panels
-        self.pipeline = ModelPanel()
+        self.pipeline = PipelinePanel()
         self.hyperparams = HyperparameterPanel()
 
         # add the widgets to the layout
@@ -85,21 +89,26 @@ class OptPanel(QGroupBox):
         self.hyperparams.load_from_classes(selected.values()) # load the corresponding widgets
 
 
-    def get_config(self) -> dict[str, bool, dict]:
+    def get_opt(self) -> dict[str, bool, dict[str, dict[str, StratOrAcq, dict[str, int, float, bool]]]]:
         '''
         Return the OptPanel configuration, including a
-        boolean 'enabled' to define if the OptPanel should be used,
-        and two dictionaries, one for the Pipeline, the other one for
-        the hyperparameters.
+        boolean 'enabled' to define if the OptPanel should be used.
+        The pipeline key return a dictionary that provide for the
+        'strategy' and 'acquisition' keys a dictionary with the class
+        stored in 'cls' and the hyperparameters stored in 'params'.
         '''
-        if not self.enable_checkbox.isChecked():
-            return {"enabled": False, "pipeline": {}, "hyperparameters": {}}
+        if not self.enable_checkbox.isChecked():      # if no optimization
+            return {"enabled": False, "pipeline": {}} # get no pipeline
 
-        classes = self.pipeline.get_selection()
-        hyperparams = self.hyperparams.get_parameters()
+        pipeline_classes = self.pipeline.get_selection() # get the pipeline elements
+        hyperparams = self.hyperparams.get_parameters()  # get the hyperparameter elements
 
-        return {
-            "enabled": True,
-            "pipeline": classes,
-            "hyperparameters": hyperparams
-        }
+        pipeline_cfg = {} # make the pipeline dictionary
+
+        for stage, cls in pipeline_classes.items(): # for every stage
+            pipeline_cfg[stage] = {                 # create a dictionary
+                "cls": cls,                         # with the class
+                "params": hyperparams.get(cls, {})  # and the parameters
+            }
+
+        return {"enabled": True, "pipeline": pipeline_cfg}
