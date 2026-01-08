@@ -25,7 +25,10 @@ def save_config(opt_form: dict) -> bool:
     
     # make an absolute user path
     base_path = pathlib.Path(saving_path_str).expanduser().resolve()
-    base_path.mkdir(parents=True, exist_ok=True) # create the directory
+    try:
+        base_path.mkdir(parents=True, exist_ok=True)  # create the directory
+    except Exception as e:
+        raise RuntimeError(f"Invalid saving_path: {base_path}") from e
 
     if is_date_folder(base_path):  # if the path contains a 'yyyy-mm-dd' expression
         date_folder = base_path    # use the current path
