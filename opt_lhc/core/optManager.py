@@ -102,17 +102,17 @@ class OptManager(QObject):
 
 
     def build_data_payload(self, X: torch.Tensor, 
-                           bounds_dict: dict,
-                           *,
-                           is_init: bool,
-                           is_opt: bool) -> dict:
+                        bounds_dict: dict,
+                        *,
+                        is_init: bool,
+                        is_opt: bool) -> dict:
         '''
         Build the payload dictionary to be transmited through
         the server.
 
             Args:
                 X: (torch.Tensor)
-                    the sample candidates to sample  of shape (n, q, d).
+                    the sample candidates to sample of shape (n, q, d).
                 
                 bounds_dict: (dict)
                     the input main informations: {name: {"bounds": ..., "address": ...}}
@@ -124,22 +124,36 @@ class OptManager(QObject):
                     indicating if it is the optimization suggested points.
         '''
         payload = {}
-        addresses = [v["address"] for v in bounds_dict.values()]  # make a list of addresses
+
+        # make a list of addresses (one per dimension)
+        addresses = [v["address"] for v in bounds_dict.values()]
+
+        # ensure CPU tensor for serialization
         X = X.cpu()
 
         samples = []
-        inputs = {}
-        for i in range(X.shape[0]):        # for each sample
+
+        for i in range(X.shape[0]):        # for each batch
             for j in range(X.shape[1]):    # for each candidate
-                for k, addr in enumerate(addresses):  # for each address
-                    inputs[addr] = X[i, j, k].item()  # set the input value
-                
-                samples.append({           # add the sample to the list
+
+                inputs = {}                # NEW dict per sample
+
+                for k, addr in enumerate(addresses):  # for each dimension
+
+                    # initialize list if address already exists
+                    if addr not in inputs:
+                        inputs[addr] = []
+
+                    # append the value corresponding to this DOF
+                    inputs[addr].append(X[i, j, k].item())
+
+                # add the sample to the list
+                samples.append({
                     "batch": i,
                     "candidate": j,
                     "inputs": inputs,
                 })
-        
+
         payload = {
             "is_init": is_init,
             "is_opt": is_opt,
@@ -147,6 +161,7 @@ class OptManager(QObject):
         }
 
         return payload
+
     
 
     def format_print(self, X: torch.Tensor, bounds_dict: dict) -> str:

@@ -14,8 +14,8 @@ class GasJetHeight(InputStructure):
         
         name = "gas_jet_height"
         unit = "mm"
-        safe_bounds = (0.0, 15.0)
-        address = "tmp 1"
+        safe_bounds = (-2.0, 10.0)
+        address = "147.250.140.65:5555"
         
         description = "Vertical position of the gas jet."
         symbol = "y_gas"

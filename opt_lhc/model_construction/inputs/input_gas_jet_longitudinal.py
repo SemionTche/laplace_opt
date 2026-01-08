@@ -12,8 +12,8 @@ class GasJetLongitudinal(InputStructure):
         
         name = "gas_jet_longitudinal"
         unit = "mm"
-        safe_bounds = (0.0, 15.0)
-        address = "tmp 2"
+        safe_bounds = (-2.0, 10.0)
+        address = "147.250.140.65:5555"
         
         description = "Position of the gas jet along the propagation axis."
         symbol = "z_gas"
