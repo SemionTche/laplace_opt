@@ -22,6 +22,10 @@ class OptManager(QObject):
         self.is_saving = False
         self.is_online = False
         self._opt_form = {}
+
+        self.server_controller.get_received.connect(
+            self.empty_data
+        )
     
 
     @property
@@ -184,6 +188,10 @@ class OptManager(QObject):
                 self.server_controller.on_server_save_path
             )
             
+            self.serv.set_on_get(
+                self.server_controller.on_get
+            )
+
             self.serv.start() # start the server
 
             # emit a signal to transmit the server address to the ExecutionPanel
@@ -191,3 +199,7 @@ class OptManager(QObject):
         
         else: # if off
             self.serv.stop() # stop the server
+
+
+    def empty_data(self) -> None:
+        self.serv.set_data({})

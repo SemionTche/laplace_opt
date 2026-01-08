@@ -126,7 +126,6 @@ class OptWindow(QMainWindow):
         self.opt_manager.on_server_address.connect(
             self.execution_panel.set_server_address
         )
-
     
     def on_start(self) -> None:
         execution = self.execution_panel.get_execution()
