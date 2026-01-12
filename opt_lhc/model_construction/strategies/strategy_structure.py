@@ -16,7 +16,7 @@ class StrategyStructure(ABC):
     ):
         """Return a fitted BoTorch model"""
 
-    @abstractmethod
-    def get_default_sampler(self, model):
-        """Return a sampler compatible with this model"""
+    # @abstractmethod
+    # def get_default_sampler(self, model):
+    #     """Return a sampler compatible with this model"""
 

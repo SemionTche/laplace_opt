@@ -21,10 +21,20 @@ class OptManager(QObject):
 
         self.is_saving = False
         self.is_online = False
+        self.is_opt = False
         self._opt_form = {}
+
+        self.strategy = None
+        self.model = None
+        self.train_X_list = None
+        self.train_Y_list = None
 
         self.server_controller.get_received.connect(
             self.empty_data
+        )
+
+        self.server_controller.opt_received.connect(
+            self.update_opt
         )
     
 
@@ -45,8 +55,12 @@ class OptManager(QObject):
                     start an initialization or an optimization.
         '''
         self.is_online = opt_form["exec"]["is_online"]  # whether the optimization is accessible from the server
+        self.is_opt = opt_form["opt"]["enabled"]
         self.set_form(opt_form)                         # set the opt_form as attribut of the class
         self.init_opt()                                 # make initialization process
+        
+        if self.is_opt:
+            self.pipeline = self.opt_form["opt"]["pipeline"]
 
 
     def set_form(self, opt_form: dict) -> None:
@@ -207,6 +221,10 @@ class OptManager(QObject):
                 self.server_controller.on_get
             )
 
+            self.serv.set_on_opt(
+                self.server_controller.on_opt
+            )
+
             self.serv.start() # start the server
 
             # emit a signal to transmit the server address to the ExecutionPanel
@@ -215,6 +233,87 @@ class OptManager(QObject):
         else: # if off
             self.serv.stop() # stop the server
 
+    def update_opt(self, data: dict) -> None:
+        print(f"[CMD_OPT] data = {data}")
+        results = data["results"]
+
+        # Lazy init: one list per objective
+        if self.train_X_list is None:
+            num_obj = len(results[0]["output"])
+            self.train_X_list = [[] for _ in range(num_obj)]
+            self.train_Y_list = [[] for _ in range(num_obj)]
+
+        for r in results:
+            x = torch.tensor(
+                next(iter(r["inputs"].values())),
+                dtype=torch.float32,
+            )
+
+            for obj_idx, y_val in enumerate(r["output"]):
+                if y_val is None:
+                    continue
+
+                self.train_X_list[obj_idx].append(x)
+                self.train_Y_list[obj_idx].append(
+                    torch.tensor([y_val], dtype=torch.float32)
+                )
+
+        # Convert lists → tensors
+        for i in range(len(self.train_X_list)):
+            if len(self.train_X_list[i]) == 0:
+                continue
+
+            self.train_X_list[i] = torch.stack(self.train_X_list[i], dim=0)
+            self.train_Y_list[i] = torch.stack(self.train_Y_list[i], dim=0)
+
+        print("[OPT] train_X_list status:")
+        for i, X in enumerate(self.train_X_list):
+            print(f"  train_X_list[{i}] = {X}")
+            # if isinstance(X, list):
+            #     print(f"  obj {i}: list with {len(X)} entries")
+            # else:
+            #     print(f"  obj {i}: tensor shape {tuple(X.shape)}")
+
+        print("[OPT] train_Y_list status:")
+        for i, Y in enumerate(self.train_Y_list):
+            print(f"  train_Y_list[{i}] = {Y}")
+            # if isinstance(Y, list):
+            #     print(f"  obj {i}: list with {len(Y)} entries")
+            # else:
+            #     print(f"  obj {i}: tensor shape {tuple(Y.shape)}")
+
+
+        self.build_strategy_model()
+
+
+
+    def build_strategy_model(self) -> None:
+        """
+        Instantiate the optimization strategy and build its model
+        using the current training data.
+        """
+        if not self.is_opt:
+            return
+
+        if self.train_X_list is None or self.train_Y_list is None:
+            return
+
+        # Require at least one objective with data
+        if not any(len(X) > 0 for X in self.train_X_list):
+            return
+
+        pipeline = self.opt_form["opt"]["pipeline"]
+        strategy_dict = pipeline["strategy"]
+        strategy_cls = strategy_dict["cls"]
+        strategy_params = strategy_dict.get("params", {})
+
+        self.strategy = strategy_cls()
+        self.model = self.strategy.build_model(
+            self.train_X_list,
+            self.train_Y_list,
+            self.bounds,
+            **strategy_params,
+        )
 
     def empty_data(self) -> None:
         self.serv.set_data({})

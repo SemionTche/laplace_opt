@@ -17,6 +17,8 @@ class GasJetTransverse(InputStructure):
         
         description = "Transverse position of the gas jet."
         symbol = "x_gas"
+
+        position_index = 2
         
         InputStructure.__init__(
             self, 
@@ -26,7 +28,8 @@ class GasJetTransverse(InputStructure):
             unit=unit, 
             address=address, 
             description=description,
-            symbol=symbol
+            symbol=symbol,
+            position_index=position_index
         )
 
     def get_position(self) -> None:

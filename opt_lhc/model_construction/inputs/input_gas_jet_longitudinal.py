@@ -17,6 +17,8 @@ class GasJetLongitudinal(InputStructure):
         
         description = "Position of the gas jet along the propagation axis."
         symbol = "z_gas"
+
+        position_index=1
         
         InputStructure.__init__(
             self, 
@@ -26,7 +28,8 @@ class GasJetLongitudinal(InputStructure):
             unit=unit, 
             address=address, 
             description=description,
-            symbol=symbol
+            symbol=symbol,
+            position_index=position_index
         )
 
     def get_position(self) -> None:
