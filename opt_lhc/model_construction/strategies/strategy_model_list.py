@@ -28,12 +28,14 @@ class ModelList(StrategyStructure):
     )
 
     parameters: Dict[str, Dict[str, Any]] = {
+
         "standardize_outputs": {
             "type": bool,
             "default": True,
             "label": "Standardize outputs",
             "description": "Apply outcome standardization per output GP",
         },
+        
         "noise": {
             "type": float,
             "default": 0,
@@ -42,6 +44,36 @@ class ModelList(StrategyStructure):
                 "Observation noise variance. "
                 "If None, noise is inferred by the model."
             ),
+        },
+        
+        "num_samples": {
+            "type": int,
+            "default": 128,
+            "label": "Number of samples",
+            "description": ""
+        },
+        
+        "raw_samples": {
+            "type": int,
+            "default": 10,
+            "label": "Raw samples",
+            "description": ""
+        },
+        
+        "num_restarts": {
+            "type": int,
+            "default": 8,
+            "label": "Number of restarts",
+            "description": ""
+        },
+
+        "q_candidates": {
+            "type": int,
+            "default": 1,
+            "min": 1,
+            "max": 1024,
+            "label": "Number of candidates 2",
+            "description": "Number of proposal for each sample"
         },
     }
 
@@ -54,7 +86,7 @@ class ModelList(StrategyStructure):
     ):
         models = []
 
-        standardize = params.get("standardize", None)
+        standardize = params.get("standardize_outputs", None)
 
         for X, Y in zip(train_X_list, train_Y_list):
             X_norm = normalize(X, bounds)
@@ -75,8 +107,16 @@ class ModelList(StrategyStructure):
             models.append(gp)
 
         return ModelListGP(*models)
+    
 
+    def get_default_sampler(self, model):
+        """
+        Return a sampler compatible with ModelListGP.
+        """
 
+        return SobolQMCNormalSampler(
+            sample_shape=torch.Size([128])
+        )
 
     # # ------------------------------------------------------------------
     # # Model construction
@@ -131,11 +171,4 @@ class ModelList(StrategyStructure):
     # # ------------------------------------------------------------------
     # # Sampler
     # # ------------------------------------------------------------------
-    # def get_default_sampler(self, model):
-    #     """
-    #     Return a sampler compatible with ModelListGP.
-    #     """
 
-    #     return SobolQMCNormalSampler(
-    #         sample_shape=torch.Size([128])
-    #     )

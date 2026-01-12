@@ -1,77 +1,393 @@
-# core/optimizer.py
 import torch
-from typing import Dict, Type
 
-from botorch.models import SingleTaskGP, ModelListGP
-from gpytorch.mlls import ExactMarginalLogLikelihood
-from botorch import fit_gpytorch_mll
+
 from botorch.optim import optimize_acqf
 from botorch.utils.transforms import normalize, unnormalize
 
-
 class Optimizer:
-    def __init__(
-        self,
-        bounds: torch.Tensor,
-        classes: Dict[str, Type],
-        hyperparameters: Dict[Type, dict],
-    ):
-        self.bounds = bounds
-        self.bounds_norm = normalize(bounds, bounds)
 
-        self.model_cls = classes["model"]
-        self.fitter_cls = classes["fitter"]
-        self.acq_cls = classes["acquisition"]
-        self.sampler_cls = classes["sampler"]
+    def __init__(self, opt_form: dict):
+        self.opt_form = opt_form
 
-        self.params = hyperparameters
+        self.is_opt = opt_form["opt"]["enabled"]
 
-        self.train_X = None
-        self.train_Y = None
+        self.inputs = opt_form["inputs"]
+        self.objectives = opt_form["obj"]
+        self.init = opt_form["init"]
+        
+        if self.is_opt:
+            self.strategy = opt_form["opt"]["pipeline"]["strategy"]
+            self.acq = opt_form["opt"]["pipeline"]["acquisition"]
 
-    # ---------- data ----------
-    def initialize(self, X: torch.Tensor, Y: torch.Tensor):
-        self.train_X = X
-        self.train_Y = Y
+            self.model = None
+            self.train_X_list = None
+            self.train_Y_list = None
 
-    def update_data(self, X_new: torch.Tensor, Y_new: torch.Tensor):
-        self.train_X = torch.cat([self.train_X, X_new], dim=0)
-        self.train_Y = torch.cat([self.train_Y, Y_new], dim=0)
+            # One dataset per objective
+            # self.train_X_list: list[torch.Tensor]  # each (n_i, d)
+            # self.train_Y_list: list[torch.Tensor]  # each (n_i, 1)
 
-    # ---------- optimization ----------
-    def get_next_candidates(self, q: int):
-        X_norm = normalize(self.train_X, self.bounds)
 
-        models = []
-        for i in range(self.train_Y.shape[-1]):
-            gp = self.model_cls()
-            gp.build(
-                X_norm,
-                self.train_Y[:, i : i + 1],
-                **self.params.get(self.model_cls, {})
+        self.init_opt()
+
+
+    def init_opt(self):
+        '''
+        Use the initialization refered in the 'opt_form' dictrionary.
+        '''
+        self.bounds_dict, self.bounds = self.get_boundaries() # get the boundaries from the input dictionary
+        
+        init_cls = self.init["cls"]()
+        init_params = self.init["params"]
+        # init_cls, params = self.init.values()                      # get the class to use and its parameters
+        # init_cls = init_cls()                                 # create an instance of the class
+
+        self.init_x = init_cls.generate(bounds=self.bounds, **init_params)  # generate the first points to sample
+
+        data = self.build_data_payload(                       # make the payload for the server
+            self.init_x,
+            self.bounds_dict,
+            is_init=True,
+            is_opt=False,
+        )
+
+        print("Sobol suggestion:\n", self.format_print(self.init_x, self.bounds_dict)) # print the sample candidates
+
+        return data
+
+
+    def build_data_payload(self, X: torch.Tensor, 
+                        bounds_dict: dict,
+                        *,
+                        is_init: bool,
+                        is_opt: bool) -> dict:
+        '''
+        Build the payload dictionary to be transmited through
+        the server.
+
+            Args:
+                X: (torch.Tensor)
+                    the sample candidates to sample of shape (n, q, d).
+                
+                bounds_dict: (dict)
+                    the input main informations: {name: {"bounds": ..., "address": ...}}
+
+                is_init: (bool)
+                    indicating if it is the initialization suggested points.
+                
+                is_opt: (bool)
+                    indicating if it is the optimization suggested points.
+        '''
+        payload = {}
+
+        # make a list of addresses (one per dimension)
+        addresses = [v["address"] for v in bounds_dict.values()]
+
+        # ensure CPU tensor for serialization
+        X = X.cpu()
+
+        samples = []
+
+        for i in range(X.shape[0]):        # for each batch
+            for j in range(X.shape[1]):    # for each candidate
+
+                inputs = {}                # NEW dict per sample
+
+                for k, addr in enumerate(addresses):  # for each dimension
+
+                    # initialize list if address already exists
+                    if addr not in inputs:
+                        inputs[addr] = []
+
+                    # append the value corresponding to this DOF
+                    inputs[addr].append(X[i, j, k].item())
+
+                # add the sample to the list
+                samples.append({
+                    "batch": i,
+                    "candidate": j,
+                    "inputs": inputs,
+                })
+
+        payload = {
+            "is_init": is_init,
+            "is_opt": is_opt,
+            "samples": samples,
+        }
+
+        return payload
+
+
+    def get_boundaries(self) -> tuple[dict[str, tuple], torch.Tensor]:
+        '''
+        Helper that extract the boundaries from the 'input' dictionary
+        stored in the optimization form.
+        
+        Return both a dictionary where the boundaries and input addresses
+        are stored using there names and a 'Torch.Tensor' to gather the 
+        boundaries.
+        '''
+        bounds = []        # gather the boundaries
+        bounds_dict = {}   # information about the inputs
+        
+        inputs = self.opt_form["inputs"]  # get the input dictionary from the form
+        
+        for name, cls in inputs.items():  # for each element
+            bounds.append(cls.bounds)     # add the boundaries in the list
+            bounds_dict[name] = {"address": cls.address, "bounds": cls.bounds} # create the field to gather the address and the boundaries
+        
+        bounds = torch.Tensor(bounds).T   # convert the list to a tensor. The tensor must be 2 x d (d = input dimension)
+        
+        return bounds_dict, bounds
+
+
+    def format_print(self, X: torch.Tensor, bounds_dict: dict) -> str:
+        '''
+        Print the values that each input should take. Use a X 'torch.Tensor'
+        for the values and a 'bounds_dict' for the input addresses.
+        '''
+        addresses = [v["address"] for v in bounds_dict.values()]  # make a list of addresses
+
+        lines = []
+        for i in range(X.shape[0]):                            # for each sample
+            lines.append(f"batch {i + 1}:")                     # print which sample it is
+            for j in range(X.shape[1]):                          # for each candidate
+                coords = ", ".join(
+                    f"{addr}={X[i, j, k].item():.6g}"            # for each input, address = value
+                    for k, addr in enumerate(addresses)
+                )
+                lines.append(f"  Candidate {j + 1}: {coords}")   # print the candidate
+        
+        return "\n".join(lines)
+    
+    
+    def build_model(self):
+        self.strategy_cls = self.strategy["cls"]()
+        strategy_params = self.strategy.get("params", {})
+
+        self.model = self.strategy_cls.build_model(
+            train_X_list=self.train_X_list,
+            train_Y_list=self.train_Y_list,
+            bounds=self.bounds,
+            **strategy_params,
+        )
+    
+    def build_acquisition(self):
+        acq_cls = self.acq["cls"]()
+        acq_params = self.acq.get("params", {})
+
+        sampler = self.strategy_cls.get_default_sampler(self.model)
+        
+        runtime_args = self.runtime_args(acq_cls)
+        
+        self.acquisition = acq_cls.build(
+            model=self.model,
+            # sampler=sampler,
+            **acq_params,
+            **runtime_args
+        )
+    
+
+    def get_X_baseline(self) -> torch.Tensor:
+        """
+        Return the union of all evaluated design points,
+        suitable for NEHVI / LogNEHVI.
+        """
+        Xs = []
+
+        for X in self.train_X_list:
+            if isinstance(X, torch.Tensor) and X.numel() > 0:
+                Xs.append(X)
+
+        if len(Xs) == 0:
+            raise RuntimeError("No baseline points available.")
+
+        # concatenate and drop duplicates
+        X_all = torch.cat(Xs, dim=0)
+        X_unique = torch.unique(X_all, dim=0)
+
+        return X_unique
+
+
+    def compute_ref_point(self) -> torch.Tensor:
+        ref = []
+        for i, obj in enumerate(self.objectives.values()):
+            y = self.train_Y_list[i].squeeze(-1)
+
+            if obj.minimize:
+                ref.append(y.max() + 0.1 * y.abs().max())
+            else:
+                ref.append(y.min() - 0.1 * y.abs().max())
+
+        return torch.tensor(ref, dtype=torch.double)
+
+
+    def optimize(self, q=1):
+        params = self.strategy.get("params", {})
+
+        candidate_norm, acq_value = optimize_acqf(
+            acq_function=self.acquisition,
+            bounds=normalize(self.bounds, self.bounds),
+            q=q,
+            num_restarts=params.get("num_restarts", None),
+            raw_samples=params.get("raw_samples", None),
+        )
+
+        return unnormalize(candidate_norm, self.bounds)
+
+
+    def suggest_next_points(self, q=1) -> torch.Tensor:
+        """
+        High-level API used by UI / server.
+        """
+        if self.train_X_list is None:
+            raise RuntimeError("No training data available.")
+
+        # at least one objective must have data
+        if not any(len(X) > 0 for X in self.train_X_list):
+            raise RuntimeError("No objective has observations.")
+
+        self.build_model()
+        self.build_acquisition()
+        return self.optimize(q=q)
+
+
+    def runtime_args(self, cls) -> dict:
+        runtime_inputs = {}
+
+        if "sampler" in cls.requires:
+            runtime_inputs["sampler"] = cls.get_sampler(self.acq.get("params", {})["mc_samples"])
+
+        if "X_baseline" in cls.requires:
+            Xb = self.get_X_baseline()
+            runtime_inputs["X_baseline"] = normalize(Xb, self.bounds)
+
+        if "ref_point" in cls.requires:
+            runtime_inputs["ref_point"] = self.compute_ref_point()
+
+        return runtime_inputs
+
+
+    def update_opt(self, data: dict):
+        params = self.strategy.get("params", {})
+        self._update_training_data(data)
+
+        if self.is_opt:
+            candidates = self.suggest_next_points(q=params.get("q_candidates", 1))
+            print(candidates)
+            # self.send_to_server(candidates)
+
+
+    def _update_training_data(self, data: dict) -> None:
+        print(f"[CMD_OPT] data = {data}")
+        results = data["results"]
+
+        # Lazy init: one list per objective
+        if self.train_X_list is None:
+            num_obj = len(results[0]["output"])
+            self.train_X_list = [[] for _ in range(num_obj)]
+            self.train_Y_list = [[] for _ in range(num_obj)]
+
+        for r in results:
+            x = torch.tensor(
+                next(iter(r["inputs"].values())),
+                dtype=torch.float64,
             )
 
-            mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-            fit_gpytorch_mll(mll)
-            models.append(gp)
+            for obj_idx, y_val in enumerate(r["output"]):
+                if y_val is None:
+                    continue
 
-        model = ModelListGP(*models)
+                self.train_X_list[obj_idx].append(x)
+                self.train_Y_list[obj_idx].append(
+                    torch.tensor([y_val], dtype=torch.float64)
+                )
 
-        sampler = self.sampler_cls(
-            **self.params.get(self.sampler_cls, {})
-        )
+        # Convert lists → tensors
+        for i in range(len(self.train_X_list)):
+            if len(self.train_X_list[i]) == 0:
+                continue
 
-        acquisition = self.acq_cls(
-            model=model,
-            sampler=sampler,
-            **self.params.get(self.acq_cls, {})
-        )
+            self.train_X_list[i] = torch.stack(self.train_X_list[i], dim=0)
+            self.train_Y_list[i] = torch.stack(self.train_Y_list[i], dim=0)
 
-        candidates_norm, _ = optimize_acqf(
-            acquisition,
-            bounds=self.bounds_norm,
-            q=q,
-            **self.params.get("optimize", {})
-        )
+        # print("[OPT] train_X_list status:")
+        # for i, X in enumerate(self.train_X_list):
+        #     print(f"  train_X_list[{i}] = {X}")
 
-        return unnormalize(candidates_norm, self.bounds)
+        # print("[OPT] train_Y_list status:")
+        # for i, Y in enumerate(self.train_Y_list):
+        #     print(f"  train_Y_list[{i}] = {Y}")
+
+    # def update_opt(self, data: dict) -> None:
+    #     print(f"[CMD_OPT] data = {data}")
+    #     results = data["results"]
+
+    #     # Lazy init: one list per objective
+    #     if self.train_X_list is None:
+    #         num_obj = len(results[0]["output"])
+    #         self.train_X_list = [[] for _ in range(num_obj)]
+    #         self.train_Y_list = [[] for _ in range(num_obj)]
+
+    #     for r in results:
+    #         x = torch.tensor(
+    #             next(iter(r["inputs"].values())),
+    #             dtype=torch.float32,
+    #         )
+
+    #         for obj_idx, y_val in enumerate(r["output"]):
+    #             if y_val is None:
+    #                 continue
+
+    #             self.train_X_list[obj_idx].append(x)
+    #             self.train_Y_list[obj_idx].append(
+    #                 torch.tensor([y_val], dtype=torch.float32)
+    #             )
+
+    #     # Convert lists → tensors
+    #     for i in range(len(self.train_X_list)):
+    #         if len(self.train_X_list[i]) == 0:
+    #             continue
+
+    #         self.train_X_list[i] = torch.stack(self.train_X_list[i], dim=0)
+    #         self.train_Y_list[i] = torch.stack(self.train_Y_list[i], dim=0)
+
+    #     print("[OPT] train_X_list status:")
+    #     for i, X in enumerate(self.train_X_list):
+    #         print(f"  train_X_list[{i}] = {X}")
+
+    #     print("[OPT] train_Y_list status:")
+    #     for i, Y in enumerate(self.train_Y_list):
+    #         print(f"  train_Y_list[{i}] = {Y}")
+
+    #     self.build_strategy_model()
+
+
+
+    # def build_strategy_model(self) -> None:
+    #     """
+    #     Instantiate the optimization strategy and build its model
+    #     using the current training data.
+    #     """
+    #     if not self.is_opt:
+    #         return
+
+    #     if self.train_X_list is None or self.train_Y_list is None:
+    #         return
+
+    #     # Require at least one objective with data
+    #     if not any(len(X) > 0 for X in self.train_X_list):
+    #         return
+
+    #     pipeline = self.opt_form["opt"]["pipeline"]
+    #     strategy_dict = pipeline["strategy"]
+    #     strategy_cls = strategy_dict["cls"]
+    #     strategy_params = strategy_dict.get("params", {})
+
+    #     self.strategy = strategy_cls()
+    #     self.model = self.strategy.build_model(
+    #         self.train_X_list,
+    #         self.train_Y_list,
+    #         self.bounds,
+    #         **strategy_params,
+    #     )
