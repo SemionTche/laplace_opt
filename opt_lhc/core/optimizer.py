@@ -9,7 +9,7 @@ class Optimizer:
     def __init__(self, opt_form: dict):
         self.opt_form = opt_form
 
-        self.is_opt = opt_form["opt"]["enabled"]
+        self.is_opt: bool = opt_form["opt"]["enabled"]
 
         self.inputs = opt_form["inputs"]
         self.objectives = opt_form["obj"]
@@ -39,8 +39,6 @@ class Optimizer:
         
         init_cls = self.init["cls"]()
         init_params = self.init["params"]
-        # init_cls, params = self.init.values()                      # get the class to use and its parameters
-        # init_cls = init_cls()                                 # create an instance of the class
 
         self.init_x = init_cls.generate(bounds=self.bounds, **init_params)  # generate the first points to sample
 
@@ -176,7 +174,7 @@ class Optimizer:
         acq_cls = self.acq["cls"]()
         acq_params = self.acq.get("params", {})
 
-        sampler = self.strategy_cls.get_default_sampler(self.model)
+        # sampler = self.strategy_cls.get_default_sampler(self.model)
         
         runtime_args = self.runtime_args(acq_cls)
         

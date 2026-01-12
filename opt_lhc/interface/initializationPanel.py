@@ -79,7 +79,7 @@ class InitializationPanel(QGroupBox):
         parameters = cls.get_parameters()
 
         # dictionary that will contained every parameter widget
-        self.param_widgets = load_standard_widgets(
+        self.param_widgets, row, col = load_standard_widgets(
             self.param_layout,
             parameters,
             max_per_row=6,

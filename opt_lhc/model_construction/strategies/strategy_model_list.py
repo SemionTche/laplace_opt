@@ -86,7 +86,7 @@ class ModelList(StrategyStructure):
                 Standardize(m=1) if standardize else None
             )
 
-            gp = SingleTaskGP(
+            gp = SingleTaskGP(      # by default use RBF Kernel
                 X_norm,
                 Y,
                 outcome_transform=outcome_transform,
@@ -100,14 +100,14 @@ class ModelList(StrategyStructure):
         return ModelListGP(*models)
     
 
-    def get_default_sampler(self, model):
-        """
-        Return a sampler compatible with ModelListGP.
-        """
+    # def get_default_sampler(self, model):
+    #     """
+    #     Return a sampler compatible with ModelListGP.
+    #     """
 
-        return SobolQMCNormalSampler(
-            sample_shape=torch.Size([128])
-        )
+    #     return SobolQMCNormalSampler(
+    #         sample_shape=torch.Size([128])
+    #     )
 
     # # ------------------------------------------------------------------
     # # Model construction
