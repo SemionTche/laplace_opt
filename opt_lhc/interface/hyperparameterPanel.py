@@ -44,12 +44,16 @@ class HyperparameterPanel(QGroupBox):
         an attribute 'parameters': dict{param_name: config_dict}.
         '''
         self.clear()  # clear the current widgets
+        row = 0
+        col = 0
 
         for cls in classes:   # for every class
-            widgets = load_standard_widgets(    # load the standard widgets
+            widgets, row, col = load_standard_widgets(    # load the standard widgets
                 self.hyper_layout,              # in the 'hyper_layout'
                 cls.parameters,                 # depending on it's parameter dictionary
                 max_per_row=6,
+                start_row=row,
+                start_col=col
             )
 
             # update the widget dictionary

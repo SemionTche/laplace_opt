@@ -29,6 +29,16 @@ class ModelList(StrategyStructure):
 
     parameters: Dict[str, Dict[str, Any]] = {
 
+        "q_candidates": {
+            "type": int,
+            "default": 1,
+            "min": 1,
+            "max": 1024,
+            "label": "Number of candidates",
+            "description": "Number of proposal for each sample"
+        },
+
+
         "standardize_outputs": {
             "type": bool,
             "default": True,
@@ -65,15 +75,6 @@ class ModelList(StrategyStructure):
             "default": 8,
             "label": "Number of restarts",
             "description": ""
-        },
-
-        "q_candidates": {
-            "type": int,
-            "default": 1,
-            "min": 1,
-            "max": 1024,
-            "label": "Number of candidates 2",
-            "description": "Number of proposal for each sample"
         },
     }
 
