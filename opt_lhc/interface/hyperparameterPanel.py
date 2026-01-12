@@ -48,9 +48,15 @@ class HyperparameterPanel(QGroupBox):
         col = 0
 
         for cls in classes:   # for every class
+            # merge core_parameters (if present) and parameters
+            if hasattr(cls, "core_parameters"):
+                params = {**getattr(cls, "core_parameters", {}), **getattr(cls, "parameters", {})}
+            else:
+                params = getattr(cls, "parameters", {})
+
             widgets, row, col = load_standard_widgets(    # load the standard widgets
                 self.hyper_layout,              # in the 'hyper_layout'
-                cls.parameters,                 # depending on it's parameter dictionary
+                params,                 # depending on it's parameter dictionary
                 max_per_row=6,
                 start_row=row,
                 start_col=col
