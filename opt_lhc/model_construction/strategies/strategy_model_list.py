@@ -10,6 +10,7 @@ from botorch import fit_gpytorch_mll
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.transforms import normalize
 
+# kernels
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 
@@ -70,16 +71,16 @@ class ModelList(StrategyStructure):
             "description": ""
         },
 
-        "covar_module": {
-            "type": dict,
-            "default": 0,
-            "combo": {
-                "RBF": RBFKernel,
-                "Matern": MaternKernel
-            },
-            "label": "Kernel",
-            "description" : ""
-        }
+        # "covar_module": {
+        #     "type": dict,
+        #     "default": 0,
+        #     "combo": {
+        #         "RBF": RBFKernel,
+        #         "Matern": MaternKernel
+        #     },
+        #     "label": "Kernel",
+        #     "description" : ""
+        # }
     }
 
     def build_model(

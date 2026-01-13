@@ -7,17 +7,19 @@ from botorch.utils.transforms import normalize, unnormalize
 class Optimizer:
 
     def __init__(self, opt_form: dict):
-        self.opt_form = opt_form
+        self.opt_form = opt_form   # the optimization formular
 
-        self.is_opt: bool = opt_form["opt"]["enabled"]
+        self.is_opt: bool = opt_form["opt"]["enabled"]  # whether to make an optimization or not
 
-        self.inputs = opt_form["inputs"]
-        self.objectives = opt_form["obj"]
-        self.init = opt_form["init"]
+        # inputs and outputs of the model
+        self.inputs: dict = opt_form["inputs"]
+        self.objectives: dict = opt_form["obj"]
+        
+        self.init: dict = opt_form["init"]  # the initialization process
         
         if self.is_opt:
-            self.strategy = opt_form["opt"]["pipeline"]["strategy"]
-            self.acq = opt_form["opt"]["pipeline"]["acquisition"]
+            self.strategy: dict = opt_form["opt"]["pipeline"]["strategy"]
+            self.acq: dict = opt_form["opt"]["pipeline"]["acquisition"]
 
             self.model = None
             self.train_X_list = None
@@ -27,16 +29,13 @@ class Optimizer:
             # self.train_X_list: list[torch.Tensor]  # each (n_i, d)
             # self.train_Y_list: list[torch.Tensor]  # each (n_i, 1)
 
-
-        self.init_opt()
+        self.bounds_dict, self.bounds = self.get_boundaries() # get the boundaries from the input dictionary
 
 
     def init_opt(self):
         '''
         Use the initialization refered in the 'opt_form' dictrionary.
         '''
-        self.bounds_dict, self.bounds = self.get_boundaries() # get the boundaries from the input dictionary
-        
         init_cls = self.init["cls"]()
         init_params = self.init["params"]
 
@@ -127,12 +126,15 @@ class Optimizer:
         '''
         bounds = []        # gather the boundaries
         bounds_dict = {}   # information about the inputs
-        
-        inputs = self.opt_form["inputs"]  # get the input dictionary from the form
-        
-        for name, cls in inputs.items():  # for each element
+                
+        for name, cls in self.inputs.items():  # for each element
             bounds.append(cls.bounds)     # add the boundaries in the list
-            bounds_dict[name] = {"address": cls.address, "bounds": cls.bounds} # create the field to gather the address and the boundaries
+            # create the field to gather the address and the boundaries
+            bounds_dict[name] = {
+                "address": cls.address, 
+                "bounds": cls.bounds, 
+                "position_index": cls.position_index
+            }
         
         bounds = torch.Tensor(bounds).T   # convert the list to a tensor. The tensor must be 2 x d (d = input dimension)
         
@@ -145,14 +147,15 @@ class Optimizer:
         for the values and a 'bounds_dict' for the input addresses.
         '''
         addresses = [v["address"] for v in bounds_dict.values()]  # make a list of addresses
+        position_index = [v["position_index"] for v in bounds_dict.values()]
 
         lines = []
         for i in range(X.shape[0]):                            # for each sample
             lines.append(f"batch {i + 1}:")                     # print which sample it is
             for j in range(X.shape[1]):                          # for each candidate
                 coords = ", ".join(
-                    f"{addr}={X[i, j, k].item():.6g}"            # for each input, address = value
-                    for k, addr in enumerate(addresses)
+                    f"{addr}|{pos}={X[i, j, k].item():.6g}"            # for each input, address = value
+                    for k, (addr, pos) in enumerate(zip(addresses, position_index))
                 )
                 lines.append(f"  Candidate {j + 1}: {coords}")   # print the candidate
         
@@ -272,7 +275,7 @@ class Optimizer:
 
         if self.is_opt:
             candidates = self.suggest_next_points(q=params.get("q_candidates", 1))
-            print(candidates)
+            print(f"candidates are : {candidates}")
             # self.send_to_server(candidates)
 
 
