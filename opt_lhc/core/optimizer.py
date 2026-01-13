@@ -194,7 +194,8 @@ class Optimizer:
             num_restarts=params.get("num_restarts", None),
             raw_samples=params.get("raw_samples", None),
         )
-
+        print(f"unnormalized candidates = {unnormalize(candidate_norm, self.bounds)}")
+        print(f"candidates = {candidate_norm}")
         return unnormalize(candidate_norm, self.bounds)
 
 

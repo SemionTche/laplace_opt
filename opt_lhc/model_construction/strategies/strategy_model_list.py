@@ -1,30 +1,27 @@
-# model_construction/models/model_list.py
-
-import torch
-from typing import Dict, Any, List
-
+# libraries
 from botorch.models import SingleTaskGP, ModelListGP
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from botorch import fit_gpytorch_mll
-from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.transforms import normalize
+from botorch.models.transforms.input import Normalize
 
-# kernels
+    # kernels
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 
+# project
 from core.optimizerContext import OptimizationContext
 from model_construction.strategies.strategy_structure import StrategyStructure
 
 
 class ModelList(StrategyStructure):
-    """
+    '''
     Independent-output Gaussian Process model.
 
     Each output dimension is modeled with an independent SingleTaskGP.
     The resulting models are combined into a ModelListGP.
-    """
+    '''
 
     display_name = "Independent GP (ModelList)"
     description = (
@@ -32,30 +29,13 @@ class ModelList(StrategyStructure):
         "Assumes outputs are conditionally independent given X."
     )
 
-    parameters: Dict[str, Dict[str, Any]] = {
+    parameters: dict[str, dict] = {
 
         "standardize_outputs": {
             "type": bool,
             "default": True,
             "label": "Standardize outputs",
             "description": "Apply outcome standardization per output GP",
-        },
-        
-        "noise": {
-            "type": float,
-            "default": 0,
-            "label": "Noise level",
-            "description": (
-                "Observation noise variance. "
-                "If None, noise is inferred by the model."
-            ),
-        },
-        
-        "num_samples": {
-            "type": int,
-            "default": 128,
-            "label": "Number of samples",
-            "description": ""
         },
 
         # "covar_module": {
@@ -70,11 +50,7 @@ class ModelList(StrategyStructure):
         # }
     }
 
-    def build_model(
-        self,
-        context: OptimizationContext,
-        **params,
-    ):
+    def build_model(self, context: OptimizationContext, **params):
         models = []
         
         train_X_list = context.train_X_list
@@ -92,8 +68,13 @@ class ModelList(StrategyStructure):
 
             gp = SingleTaskGP(      # by default use RBF Kernel
                 X_norm,
+                # X,
                 Y,
                 outcome_transform=outcome_transform,
+                # input_transform=Normalize(
+                #     d=X.shape[-1],
+                #     bounds=bounds,
+                # ),
             )
 
             mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
@@ -103,15 +84,6 @@ class ModelList(StrategyStructure):
 
         return ModelListGP(*models)
     
-
-    # def get_default_sampler(self, model):
-    #     """
-    #     Return a sampler compatible with ModelListGP.
-    #     """
-
-    #     return SobolQMCNormalSampler(
-    #         sample_shape=torch.Size([128])
-    #     )
 
     # # ------------------------------------------------------------------
     # # Model construction
@@ -123,9 +95,9 @@ class ModelList(StrategyStructure):
     #     bounds: torch.Tensor,
     #     **params,
     # ):
-    #     """
+    #     '''
     #     Build and fit a ModelListGP composed of independent SingleTaskGPs.
-    #     """
+    #     '''
 
     #     # normalize inputs
     #     X_norm = normalize(train_X, bounds)
@@ -162,8 +134,3 @@ class ModelList(StrategyStructure):
     #         models.append(gp)
 
     #     return ModelListGP(*models)
-
-    # # ------------------------------------------------------------------
-    # # Sampler
-    # # ------------------------------------------------------------------
-

@@ -1,7 +1,8 @@
+# libraries
 from abc import ABC, abstractmethod
 
 class AcquisitionStructure(ABC):
-    display_name: str = "Base acquisition"
+    display_name: str = "Acquisition Structure"
     parameters: dict = {}
 
     @abstractmethod

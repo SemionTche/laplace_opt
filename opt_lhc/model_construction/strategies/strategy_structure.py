@@ -16,7 +16,7 @@ class StrategyStructure(ABC):
             "default": 1,
             "min": 1,
             "max": 1000,
-            "label": "Number of shot per sample",
+            "label": "Number of shots per sample",
             "description": "Indicate how many shots should be made for each sample"
         },
 
