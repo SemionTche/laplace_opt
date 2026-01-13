@@ -13,7 +13,7 @@ from model_construction.inputs.input_structure import InputStructure
 class InputWidget(QWidget):
     '''
     InputWidget defines the line of an input. The input must 
-    have it's own class file in 'model_construction/inputs' 
+    have its own class file in 'model_construction/inputs' 
     and respect the InputStructure format.
     '''
     def __init__(self, name: str, cls: type[InputStructure]):
@@ -23,7 +23,7 @@ class InputWidget(QWidget):
                     name of the class used for this line.
 
                 cls: (type)
-                    the class of the inpout. 
+                    the class of the input. 
                     (must heritate from 'InputStructure')
         '''
         super().__init__() # heritage from QWidget
@@ -64,6 +64,16 @@ class InputWidget(QWidget):
         self.address_label.setEnabled(False)
         self.address_label.setToolTip("The address of the input device used by the server")
         line_layout.addWidget(self.address_label)
+
+        # position index
+        self.position_label = QLabel()
+        self.position_index = self.instance.position_index
+        self.position_label.setText(str(self.position_index) or "Unknown")
+        self.position_label.setEnabled(False)
+        self.position_label.setFixedWidth(20)
+        self.position_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.position_label.setToolTip("The position of the input device in the server list")
+        line_layout.addWidget(self.position_label)
 
         # name
         self.name_label = QLabel(name)
@@ -215,3 +225,4 @@ class InputWidget(QWidget):
 
     def enable_address(self, enable: bool) -> None:
         self.address_label.setEnabled(enable)
+        self.position_label.setEnabled(enable)
