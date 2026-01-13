@@ -14,6 +14,7 @@ from botorch.utils.transforms import normalize
 from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 
+from core.optimizerContext import OptimizationContext
 from model_construction.strategies.strategy_structure import StrategyStructure
 
 
@@ -56,20 +57,6 @@ class ModelList(StrategyStructure):
             "label": "Number of samples",
             "description": ""
         },
-        
-        "raw_samples": {
-            "type": int,
-            "default": 10,
-            "label": "Raw samples",
-            "description": ""
-        },
-        
-        "num_restarts": {
-            "type": int,
-            "default": 8,
-            "label": "Number of restarts",
-            "description": ""
-        },
 
         # "covar_module": {
         #     "type": dict,
@@ -85,12 +72,14 @@ class ModelList(StrategyStructure):
 
     def build_model(
         self,
-        train_X_list: List[torch.Tensor],
-        train_Y_list: List[torch.Tensor],
-        bounds: torch.Tensor,
+        context: OptimizationContext,
         **params,
     ):
         models = []
+        
+        train_X_list = context.train_X_list
+        train_Y_list = context.train_Y_list
+        bounds = context.bounds
 
         standardize = params.get("standardize_outputs", None)
 

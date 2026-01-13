@@ -4,6 +4,8 @@ import torch
 from botorch.optim import optimize_acqf
 from botorch.utils.transforms import normalize, unnormalize
 
+from core.optimizerContext import OptimizationContext
+
 class Optimizer:
 
     def __init__(self, opt_form: dict):
@@ -162,74 +164,33 @@ class Optimizer:
         return "\n".join(lines)
     
     
-    def build_model(self):
+    def build_model(self, context: OptimizationContext) -> None:
         self.strategy_cls = self.strategy["cls"]()
         strategy_params = self.strategy.get("params", {})
 
         self.model = self.strategy_cls.build_model(
-            train_X_list=self.train_X_list,
-            train_Y_list=self.train_Y_list,
-            bounds=self.bounds,
+            context=context,
             **strategy_params,
         )
     
-    def build_acquisition(self):
+    def build_acquisition(self, context) -> None:
         acq_cls = self.acq["cls"]()
         acq_params = self.acq.get("params", {})
 
-        # sampler = self.strategy_cls.get_default_sampler(self.model)
-        
-        runtime_args = self.runtime_args(acq_cls)
-        
         self.acquisition = acq_cls.build(
             model=self.model,
-            # sampler=sampler,
+            context=context,
             **acq_params,
-            **runtime_args
         )
-    
-
-    def get_X_baseline(self) -> torch.Tensor:
-        """
-        Return the union of all evaluated design points,
-        suitable for NEHVI / LogNEHVI.
-        """
-        Xs = []
-
-        for X in self.train_X_list:
-            if isinstance(X, torch.Tensor) and X.numel() > 0:
-                Xs.append(X)
-
-        if len(Xs) == 0:
-            raise RuntimeError("No baseline points available.")
-
-        # concatenate and drop duplicates
-        X_all = torch.cat(Xs, dim=0)
-        X_unique = torch.unique(X_all, dim=0)
-
-        return X_unique
 
 
-    def compute_ref_point(self) -> torch.Tensor:
-        ref = []
-        for i, obj in enumerate(self.objectives.values()):
-            y = self.train_Y_list[i].squeeze(-1)
-
-            if obj.minimize:
-                ref.append(y.max() + 0.1 * y.abs().max())
-            else:
-                ref.append(y.min() - 0.1 * y.abs().max())
-
-        return torch.tensor(ref, dtype=torch.double)
-
-
-    def optimize(self, q=1):
+    def optimize(self):
         params = self.strategy.get("params", {})
 
         candidate_norm, acq_value = optimize_acqf(
             acq_function=self.acquisition,
             bounds=normalize(self.bounds, self.bounds),
-            q=q,
+            q=params.get("q_candidates", 1),
             num_restarts=params.get("num_restarts", None),
             raw_samples=params.get("raw_samples", None),
         )
@@ -237,7 +198,7 @@ class Optimizer:
         return unnormalize(candidate_norm, self.bounds)
 
 
-    def suggest_next_points(self, q=1) -> torch.Tensor:
+    def suggest_next_points(self) -> torch.Tensor:
         """
         High-level API used by UI / server.
         """
@@ -247,34 +208,40 @@ class Optimizer:
         # at least one objective must have data
         if not any(len(X) > 0 for X in self.train_X_list):
             raise RuntimeError("No objective has observations.")
+        
+        self.context = OptimizationContext(
+            train_X_list=self.train_X_list,
+            train_Y_list=self.train_Y_list,
+            bounds=self.bounds,
+            objectives=self.objectives,
+        )
 
-        self.build_model()
-        self.build_acquisition()
-        return self.optimize(q=q)
+        self.build_model(self.context)
+        self.build_acquisition(self.context)
+        return self.optimize()
 
 
-    def runtime_args(self, cls) -> dict:
-        runtime_inputs = {}
+    # def runtime_args(self, cls) -> dict:
+    #     runtime_inputs = {}
 
-        if "sampler" in cls.requires:
-            runtime_inputs["sampler"] = cls.get_sampler(self.acq.get("params", {})["mc_samples"])
+    #     if "sampler" in cls.requires:
+    #         runtime_inputs["sampler"] = cls.get_sampler(self.acq.get("params", {})["mc_samples"])
 
-        if "X_baseline" in cls.requires:
-            Xb = self.get_X_baseline()
-            runtime_inputs["X_baseline"] = normalize(Xb, self.bounds)
+    #     if "X_baseline" in cls.requires:
+    #         Xb = self.get_X_baseline()
+    #         runtime_inputs["X_baseline"] = normalize(Xb, self.bounds)
 
-        if "ref_point" in cls.requires:
-            runtime_inputs["ref_point"] = self.compute_ref_point()
+    #     if "ref_point" in cls.requires:
+    #         runtime_inputs["ref_point"] = self.compute_ref_point()
 
-        return runtime_inputs
+    #     return runtime_inputs
 
 
     def update_opt(self, data: dict):
-        params = self.strategy.get("params", {})
         self._update_training_data(data)
 
         if self.is_opt:
-            candidates = self.suggest_next_points(q=params.get("q_candidates", 1))
+            candidates = self.suggest_next_points()
             print(f"candidates are : {candidates}")
             # self.send_to_server(candidates)
 

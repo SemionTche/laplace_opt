@@ -4,6 +4,7 @@ from botorch.acquisition.multi_objective.logei import (
 )
 from botorch.sampling import SobolQMCNormalSampler
 
+from core.optimizerContext import OptimizationContext
 from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
 
 
@@ -13,7 +14,9 @@ class qLogNEHVI(AcquisitionStructure):
     parameters = {
         "mc_samples": {
             "type": int, 
-            "default": 128
+            "default": 128,
+            "description": "",
+            "label": "mc_samples"
         },
         "alpha": {
             "type": float, 
@@ -23,30 +26,32 @@ class qLogNEHVI(AcquisitionStructure):
         },
     }
 
-    requires = {"ref_point", "X_baseline", "sampler"}
-
     def build(
         self,
         model,
-        sampler,
-        ref_point: torch.Tensor,
-        X_baseline: torch.Tensor,
+        context: OptimizationContext,
+        mc_samples: int,
         alpha: float,
         **kwargs,
     ):
-        return qLogNoisyExpectedHypervolumeImprovement(
-            model=model,
-            ref_point=ref_point,
-            X_baseline=X_baseline,
-            sampler=sampler,
-            alpha=alpha,
-        )
-
-
-    def get_sampler(self, mc_samples: int):
-        """
-        Return a sampler compatible with ModelListGP.
-        """
-        return SobolQMCNormalSampler(
+        sampler = SobolQMCNormalSampler(
             sample_shape=torch.Size([mc_samples])
         )
+
+        return qLogNoisyExpectedHypervolumeImprovement(
+            model=model,
+            ref_point=context.compute_ref_point(),
+            X_baseline=context.get_X_baseline_normalized(),
+            sampler=sampler,
+            alpha=alpha,
+            **kwargs
+        )
+
+
+    # def get_sampler(self, mc_samples: int):
+    #     """
+    #     Return a sampler compatible with ModelListGP.
+    #     """
+    #     return SobolQMCNormalSampler(
+    #         sample_shape=torch.Size([mc_samples])
+    #     )

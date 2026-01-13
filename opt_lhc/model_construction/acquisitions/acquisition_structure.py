@@ -5,5 +5,5 @@ class AcquisitionStructure(ABC):
     parameters: dict = {}
 
     @abstractmethod
-    def build(self, model, sampler, **params):
+    def build(self, model, context, **params):
         pass
