@@ -96,6 +96,11 @@ def create_standard_widget(name: str, meta: dict) -> QWidget:
         w.addItems(["True", "False"])
         default = meta.get("default", False)
         w.setCurrentIndex(0 if default else 1)
+    
+    elif ptype is dict:
+        w = QComboBox()
+        w.addItems(meta.get("combo", {}))
+        w.setCurrentIndex(meta.get("default", 0))
 
     elif ptype is str and name == "path":   # if making a path widget
         w = PathStandardWidget(

@@ -10,6 +10,9 @@ from botorch import fit_gpytorch_mll
 from botorch.sampling import SobolQMCNormalSampler
 from botorch.utils.transforms import normalize
 
+from gpytorch.kernels.rbf_kernel import RBFKernel
+from gpytorch.kernels.matern_kernel import MaternKernel
+
 from model_construction.strategies.strategy_structure import StrategyStructure
 
 
@@ -66,6 +69,17 @@ class ModelList(StrategyStructure):
             "label": "Number of restarts",
             "description": ""
         },
+
+        "covar_module": {
+            "type": dict,
+            "default": 0,
+            "combo": {
+                "RBF": RBFKernel,
+                "Matern": MaternKernel
+            },
+            "label": "Kernel",
+            "description" : ""
+        }
     }
 
     def build_model(
