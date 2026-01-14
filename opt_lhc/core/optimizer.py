@@ -124,6 +124,7 @@ class Optimizer:
             "is_init": is_init,
             "is_opt": is_opt,
             "samples": samples,
+            "obj": self.get_objective_spec()
         }
 
         return payload
@@ -153,6 +154,48 @@ class Optimizer:
         bounds = torch.Tensor(bounds).T   # convert the list to a tensor. The tensor must be 2 x d (d = input dimension)
         print(f"the boundaries are = {bounds}")
         return bounds_dict, bounds
+
+
+    def get_objective_spec(self) -> dict[str, list[list[str] | None]]:
+        """
+        Build objective specification grouped by address and position_index.
+
+        Returns:
+            {
+                address: [
+                    output_keys_at_pos0 | None,
+                    output_keys_at_pos1 | None,
+                    ...
+                ]
+            }
+        """
+        obj_spec: dict[str, dict[int, list[str]]] = {}
+
+        for name, obj in self.objectives.items():
+            addr = obj.address
+            pos = obj.position_index
+            key = obj.output_key
+
+            if addr not in obj_spec:
+                obj_spec[addr] = {}
+
+            obj_spec[addr].setdefault(pos, []).append(key)
+
+        # convert sparse dicts to dense lists
+        result: dict[str, list[list[str] | None]] = {}
+
+        for addr, pos_dict in obj_spec.items():
+            max_pos = max(pos_dict.keys())
+            lst: list[list[str] | None] = [None] * (max_pos + 1)
+
+            for pos, keys in pos_dict.items():
+                lst[pos] = keys
+
+            result[addr] = lst
+
+        return result
+
+
 
 
     def _compute_address_sizes(self, bounds_dict: dict) -> dict[str, int]:
