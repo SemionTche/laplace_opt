@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 class ObjectiveStructure(ABC):
     
-    def __init__(self, name: str, unit: str, minimize: bool, description: str, symbol:str):
+    def __init__(self, name: str, unit: str, minimize: bool, description: str, symbol:str, address: str, position_index: int):
 
         self._name = name
         self._unit = unit
@@ -10,6 +10,9 @@ class ObjectiveStructure(ABC):
 
         self.description = description
         self.symbol = symbol
+
+        self.address = address
+        self.position_index = position_index
     
     @property
     def name(self) -> str:

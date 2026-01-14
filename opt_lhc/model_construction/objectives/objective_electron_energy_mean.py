@@ -14,13 +14,11 @@ class ElectronEnergyMean(ObjectiveStructure):
         description = "The spectrum mean energy"
         symbol = r"$E_0$"
 
-        ObjectiveStructure.__init__(self, name, unit, minimize, description, symbol)
+        address = "tcp://147.250.140.65:5556"
+        position_index = 0
+
+        ObjectiveStructure.__init__(self, name, unit, minimize, description, symbol, address, position_index)
 
 
     def get_value(self) -> None:
         pass
-
-
-if __name__ == "__main__":
-    e = ElectronEnergyMean(True)
-    print(e)

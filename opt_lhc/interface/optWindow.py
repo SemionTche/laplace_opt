@@ -41,7 +41,7 @@ class OptWindow(QMainWindow):
         # set title, geometry and style
         self.setWindowTitle("Optimization Window")
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
-        self.setGeometry(100, 30, 1000, 700)
+        self.setGeometry(100, 30, 1500, 800)
 
         # icon
         icon_path = p.parent / 'icons' # path to the icon folder
@@ -71,8 +71,8 @@ class OptWindow(QMainWindow):
 
             # input / obj layout
         middle_layout = QHBoxLayout()
-        middle_layout.addWidget(self.input_panel, stretch=3)
-        middle_layout.addWidget(self.objective_panel, stretch=2)
+        middle_layout.addWidget(self.input_panel, stretch=1)
+        middle_layout.addWidget(self.objective_panel, stretch=1)
         main_layout.addLayout(middle_layout)
 
         # Block 3: Init
@@ -115,6 +115,10 @@ class OptWindow(QMainWindow):
         # enable / disable input addresses with respect to the server signal
         self.execution_panel.server_state_changed.connect(
             self.input_panel.enable_addresses
+        )
+
+        self.execution_panel.server_state_changed.connect(
+            self.objective_panel.enable_addresses
         )
         
         # change the saving path when the server get the "SAVE" cmd
