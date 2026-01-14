@@ -116,16 +116,19 @@ class InputWidget(QWidget):
 
         if self.safe_bounds:
             safe_lo, safe_hi = self.safe_bounds
-            self.min_spin.setRange(safe_lo, safe_hi) # min / max spin
+            self.min_spin.setRange(safe_lo, safe_hi)
             self.max_spin.setRange(safe_lo, safe_hi)
 
-            lo, hi = self.instance.bounds
-            self.min_spin.setValue(lo)
-            self.max_spin.setValue(hi)
+        lo, hi = self._compute_effective_bounds()
+
+        self.min_spin.setValue(lo)
+        self.max_spin.setValue(hi)
+
+        self.instance.set_bounds((lo, hi))
         
         # set label safe bounds
         self.safe_label.setText(f"safe: {self.safe_bounds}")
-
+        
         self.actions() # defines the actions of InputWidget
 
 
@@ -174,6 +177,27 @@ class InputWidget(QWidget):
         bounds = self.get_value()
         if bounds is not None:
             self.instance.set_bounds(bounds)
+
+
+    def _compute_effective_bounds(self) -> tuple[float, float]:
+        """
+        Compute the bounds actually used by the UI and the instance,
+        intersecting instance.bounds with safe_bounds if needed.
+        """
+        lo, hi = self.instance.bounds
+
+        if self.safe_bounds:
+            safe_lo, safe_hi = self.safe_bounds
+            lo = max(lo, safe_lo)
+            hi = min(hi, safe_hi)
+
+        if lo >= hi:
+            raise ValueError(
+                f"Invalid bounds after applying safe bounds for {self.name}: "
+                f"{(lo, hi)}"
+            )
+
+        return lo, hi
 
 
     def safe_bounds_checking(self) -> None:

@@ -1,5 +1,5 @@
 import torch
-
+from collections import defaultdict
 
 from botorch.optim import optimize_acqf
 from botorch.utils.transforms import normalize, unnormalize
@@ -82,6 +82,9 @@ class Optimizer:
         # make a list of addresses (one per dimension)
         addresses = [v["address"] for v in bounds_dict.values()]
 
+        address_sizes = self._compute_address_sizes(bounds_dict)
+        addresses = list(address_sizes.keys())
+
         # ensure CPU tensor for serialization
         X = X.cpu()
 
@@ -90,16 +93,25 @@ class Optimizer:
         for i in range(X.shape[0]):        # for each batch
             for j in range(X.shape[1]):    # for each candidate
 
-                inputs = {}                # NEW dict per sample
+                inputs = {
+                    addr: [None] * size
+                    for addr, size in address_sizes.items()
+                }                # NEW dict per sample
 
-                for k, addr in enumerate(addresses):  # for each dimension
+                for k, (name, info) in enumerate(bounds_dict.items()):
+                    addr = info["address"]
+                    pos = info["position_index"]
 
-                    # initialize list if address already exists
-                    if addr not in inputs:
-                        inputs[addr] = []
+                    inputs[addr][pos] = X[i, j, k].item()
 
-                    # append the value corresponding to this DOF
-                    inputs[addr].append(X[i, j, k].item())
+                # for k, addr in enumerate(addresses):  # for each dimension
+
+                #     # initialize list if address already exists
+                #     if addr not in inputs:
+                #         inputs[addr] = []
+
+                #     # append the value corresponding to this DOF
+                #     inputs[addr].append(X[i, j, k].item())
 
                 # add the sample to the list
                 samples.append({
@@ -139,8 +151,22 @@ class Optimizer:
             }
         
         bounds = torch.Tensor(bounds).T   # convert the list to a tensor. The tensor must be 2 x d (d = input dimension)
-        
+        print(f"the boundaries are = {bounds}")
         return bounds_dict, bounds
+
+
+    def _compute_address_sizes(self, bounds_dict: dict) -> dict[str, int]:
+        """
+        Returns {address: size_of_motor_list}
+        """
+        sizes = defaultdict(int)
+
+        for info in bounds_dict.values():
+            addr = info["address"]
+            pos = info["position_index"]
+            sizes[addr] = max(sizes[addr], pos + 1)
+
+        return dict(sizes)
 
 
     def format_print(self, X: torch.Tensor, bounds_dict: dict) -> str:

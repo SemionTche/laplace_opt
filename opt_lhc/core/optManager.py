@@ -59,6 +59,7 @@ class OptManager(QObject):
         self.is_online = self.opt_form["exec"]["is_online"]  # whether the optimization is accessible from the server
         self.is_opt = self.opt_form["opt"]["enabled"]
         data = self.optimizer.init_opt()
+        print(f"[Data set to server] data = {data}")
         
         if self.is_online:
             self.serv.set_data(data)                 # add the payload to the server
