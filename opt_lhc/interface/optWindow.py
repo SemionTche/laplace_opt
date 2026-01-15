@@ -7,16 +7,15 @@ from PyQt6.QtGui import QIcon
 
 import qdarkstyle
 import pathlib
-import torch
 
 from log_laplace.log_lhc import log
 from log_laplace.utils import json_style
 
 # project
-from interface.executionPanel import ExecutionPanel
-from interface.inOutPanel import InOutPanel
-from interface.initializationPanel import InitializationPanel
-from interface.optPanel import OptPanel
+from interface.panels.executionPanel import ExecutionPanel
+from interface.panels.inOutPanel import InOutPanel
+from interface.panels.initializationPanel import InitializationPanel
+from interface.panels.optPanel import OptPanel
 
 from core.optManager import OptManager
 

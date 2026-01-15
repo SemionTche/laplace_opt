@@ -2,8 +2,8 @@
 from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QListWidget, QListWidgetItem
 
 # project
-from interface.inputWidget import InputWidget
-from interface.objectiveWidget import ObjectiveWidget
+from interface.widgets.inputWidget import InputWidget
+from interface.widgets.objectiveWidget import ObjectiveWidget
 
 from utils.getter import get_classes
 from model_construction.inputs.input_structure import InputStructure
