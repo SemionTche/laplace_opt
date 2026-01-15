@@ -2,6 +2,11 @@
 from PyQt6.QtWidgets import QApplication
 import sys
 
+from log_laplace.log_lhc import LoggerLHC
+
+logger = LoggerLHC("opt_laplace")
+logger.info("Hello from Laplace logger!")
+
 # project
 from interface.optWindow import OptWindow
 
