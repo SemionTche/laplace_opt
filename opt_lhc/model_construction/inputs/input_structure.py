@@ -9,6 +9,7 @@ def check_bounds_format(bounds: Sequence[float]):
     if len(bounds) != 2 or bounds[0] > bounds[1]:
         raise ValueError("bounds must have exactly 2 elements: (min, max)")
 
+
 class InputStructure(ABC):
     
     def __init__(self, name: str, 

@@ -10,20 +10,21 @@ import pathlib
 # project
 from model_construction.inputs.input_structure import InputStructure
 
+
 class InputWidget(QWidget):
     '''
-    InputWidget defines the line of an input. The input must 
-    have its own class file in 'model_construction/inputs' 
-    and respect the InputStructure format.
+    Define the input line. The input must have its own 
+    class file in 'model_construction/inputs' and respect 
+    the InputStructure format.
     '''
     def __init__(self, name: str, cls: type[InputStructure]):
         '''
             Args:
                 name: (str)
-                    name of the class used for this line.
+                    class name used for this line.
 
                 cls: (type)
-                    the class of the input. 
+                    the input class. 
                     (must heritate from 'InputStructure')
         '''
         super().__init__() # heritage from QWidget
@@ -31,14 +32,33 @@ class InputWidget(QWidget):
         self.name = name
         self.instance: InputStructure = cls()  # create a class instance
 
-        # main input line layout
-        line_layout = QHBoxLayout(self)
-        line_layout.setContentsMargins(4, 2, 4, 2)
-        line_layout.setSpacing(8)
-        self.setLayout(line_layout)
+        # get relevant features from the instance
+        self.address = self.instance.address
+        self.position_index = self.instance.position_index
+        self.description = self.instance.description
+        self.unit = self.instance.unit
+        self.safe_bounds = self.instance.safe_bounds
 
-        p = pathlib.Path(__file__)       # get the path of the file
-        icon_path = p.parent.parent / 'icons'   # path to the icon folder
+        self.set_up()  # build the input widget
+        self.actions() # defines the actions of InputWidget
+
+        # first verification of the boundaries
+        self.set_inital_boundaries()  # compare the default input boundaries with the safe ones
+        self.update_min_max()
+
+
+    def set_up(self) -> None:
+        '''
+        Build the widget of the InputWidget class.
+        '''
+        # input line layout
+        line_layout = QHBoxLayout(self)
+        line_layout.setContentsMargins(4, 2, 4, 2) # widget margin
+        line_layout.setSpacing(8)                  # spacing
+        self.setLayout(line_layout)                # set layout
+
+        p = pathlib.Path(__file__)              # get the file path
+        icon_path = p.parent.parent / 'icons'   # get the icon folder path
 
         # build the check and uncheck icons
         self.connected_icon = QIcon(str(icon_path / 'connected.png'))
@@ -46,12 +66,12 @@ class InputWidget(QWidget):
 
         # state
         self.state_checkBox = QCheckBox()
-        self.state_checkBox.setToolTip(f"Enable {name}")
+        self.state_checkBox.setToolTip(f"Enable {self.name}")
         self.state_checkBox.setFixedWidth(20)
         line_layout.addWidget(self.state_checkBox)
 
         # state icon
-        self.state_icon = QLabel() # create a blank label
+        self.state_icon = QLabel()                                       # create a blank label
         self.state_icon.setFixedWidth(20)
         self.state_icon.setPixmap(self.disconnected_icon.pixmap(16, 16)) # add an image
         self.state_icon.setToolTip("Current state")
@@ -59,7 +79,6 @@ class InputWidget(QWidget):
 
         # address
         self.address_label = QLabel()
-        self.address = self.instance.address      # get address from the instance
         self.address_label.setText(self.address or "Unknown")
         self.address_label.setEnabled(False)
         self.address_label.setToolTip("The address of the input device used by the server")
@@ -67,7 +86,6 @@ class InputWidget(QWidget):
 
         # position index
         self.position_label = QLabel()
-        self.position_index = self.instance.position_index
         self.position_label.setText(str(self.position_index) or "Unknown")
         self.position_label.setEnabled(False)
         self.position_label.setFixedWidth(20)
@@ -76,9 +94,8 @@ class InputWidget(QWidget):
         line_layout.addWidget(self.position_label)
 
         # name
-        self.name_label = QLabel(name)
-        self.tip = self.instance.description
-        self.name_label.setToolTip(self.tip)    # add a description
+        self.name_label = QLabel(self.name)
+        self.name_label.setToolTip(self.description)
         self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         line_layout.addWidget(self.name_label)
 
@@ -98,7 +115,6 @@ class InputWidget(QWidget):
 
         # Unit
         self.unit_label = QLabel()
-        self.unit = self.instance.unit   # get unit from the instance
         self.unit_label.setText(self.unit or "Unknown")
         self.unit_label.setFixedWidth(25)
         self.unit_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -112,44 +128,55 @@ class InputWidget(QWidget):
         self.safe_label.setToolTip("The intervalle available")
         line_layout.addWidget(self.safe_label)
 
-        self.safe_bounds = self.instance.safe_bounds   # get safe bounds from the instance
-
-        if self.safe_bounds:
-            safe_lo, safe_hi = self.safe_bounds
-            self.min_spin.setRange(safe_lo, safe_hi)
-            self.max_spin.setRange(safe_lo, safe_hi)
-
-        lo, hi = self._compute_effective_bounds()
-
-        self.min_spin.setValue(lo)
-        self.max_spin.setValue(hi)
-
-        self.instance.set_bounds((lo, hi))
+        safe_lo, safe_hi = self.safe_bounds
+        self.min_spin.setRange(safe_lo, safe_hi)
+        self.max_spin.setRange(safe_lo, safe_hi)
         
         # set label safe bounds
         self.safe_label.setText(f"safe: {self.safe_bounds}")
-        
-        self.actions() # defines the actions of InputWidget
+        self.safe_label.setEnabled(False)
 
 
     def actions(self) -> None:
         '''
         Defines the actions of the InputWidget class.
         '''
-        # when the state is changed, change the icon and enable / disable the spin boxes
+        # when the input state is changed, change the icon and enable / disable the spin boxes
         self.state_checkBox.stateChanged.connect(self.on_state_changed)
-        # when the spin boxes are updated, verify the safe bounds
-        self.min_spin.valueChanged.connect(self.safe_bounds_checking)
-        self.max_spin.valueChanged.connect(self.safe_bounds_checking)
         
+        # when the spin boxes are updated, change the input instance boundaries
         self.min_spin.valueChanged.connect(self.update_instance_bounds)
         self.max_spin.valueChanged.connect(self.update_instance_bounds)
+
+        # when the spin boxes are updated, change the spin boxes range
+        self.min_spin.valueChanged.connect(self.update_min_max)
+        self.max_spin.valueChanged.connect(self.update_min_max)
+
+
+    def set_inital_boundaries(self) -> None:
+        '''
+        Compare the default and safe boundaries and set it 
+        in the instance.
+        
+        Set the spin boxes initial values. 
+        '''
+        lo, hi = self.instance.bounds
+        safe_lo, safe_hi = self.instance.safe_bounds
+    
+        lo = max(lo, safe_lo)
+        hi = min(hi, safe_hi)
+
+        self.instance.set_bounds((lo, hi))  # set the instance boundaries
+
+        # set the spin boxe values
+        self.min_spin.setValue(lo)
+        self.max_spin.setValue(hi)
 
 
     def on_state_changed(self, enabled: bool) -> None:
         '''
-        When the InputWidget state changes, enable / disable
-        the spin boxes, change the icon and check the bounds.
+        When the InputWidget state change, enable / disable
+        the spin boxes, change the icon and check the boundaries.
         '''
         # change the icon
         icon = self.connected_icon if enabled else self.disconnected_icon
@@ -158,89 +185,50 @@ class InputWidget(QWidget):
         self.min_spin.setEnabled(enabled)  # enable / disable the spin boxes
         self.max_spin.setEnabled(enabled)
 
-        if not enabled:
-            # reset the style of the widget (disable colors)
-            self.min_spin.setStyleSheet("")
-            self.max_spin.setStyleSheet("")
-            self.safe_label.setStyleSheet("")
-        
-        self.safe_bounds_checking() # verify if the spin boxes are valid.
+        self.safe_label.setEnabled(enabled) # enable / disable safe label
 
 
     def update_instance_bounds(self) -> None:
         '''
-        Update the bounds in the class instance.
+        Update the boundaries in the class instance.
         '''
-        if not self.is_enabled():
-            return
+        if not self.is_enabled():  # if the input is not selected
+            return                 # do not change anything
 
-        bounds = self.get_value()
-        if bounds is not None:
-            self.instance.set_bounds(bounds)
-
-
-    def _compute_effective_bounds(self) -> tuple[float, float]:
-        """
-        Compute the bounds actually used by the UI and the instance,
-        intersecting instance.bounds with safe_bounds if needed.
-        """
-        lo, hi = self.instance.bounds
-
-        if self.safe_bounds:
-            safe_lo, safe_hi = self.safe_bounds
-            lo = max(lo, safe_lo)
-            hi = min(hi, safe_hi)
-
-        if lo >= hi:
-            raise ValueError(
-                f"Invalid bounds after applying safe bounds for {self.name}: "
-                f"{(lo, hi)}"
-            )
-
-        return lo, hi
+        bounds = self.get_value()            # get the boundary values
+        if bounds is not None:               # if the value is valid
+            self.instance.set_bounds(bounds) # update the instance boundaries
 
 
-    def safe_bounds_checking(self) -> None:
+    def update_min_max(self) -> None:
         '''
-        Verify the boundaries provided in the spin boxes.
-        Update safe bounds label accordingly.
+        Update the min and max values of the spin boxes.
         '''
-        # if the InputWidget is not selected
-        if not self.is_enabled():
-            return  # do not check the boundaries
-
-        valid = self.get_value() is not None
-
-        # Update styles
-        if not valid:
-            # add red over the spin boxes
-            self.min_spin.setStyleSheet("border: 1px solid red;")
-            self.max_spin.setStyleSheet("border: 1px solid red;")
-            self.safe_label.setStyleSheet("color: red;") # set the safe bound red color
-        else:
-            # reset the spin boxe styles (disable the color)
-            self.min_spin.setStyleSheet("")
-            self.max_spin.setStyleSheet("")
-            self.safe_label.setStyleSheet("color: green;") # set the safe bound green color
+        safe_lo, safe_hi = self.safe_bounds
+        self.min_spin.setRange(safe_lo, self.max_spin.value())
+        self.max_spin.setRange(self.min_spin.value(), safe_hi)
 
 
     def get_value(self) -> tuple[float, float] | None:
         '''
-        Return the values of the spin boxes if they are in the safe boundaries.
+        Return the spin boxe's values if they are in the safe boundaries.
         Return None otherwise.
         '''
         if not self.state_checkBox.isChecked(): # if the InputWidget is not selected
-            return None
+            return None                         # do nothing
         
         lo = self.min_spin.value() # get the spin box values
         hi = self.max_spin.value()
-        
-        if self.safe_bounds: # if the safe bounds exist
-            safe_lo, safe_hi = self.safe_bounds
-            if lo < safe_lo or hi > safe_hi or lo >= hi: # compare the corresponding boundaries
-                return None
+
+        safe_lo, safe_hi = self.safe_bounds  # get the safe bounds
+
+        valid = safe_lo <= lo <= hi <= safe_hi  # define if valid
+
+        if not valid:
+            return None
 
         return (lo, hi)
+
 
     ### helpers
 
