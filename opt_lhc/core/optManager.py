@@ -7,7 +7,9 @@ from server_lhc.protocol import DEVICE_OPT
 from server_lhc.serverController import ServerController
 
 # project
+from core.optimizer import Optimizer
 from utils.save_configuration import save_config
+
 
 class OptManager(QObject):
 
@@ -21,7 +23,13 @@ class OptManager(QObject):
 
         self.is_saving = False
         self.is_online = False
+        self.is_opt = False
         self._opt_form = {}
+
+        self.strategy = None
+        self.model = None
+        self.train_X_list = None
+        self.train_Y_list = None
 
         self.server_controller.get_received.connect(
             self.empty_data
@@ -44,129 +52,38 @@ class OptManager(QObject):
                     the optimization dictionary required to
                     start an initialization or an optimization.
         '''
-        self.is_online = opt_form["exec"]["is_online"]  # whether the optimization is accessible from the server
         self.set_form(opt_form)                         # set the opt_form as attribut of the class
-        self.init_opt()                                 # make initialization process
+        
+        self.optimizer = Optimizer(self.opt_form)
+        
+        self.is_online = self.opt_form["exec"]["is_online"]  # whether the optimization is accessible from the server
+        self.is_opt = self.opt_form["opt"]["enabled"]
+        data = self.optimizer.init_opt()
+        print(f"[Data set to server] data = {data}")
+        
+        if self.is_online:
+            self.serv.set_data(data)                 # add the payload to the server
 
+            self.server_controller.opt_received.connect(
+                self.optimizer.update_opt
+            )
+
+            self.optimizer.new_candidates.connect(
+                self.up_serv_temp
+            )
+    
+    def up_serv_temp(self, data: dict):
+        print("here we are on business")
+        self.serv.set_data(data)
+        print(f"serv data update = {self.serv.data}")
+
+    # def print_test(data: dict):
+    #     print(f"test passed {data}")
 
     def set_form(self, opt_form: dict) -> None:
         '''Helper that set and save the 'opt_form' dictionary of the optimization.'''
         self._opt_form = opt_form     # set the attribute
         self.is_saving = save_config(opt_form)  # save the configuration
-
-
-    def init_opt(self) -> None:
-        '''
-        Use the initialization refered in the 'opt_form' dictrionary.
-        '''
-        self.bounds_dict, self.bounds = self.get_boundaries() # get the boundaries from the input dictionary
-        init = self.opt_form["init"]                          # get the init dictionary
-        init_cls, params = init.values()                      # get the class to use and its parameters
-        init_cls = init_cls()                                 # create an instance of the class
-        self.init_x = init_cls.generate(bounds=self.bounds, **params)  # generate the first points to sample
-
-        data = self.build_data_payload(                       # make the payload for the server
-            self.init_x,
-            self.bounds_dict,
-            is_init=True,
-            is_opt=False,
-        )
-        
-        if self.is_online:
-            self.serv.set_data(data)                          # add the payload to the server
-
-        print("Sobol suggestion:\n", self.format_print(self.init_x, self.bounds_dict)) # print the sample candidates
-
-
-    def get_boundaries(self) -> tuple[dict[str, tuple], torch.Tensor]:
-        '''
-        Helper that extract the boundaries from the 'input' dictionary
-        stored in the optimization form.
-        
-        Return both a dictionary where the boundaries and address of the
-        input are stored using there names and a 'Torch.Tensor' to gather
-        the boundaries.
-        '''
-        bounds = []        # gather the boundaries
-        bounds_dict = {}   # information about the inputs
-        
-        inputs = self.opt_form["inputs"]  # get the input dictionary from the form
-        
-        for name, cls in inputs.items():  # for each element
-            bounds.append(cls.bounds)     # add the boundaries in the list
-            bounds_dict[name] = {"address": cls.address, "bounds": cls.bounds} # create the field to gather the address and the boundaries
-        
-        bounds = torch.Tensor(bounds).T   # convert the list to a tensor. The tensor must be 2 x d (d = input dimension)
-        
-        return bounds_dict, bounds
-
-
-    def build_data_payload(self, X: torch.Tensor, 
-                           bounds_dict: dict,
-                           *,
-                           is_init: bool,
-                           is_opt: bool) -> dict:
-        '''
-        Build the payload dictionary to be transmited through
-        the server.
-
-            Args:
-                X: (torch.Tensor)
-                    the sample candidates to sample  of shape (n, q, d).
-                
-                bounds_dict: (dict)
-                    the input main informations: {name: {"bounds": ..., "address": ...}}
-
-                is_init: (bool)
-                    indicating if it is the initialization suggested points.
-                
-                is_opt: (bool)
-                    indicating if it is the optimization suggested points.
-        '''
-        payload = {}
-        addresses = [v["address"] for v in bounds_dict.values()]  # make a list of addresses
-        X = X.cpu()
-
-        samples = []
-        inputs = {}
-        for i in range(X.shape[0]):        # for each sample
-            for j in range(X.shape[1]):    # for each candidate
-                for k, addr in enumerate(addresses):  # for each address
-                    inputs[addr] = X[i, j, k].item()  # set the input value
-                
-                samples.append({           # add the sample to the list
-                    "batch": i,
-                    "candidate": j,
-                    "inputs": inputs,
-                })
-        
-        payload = {
-            "is_init": is_init,
-            "is_opt": is_opt,
-            "samples": samples,
-        }
-
-        return payload
-    
-
-    def format_print(self, X: torch.Tensor, bounds_dict: dict) -> str:
-        '''
-        Print the values that each input should take. Use a X 'torch.Tensor'
-        for the values and a 'bounds_dict' for the input addresses.
-        '''
-        addresses = [v["address"] for v in bounds_dict.values()]  # make a list of addresses
-
-        lines = []
-        for i in range(X.shape[0]):                            # for each sample
-            lines.append(f"batch {i + 1}:")                     # print which sample it is
-            for j in range(X.shape[1]):                          # for each candidate
-                coords = ", ".join(
-                    f"{addr}={X[i, j, k].item():.6g}"            # for each input, address = value
-                    for k, addr in enumerate(addresses)
-                )
-                lines.append(f"  Candidate {j + 1}: {coords}")   # print the candidate
-        
-        return "\n".join(lines)
 
 
     def server_launch(self, server_state: bool) -> None:
@@ -192,6 +109,10 @@ class OptManager(QObject):
                 self.server_controller.on_get
             )
 
+            self.serv.set_on_opt(
+                self.server_controller.on_opt
+            )
+
             self.serv.start() # start the server
 
             # emit a signal to transmit the server address to the ExecutionPanel
@@ -200,6 +121,8 @@ class OptManager(QObject):
         else: # if off
             self.serv.stop() # stop the server
 
-
+    
     def empty_data(self) -> None:
-        self.serv.set_data({})
+        if self.serv.reset_data:
+            self.serv.set_data({})
+            print("server is empty")

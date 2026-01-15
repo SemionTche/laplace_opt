@@ -12,7 +12,9 @@ from utils.path_standard_widget import PathStandardWidget
 def place_labeled_widgets(layout: QGridLayout,
                           items: list[tuple[str, QWidget]],
                           *,
-                          max_per_row: int = 6) -> None:
+                          max_per_row: int = 6,
+                          start_row: int = 0,
+                          start_col: int = 0,) -> tuple[int, int]:
     '''
     Place (label, widget) pairs in a QGridLayout.
 
@@ -34,23 +36,25 @@ def place_labeled_widgets(layout: QGridLayout,
                 the maximum number of element per row.
                 (default 6)
     '''
-    col = 0
-    base_row = 0
+    row = start_row
+    col = start_col
 
     for label_text, widget in items: # for every widget
         if col >= max_per_row:       # if the line is full
             col = 0                  # restart from first column
-            base_row += 2            # skip 2 lines (label and widget were placed)
+            row += 2            # skip 2 lines (label and widget were placed)
 
         # create the label
         label = QLabel(label_text)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # place label and widget
-        layout.addWidget(label, base_row, col)
-        layout.addWidget(widget, base_row + 1, col)
+        layout.addWidget(label, row, col)
+        layout.addWidget(widget, row + 1, col)
 
         col += 1  # update the column
+    
+    return row, col
 
 
 def create_standard_widget(name: str, meta: dict) -> QWidget:
@@ -92,6 +96,11 @@ def create_standard_widget(name: str, meta: dict) -> QWidget:
         w.addItems(["True", "False"])
         default = meta.get("default", False)
         w.setCurrentIndex(0 if default else 1)
+    
+    elif ptype is dict:
+        w = QComboBox()
+        w.addItems(meta.get("combo", {}))
+        w.setCurrentIndex(meta.get("default", 0))
 
     elif ptype is str and name == "path":   # if making a path widget
         w = PathStandardWidget(
@@ -102,6 +111,10 @@ def create_standard_widget(name: str, meta: dict) -> QWidget:
 
     else:
         raise TypeError(f"Unsupported parameter type: {ptype}")
+    
+    description = meta.get("description")
+    if description:
+        w.setToolTip(description)     # add a tool tip
 
     return w
 
@@ -109,7 +122,9 @@ def create_standard_widget(name: str, meta: dict) -> QWidget:
 def load_standard_widgets(layout: QGridLayout,
                           parameters: dict[str, dict],
                           *,
-                          max_per_row: int = 6) -> dict[str, QWidget]:
+                          max_per_row: int = 6,
+                          start_row: int = 0,
+                          start_col: int = 0,) -> tuple[dict[str, QWidget], int, int]:
     '''
     Create and place parameter widgets in a given grid layout.
 
@@ -140,10 +155,12 @@ def load_standard_widgets(layout: QGridLayout,
         widgets[name] = w         # add the widget in the dictionary
 
     # place the widget in the layout
-    place_labeled_widgets(
+    row, col = place_labeled_widgets(
         layout,
         items,
         max_per_row=max_per_row,
+        start_row=start_row,
+        start_col=start_col
     )
 
-    return widgets
+    return widgets, row, col

@@ -18,6 +18,8 @@ class GasPressure(InputStructure):
 
         description = "Gas pressure"
         symbol = "P_gas"
+
+        position_index = 0
         
         InputStructure.__init__(
             self, 
@@ -27,7 +29,8 @@ class GasPressure(InputStructure):
             unit=unit, 
             address=address, 
             description=description,
-            symbol=symbol
+            symbol=symbol,
+            position_index=position_index
         )
     
     @property

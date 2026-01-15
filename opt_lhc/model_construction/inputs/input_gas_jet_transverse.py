@@ -13,10 +13,12 @@ class GasJetTransverse(InputStructure):
         name = "gas_jet_transverse"
         unit = "mm"
         safe_bounds = (0.0, 15.0)
-        address = "tmp 3"
+        address = "147.250.140.65:5555"
         
         description = "Transverse position of the gas jet."
         symbol = "x_gas"
+
+        position_index = 2
         
         InputStructure.__init__(
             self, 
@@ -26,7 +28,8 @@ class GasJetTransverse(InputStructure):
             unit=unit, 
             address=address, 
             description=description,
-            symbol=symbol
+            symbol=symbol,
+            position_index=position_index
         )
 
     def get_position(self) -> None:

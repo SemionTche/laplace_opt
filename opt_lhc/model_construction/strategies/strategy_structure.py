@@ -1,22 +1,56 @@
+# libraries
 from abc import ABC, abstractmethod
-import torch
+
+# project
+from core.optimizerContext import OptimizationContext
 
 class StrategyStructure(ABC):
     display_name: str
     description: str
     parameters: dict
 
-    @abstractmethod
-    def build_model(
-        self,
-        train_X: torch.Tensor,
-        train_Y: torch.Tensor,
-        bounds: torch.Tensor,
-        **params
-    ):
-        """Return a fitted BoTorch model"""
+    # parameters required for every strategy
+    core_parameters = {
+        "number_shot": {
+            "type": int,
+            "default": 1,
+            "min": 1,
+            "max": 1000,
+            "label": "Number of shots per sample",
+            "description": "Indicate how many shots should be made for each sample"
+        },
+
+        "q_candidates": {
+            "type": int,
+            "default": 1,
+            "min": 1,
+            "max": 1024,
+            "label": "Number of candidates",
+            "description": "Number of candidates proposed in one optimization step"
+        },
+
+        "num_restarts": {
+            "type": int,
+            "default": 5,
+            "min": 1,
+            "label": "Number of restarts",
+            "description": "Number of multistart local optimizations used to maximize the acquisition function. Higher values improve robustness but increase cost."
+        },
+
+        "raw_samples": {
+            "type": int,
+            "default": 10,
+            "label": "Raw samples",
+            "description": (
+                "Number of Sobol samples used to score the acquisition function and select starting points for the gradient optimization.\n"
+                "Larger values improve 'restart' quality but increase cost."
+            )
+
+        },
+
+    }
 
     @abstractmethod
-    def get_default_sampler(self, model):
-        """Return a sampler compatible with this model"""
+    def build_model(self, context: OptimizationContext, **params):
+        '''Return a fitted BoTorch model'''
 

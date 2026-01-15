@@ -17,7 +17,8 @@ class InputStructure(ABC):
                  unit: str, 
                  address: str,
                  description: str,
-                 symbol: str):
+                 symbol: str,
+                 position_index: int):
         
         check_bounds_format(bounds)
         check_bounds_format(safe_bounds)
@@ -27,6 +28,8 @@ class InputStructure(ABC):
         self._bounds = bounds
         self._safe_bounds = safe_bounds
         self._unit = unit
+
+        self.position_index = position_index
 
         self.description = description
         self.symbol = symbol

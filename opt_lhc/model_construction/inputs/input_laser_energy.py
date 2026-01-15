@@ -1,10 +1,8 @@
+# libraries
 from typing import Sequence
 
-try:
-    from model_construction.inputs.input_structure import InputStructure
-except ModuleNotFoundError:
-    # allow running the module directly (in __main__)
-    from input_structure import InputStructure
+# project
+from model_construction.inputs.input_structure import InputStructure
 
 class LaserEnergy(InputStructure):
 
@@ -17,6 +15,8 @@ class LaserEnergy(InputStructure):
 
         description = "Laser energy"
         symbol = "E_laser"
+
+        position_index = 0
         
         InputStructure.__init__(
             self, 
@@ -26,7 +26,8 @@ class LaserEnergy(InputStructure):
             unit=unit, 
             address=address, 
             description=description,
-            symbol=symbol
+            symbol=symbol,
+            position_index=position_index
         )
 
     def get_position(self) -> None:
@@ -34,11 +35,3 @@ class LaserEnergy(InputStructure):
 
     def set_position(self, position: float) -> None:
         pass
-
-if __name__ == "__main__":
-    laser_energy = LaserEnergy(bounds=(0, 4))
-    print(laser_energy)
-    print("Position: ", laser_energy.get_position())
-
-    laser_energy.set_bounds((1, 3))
-    print(laser_energy)

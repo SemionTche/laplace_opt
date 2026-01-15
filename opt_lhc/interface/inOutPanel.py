@@ -96,7 +96,7 @@ class InOutPanel(QGroupBox):
         of the panel.
         '''
         for widget in self.rows.values():
-            if isinstance(widget, InputWidget):
+            if isinstance(widget, (InputWidget, ObjectiveWidget)):
                 widget.enable_address(enable)
 
     def get_rows(self) -> dict[str, InputWidget | ObjectiveWidget]:

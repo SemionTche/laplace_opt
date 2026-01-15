@@ -13,7 +13,7 @@ from model_construction.inputs.input_structure import InputStructure
 class InputWidget(QWidget):
     '''
     InputWidget defines the line of an input. The input must 
-    have it's own class file in 'model_construction/inputs' 
+    have its own class file in 'model_construction/inputs' 
     and respect the InputStructure format.
     '''
     def __init__(self, name: str, cls: type[InputStructure]):
@@ -23,7 +23,7 @@ class InputWidget(QWidget):
                     name of the class used for this line.
 
                 cls: (type)
-                    the class of the inpout. 
+                    the class of the input. 
                     (must heritate from 'InputStructure')
         '''
         super().__init__() # heritage from QWidget
@@ -64,6 +64,16 @@ class InputWidget(QWidget):
         self.address_label.setEnabled(False)
         self.address_label.setToolTip("The address of the input device used by the server")
         line_layout.addWidget(self.address_label)
+
+        # position index
+        self.position_label = QLabel()
+        self.position_index = self.instance.position_index
+        self.position_label.setText(str(self.position_index) or "Unknown")
+        self.position_label.setEnabled(False)
+        self.position_label.setFixedWidth(20)
+        self.position_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.position_label.setToolTip("The position of the input device in the server list")
+        line_layout.addWidget(self.position_label)
 
         # name
         self.name_label = QLabel(name)
@@ -106,16 +116,19 @@ class InputWidget(QWidget):
 
         if self.safe_bounds:
             safe_lo, safe_hi = self.safe_bounds
-            self.min_spin.setRange(safe_lo, safe_hi) # min / max spin
+            self.min_spin.setRange(safe_lo, safe_hi)
             self.max_spin.setRange(safe_lo, safe_hi)
 
-            lo, hi = self.instance.bounds
-            self.min_spin.setValue(lo)
-            self.max_spin.setValue(hi)
+        lo, hi = self._compute_effective_bounds()
+
+        self.min_spin.setValue(lo)
+        self.max_spin.setValue(hi)
+
+        self.instance.set_bounds((lo, hi))
         
         # set label safe bounds
         self.safe_label.setText(f"safe: {self.safe_bounds}")
-
+        
         self.actions() # defines the actions of InputWidget
 
 
@@ -164,6 +177,27 @@ class InputWidget(QWidget):
         bounds = self.get_value()
         if bounds is not None:
             self.instance.set_bounds(bounds)
+
+
+    def _compute_effective_bounds(self) -> tuple[float, float]:
+        """
+        Compute the bounds actually used by the UI and the instance,
+        intersecting instance.bounds with safe_bounds if needed.
+        """
+        lo, hi = self.instance.bounds
+
+        if self.safe_bounds:
+            safe_lo, safe_hi = self.safe_bounds
+            lo = max(lo, safe_lo)
+            hi = min(hi, safe_hi)
+
+        if lo >= hi:
+            raise ValueError(
+                f"Invalid bounds after applying safe bounds for {self.name}: "
+                f"{(lo, hi)}"
+            )
+
+        return lo, hi
 
 
     def safe_bounds_checking(self) -> None:
@@ -215,3 +249,4 @@ class InputWidget(QWidget):
 
     def enable_address(self, enable: bool) -> None:
         self.address_label.setEnabled(enable)
+        self.position_label.setEnabled(enable)

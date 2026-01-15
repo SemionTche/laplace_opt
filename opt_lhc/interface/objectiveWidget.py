@@ -56,6 +56,24 @@ class ObjectiveWidget(QWidget):
         self.state_icon.setToolTip("Current state")
         line_layout.addWidget(self.state_icon)
 
+        # address
+        self.address_label = QLabel()
+        self.address = self.instance.address      # get address from the instance
+        self.address_label.setText(self.address or "Unknown")
+        self.address_label.setEnabled(False)
+        self.address_label.setToolTip("The address of the input device used by the server")
+        line_layout.addWidget(self.address_label)
+
+        # position index
+        self.position_label = QLabel()
+        self.position_index = self.instance.position_index
+        self.position_label.setText(str(self.position_index) or "Unknown")
+        self.position_label.setEnabled(False)
+        self.position_label.setFixedWidth(20)
+        self.position_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.position_label.setToolTip("The position of the input device in the server list")
+        line_layout.addWidget(self.position_label)
+
         # name label
         self.name_label = QLabel(name)
         self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -117,3 +135,7 @@ class ObjectiveWidget(QWidget):
 
     def is_minimize(self) -> bool:
         return self.mode.currentText() == "Minimize"
+    
+    def enable_address(self, enable: bool) -> None:
+        self.address_label.setEnabled(enable)
+        self.position_label.setEnabled(enable)
