@@ -5,6 +5,8 @@ from PyQt6.QtCore import pyqtSignal, QObject
 from botorch.optim import optimize_acqf
 from botorch.utils.transforms import normalize, unnormalize
 
+from log_laplace.log_lhc import log
+
 from core.optimizerContext import OptimizationContext
 
 class Optimizer(QObject):
@@ -58,8 +60,10 @@ class Optimizer(QObject):
             is_init=True,
             is_opt=False,
         )
-
+        
         print("Sobol suggestion:\n", self.format_print(self.init_x, self.bounds_dict)) # print the sample candidates
+
+        log.info("This is important info")
 
         return data
 
