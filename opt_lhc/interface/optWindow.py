@@ -191,6 +191,9 @@ class OptWindow(QMainWindow):
 
 
     def on_stop(self):
+        '''
+        Function used when 'stop_button' is pressed.
+        '''
         log.debug("Stop button pressed.")
         pass
 

@@ -5,20 +5,21 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 
+from log_laplace.log_lhc import log
+
 
 class ExecutionPanel(QGroupBox):
     '''
     Panel handling execution mode and data source configuration.
     A lock button allows to enable / disable every widget.
     '''
-    # signal indicating that that the server state changed
-    # connected to "launch_server" in OptWindow
+    # signal indicating that the server checkbox state changed
     server_state_changed = pyqtSignal(bool)
 
     def __init__(self):
         super().__init__("Execution & Data Configuration")
 
-        self.set_up() # build the elements
+        self.set_up()  # build the elements
         self.actions() # defines the panel actions
 
 
@@ -31,20 +32,20 @@ class ExecutionPanel(QGroupBox):
 
         # Online execution
         self.server_checkbox = QCheckBox("Run online (start server)")
-        self.server_label = QLabel("")
+        self.server_label = QLabel("")  # indicates the optimization server address (when server is up)
         self.server_label.setEnabled(False)
 
         # Data source
             # file
         self.read_file = QRadioButton("Read data from file")
-        self.read_file.setChecked(True)
+        self.read_file.setChecked(True)  # default mode read from file
         self.read_entry = QLineEdit()
         self.read_entry.setPlaceholderText("reading path")
         self.read_browse_button = QPushButton("Read Browse")
 
             # server
         self.read_server = QRadioButton("Read data from server")
-        self.read_server.setEnabled(False)
+        self.read_server.setEnabled(False) # cannot read from server until server connected
 
         # Saving entry
         self.saving_entry = QLineEdit()
@@ -73,7 +74,7 @@ class ExecutionPanel(QGroupBox):
 
         exc_layout.addWidget(self.lock_button, 0, 3, alignment=Qt.AlignmentFlag.AlignRight)
 
-        exc_layout.setColumnStretch(2, 1)
+        exc_layout.setColumnStretch(2, 1) # set the Stretch of the 2nd column, to 1 (other are 0)
 
         self.update_read_server_state() # enable / disable the read_server radiobutton
         self.update_read_file_state()   # enable / disable the read_entry
@@ -81,15 +82,15 @@ class ExecutionPanel(QGroupBox):
 
     def actions(self) -> None:
         '''
-        Defines the action of the ExecutionPanel class.
+        Defines the actions of the ExecutionPanel class.
         '''
-        # server connection
+        # when the server checkbox is toggled, use emit a PyQt6 signal
         self.server_checkbox.toggled.connect(self.update_online_state)
         
-        # read from file
+        # when the read from file radiobutton is toggled, enable / disable the read_entry
         self.read_file.toggled.connect(self.update_read_file_state)
         
-        # lock the widgets
+        # when the lock_button is pressed, enable / disable the widgets
         self.lock_button.toggled.connect(self.set_locked)
 
         # select the reading folder
@@ -105,44 +106,48 @@ class ExecutionPanel(QGroupBox):
 
     def update_online_state(self, checked: bool) -> None:
         '''
-        Change the server state and emit signal realted.
+        Change the server state and emit the realted signal.
         '''
-        if not self.lock_button.isChecked():
-            self.server_label.setEnabled(checked) # enable / disable the server address label
+        if not self.lock_button.isChecked():       # if the lock button is not pressed
+            self.server_label.setEnabled(checked)  # enable / disable the server address label
         
         self.update_read_server_state()  # enable / disable the read_server radiobutton
         
-        if checked:
-            self.read_server.setChecked(checked) # check the server reading radio button
-        else:
-            self.read_file.setChecked(True)      # check the file reading radio button
+        self.read_server.setChecked(checked)     # check the server reading radio button
+        self.read_file.setChecked(not checked)   # uncheck the file reading radio button
         
-        self.server_state_changed.emit(checked) # emit a signal to start / stop the server
+        self.server_state_changed.emit(checked)  # emit a signal to start / stop the server
+        log.debug("Server checked." if checked else "Server unchecked.")
 
 
     def update_read_server_state(self) -> None:
         '''
-        Enable read_server only if:
-            - server is enabled
-            - configuration is not locked
+        Enable / disable the server reading radiobutton.
+
+        Enable read_server if server checkbox is enabled
+        and configuration is not locked.
         '''
         enabled = (
-            self.server_checkbox.isChecked()
-            and not self.lock_button.isChecked()
+            self.server_checkbox.isChecked()      # if the server box is checked 
+            and not self.lock_button.isChecked()  # and the lock button not pressed
         )
-        self.read_server.setEnabled(enabled)
+        self.read_server.setEnabled(enabled) # enable / disable the server reading radiobutton
     
 
     def update_read_file_state(self) -> None:
         '''
-        Enable file reading widgets only if:
-            - read_file is selected
-            - configuration is not locked
+        Enable / disable the file reading widgets.
+
+        Enable read file widgets (entry and button) 
+        if read_file radiobutton is selected and
+        configuration not locked.
         '''
         enabled = (
-            self.read_file.isChecked()
-            and not self.lock_button.isChecked()
+            self.read_file.isChecked()            # if the read file radiobutton is checked
+            and not self.lock_button.isChecked()  # and the lock button not pressed
         )
+
+        # enable / disable the reading entry and button
         self.read_entry.setEnabled(enabled)
         self.read_browse_button.setEnabled(enabled)
 
@@ -152,32 +157,35 @@ class ExecutionPanel(QGroupBox):
         Enable / disable every widget of the panel when
         the lock button is clicked.
         '''
-        widgets = [   # list of all widgets of the panel
+        # list of widgets to lock
+        widgets = [
             self.server_checkbox,
             self.read_file,
             self.read_entry,
             self.read_browse_button,
+            self.read_server,
             self.saving_entry,
             self.save_browse_button
         ]
 
         for w in widgets: # for every widget
-            w.setEnabled(not locked) # lock / unlock it (locked = True means disable: Enable = False)
+            w.setEnabled(not locked) # lock / unlock it (locked = True means disable -> Enable = False)
 
-        # for the server label (address), we need to verify if it is in server mode 
-        # otherwise the widget might not exist (if server did not run at all)
-        # and is anyway already disable if the server is off
+        # enable / disable the server address label only if the server is on
         self.server_label.setEnabled(
             self.server_checkbox.isChecked() and not locked
         )
 
+        # lock / unlock the server radiobutton and the 
+        # reading widgets according to the current chosen mode
         self.update_read_server_state()
         self.update_read_file_state()
 
-        # change the text of the button
+        # change the button text 
         self.lock_button.setText(
             "🔓 Unlock configuration" if locked else "🔒 Lock configuration"
         )
+        log.debug("Configuration locked." if locked else "Configuration unlocked.")
 
 
     def browse_folder(self, is_read: bool=True) -> None:
@@ -185,24 +193,30 @@ class ExecutionPanel(QGroupBox):
         Open a QFileDialog to select a folder. Modify the reading
         or saving entry according to the button used.
         '''
-        path = QFileDialog.getExistingDirectory(self,
-                                                "Select folder",
-                                                "",  # initial directory ("" = current working dir)
-                                                QFileDialog.Option.ShowDirsOnly)
+        path = QFileDialog.getExistingDirectory(
+            self,
+            "Select folder",
+            "",             # initial directory ("" = current working dir)
+            QFileDialog.Option.ShowDirsOnly
+        )
 
-        if path: # if a folder was selected
+        # if a folder was selected
+        if path:
             # update the corresponding entry
             if is_read:
                 self.read_entry.setText(path)
+                log.debug(f"Reading folder modified, new reading folder: {path}")
             else:
                 self.saving_entry.setText(path)
+                log.debug(f"Saving folder modified, new saving folder: {path}")
+
 
     ### helpers
 
     def get_execution(self) -> dict[str, bool]:
         '''
         Return the execution dictionary defining the
-        online / offline, reading and saving procedures. 
+        online / offline, reading and saving procedure. 
         '''
         execution = {}
         execution["is_online"] = self.is_online_enabled()
@@ -213,7 +227,7 @@ class ExecutionPanel(QGroupBox):
 
         return execution
 
-
+        # checkers
     def is_online_enabled(self) -> bool:
         return self.server_checkbox.isChecked()
 
@@ -226,6 +240,8 @@ class ExecutionPanel(QGroupBox):
     def read_from_server(self) -> bool:
         return self.read_server.isChecked()
 
+
+        # getters
     def get_path_reading(self) -> str:
         return self.read_entry.text().strip()
 
@@ -235,6 +251,8 @@ class ExecutionPanel(QGroupBox):
     def get_server_address(self) -> str:
         return self.server_label.text().strip()
 
+        
+        ### setters
     def set_path_reading(self, path: str) -> None:
         self.read_entry.setText(path)
     
