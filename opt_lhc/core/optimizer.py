@@ -1,14 +1,18 @@
 import torch
 from collections import defaultdict
+from PyQt6.QtCore import pyqtSignal, QObject
 
 from botorch.optim import optimize_acqf
 from botorch.utils.transforms import normalize, unnormalize
 
 from core.optimizerContext import OptimizationContext
 
-class Optimizer:
+class Optimizer(QObject):
+    
+    new_candidates = pyqtSignal(dict)
 
     def __init__(self, opt_form: dict):
+        super().__init__() # heritage QObject
         self.opt_form = opt_form   # the optimization formular
 
         self.is_opt: bool = opt_form["opt"]["enabled"]  # whether to make an optimization or not
@@ -18,7 +22,8 @@ class Optimizer:
         self.objectives: dict = opt_form["obj"]
         
         self.init: dict = opt_form["init"]  # the initialization process
-        
+        self.objective_list = list(self.objectives.values())
+
         if self.is_opt:
             self.strategy: dict = opt_form["opt"]["pipeline"]["strategy"]
             self.acq: dict = opt_form["opt"]["pipeline"]["acquisition"]
@@ -30,8 +35,12 @@ class Optimizer:
             # One dataset per objective
             # self.train_X_list: list[torch.Tensor]  # each (n_i, d)
             # self.train_Y_list: list[torch.Tensor]  # each (n_i, 1)
-
+        
         self.bounds_dict, self.bounds = self.get_boundaries() # get the boundaries from the input dictionary
+
+        self.train_X_list_raw = None  # list of lists
+        self.train_Y_list_raw = None
+        self.context = None
 
 
     def init_opt(self):
@@ -156,44 +165,25 @@ class Optimizer:
         return bounds_dict, bounds
 
 
-    def get_objective_spec(self) -> dict[str, list[list[str] | None]]:
+    def get_objective_spec(self) -> dict[str, list[str]]:
         """
-        Build objective specification grouped by address and position_index.
+        Build objective specification grouped by address.
 
         Returns:
             {
-                address: [
-                    output_keys_at_pos0 | None,
-                    output_keys_at_pos1 | None,
-                    ...
-                ]
+                address: [output_key_1, output_key_2, ...]
             }
         """
-        obj_spec: dict[str, dict[int, list[str]]] = {}
+        obj_spec: dict[str, list[str]] = {}
 
-        for name, obj in self.objectives.items():
+        for obj in self.objectives.values():
             addr = obj.address
-            pos = obj.position_index
             key = obj.output_key
 
-            if addr not in obj_spec:
-                obj_spec[addr] = {}
+            obj_spec.setdefault(addr, []).append(key)
 
-            obj_spec[addr].setdefault(pos, []).append(key)
+        return obj_spec
 
-        # convert sparse dicts to dense lists
-        result: dict[str, list[list[str] | None]] = {}
-
-        for addr, pos_dict in obj_spec.items():
-            max_pos = max(pos_dict.keys())
-            lst: list[list[str] | None] = [None] * (max_pos + 1)
-
-            for pos, keys in pos_dict.items():
-                lst[pos] = keys
-
-            result[addr] = lst
-
-        return result
 
 
 
@@ -272,19 +262,22 @@ class Optimizer:
         """
         High-level API used by UI / server.
         """
-        if self.train_X_list is None:
-            raise RuntimeError("No training data available.")
+        # if self.train_X_list is None:
+        #     raise RuntimeError("No training data available.")
 
-        # at least one objective must have data
-        if not any(len(X) > 0 for X in self.train_X_list):
-            raise RuntimeError("No objective has observations.")
+        # # at least one objective must have data
+        # if not any(len(X) > 0 for X in self.train_X_list):
+        #     raise RuntimeError("No objective has observations.")
         
-        self.context = OptimizationContext(
-            train_X_list=self.train_X_list,
-            train_Y_list=self.train_Y_list,
-            bounds=self.bounds,
-            objectives=self.objectives,
-        )
+        if self.train_X_list_raw is None or not any(self.train_X_list_raw):
+            raise RuntimeError("No training data available.")
+        
+        # self.context = OptimizationContext(
+        #     train_X_list=self.train_X_list,
+        #     train_Y_list=self.train_Y_list,
+        #     bounds=self.bounds,
+        #     objectives=self.objectives,
+        # )
 
         self.build_model(self.context)
         self.build_acquisition(self.context)
@@ -306,13 +299,47 @@ class Optimizer:
 
     #     return runtime_inputs
 
+    def _sync_context(self):
+        """Convert raw lists into tensors and update OptimizationContext."""
+        train_X_list = []
+        train_Y_list = []
+
+        for X_raw, Y_raw in zip(self.train_X_list_raw, self.train_Y_list_raw):
+            if not X_raw:
+                train_X_list.append(torch.empty(0, self.bounds.shape[1], dtype=torch.float64))
+                train_Y_list.append(torch.empty(0, 1, dtype=torch.float64))
+            else:
+                train_X_list.append(torch.stack(X_raw))
+                train_Y_list.append(torch.stack(Y_raw))
+
+        self.train_X_list = train_X_list
+        self.train_Y_list = train_Y_list
+
+        if self.context is None:
+            # build context for the first time
+            self.context = OptimizationContext(
+                train_X_list=self.train_X_list,
+                train_Y_list=self.train_Y_list,
+                bounds=self.bounds,
+                objectives=self.objectives,
+            )
+        else:
+            # update tensors in existing context
+            self.context.train_X_list = self.train_X_list
+            self.context.train_Y_list = self.train_Y_list
+
 
     def update_opt(self, data: dict):
         self._update_training_data(data)
 
         if self.is_opt:
             candidates = self.suggest_next_points()
-            print(f"candidates are : {candidates}")
+            ext = candidates.unsqueeze(1)
+            print(f"candidates are : {candidates}, candidates updated = {ext}")
+            
+            data = self.build_data_payload(ext, self.bounds_dict, is_opt=True, is_init=False)
+            print(f"data build payload candidates = {data}")
+            self.new_candidates.emit(data)
             # self.send_to_server(candidates)
 
 
@@ -320,34 +347,44 @@ class Optimizer:
         print(f"[CMD_OPT] data = {data}")
         results = data["results"]
 
-        # Lazy init: one list per objective
-        if self.train_X_list is None:
-            num_obj = len(results[0]["output"])
-            self.train_X_list = [[] for _ in range(num_obj)]
-            self.train_Y_list = [[] for _ in range(num_obj)]
+        # Lazy init of raw lists
+        if self.train_X_list_raw is None:
+            n_obj = len(self.objective_list)
+            self.train_X_list_raw = [[] for _ in range(n_obj)]
+            self.train_Y_list_raw = [[] for _ in range(n_obj)]
 
         for r in results:
-            x = torch.tensor(
-                next(iter(r["inputs"].values())),
-                dtype=torch.float64,
-            )
+            # rebuild x in deterministic order
+            x_vals = []
+            for name in self.bounds_dict:
+                info = self.bounds_dict[name]
+                addr = info["address"]
+                pos = info["position_index"]
+                x_vals.append(r["inputs"][addr][pos])
 
-            for obj_idx, y_val in enumerate(r["output"]):
-                if y_val is None:
+            x = torch.tensor(x_vals, dtype=torch.float64)
+
+            outputs = r["outputs"]
+
+            for obj_idx, obj in enumerate(self.objective_list):
+                addr = obj.address
+                key = obj.output_key
+
+                if addr not in outputs or key not in outputs[addr]:
                     continue
 
-                self.train_X_list[obj_idx].append(x)
-                self.train_Y_list[obj_idx].append(
-                    torch.tensor([y_val], dtype=torch.float64)
-                )
+                values = outputs[addr][key]
+                for v in values:
+                    self.train_X_list_raw[obj_idx].append(x)
+                    self.train_Y_list_raw[obj_idx].append(
+                        torch.tensor([v], dtype=torch.float64)
+                    )
 
-        # Convert lists → tensors
-        for i in range(len(self.train_X_list)):
-            if len(self.train_X_list[i]) == 0:
-                continue
+        # Build / update context
+        self._sync_context()
 
-            self.train_X_list[i] = torch.stack(self.train_X_list[i], dim=0)
-            self.train_Y_list[i] = torch.stack(self.train_Y_list[i], dim=0)
+
+
 
         # print("[OPT] train_X_list status:")
         # for i, X in enumerate(self.train_X_list):

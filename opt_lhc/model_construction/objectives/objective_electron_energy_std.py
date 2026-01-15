@@ -16,7 +16,7 @@ class ElectronEnergyStd(ObjectiveStructure):
         symbol = r"$\sigma_E$"
 
         address = "tcp://147.250.140.65:5556"
-        position_index = 2
+        position_index = 0
 
         output_key = "electron_energy_std"
         

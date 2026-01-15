@@ -68,6 +68,17 @@ class OptManager(QObject):
                 self.optimizer.update_opt
             )
 
+            self.optimizer.new_candidates.connect(
+                self.up_serv_temp
+            )
+    
+    def up_serv_temp(self, data: dict):
+        print("here we are on business")
+        self.serv.set_data(data)
+        print(f"serv data update = {self.serv.data}")
+
+    # def print_test(data: dict):
+    #     print(f"test passed {data}")
 
     def set_form(self, opt_form: dict) -> None:
         '''Helper that set and save the 'opt_form' dictionary of the optimization.'''
@@ -112,4 +123,6 @@ class OptManager(QObject):
 
     
     def empty_data(self) -> None:
-        self.serv.set_data({})
+        if self.serv.reset_data:
+            self.serv.set_data({})
+            print("server is empty")
