@@ -61,16 +61,10 @@ class OptWindow(QMainWindow):
         main_layout.addWidget(self.execution_panel)
 
         # Block 2: Inputs
-        self.input_panel = InOutPanel(
-            title="Available Inputs",
-            folder_name="inputs"
-        )
+        self.input_panel = InOutPanel(folder_name="inputs")
 
         # Block 2: Objectives
-        self.objective_panel = InOutPanel(
-            title="Available Objectives",
-            folder_name="objectives"
-        )
+        self.objective_panel = InOutPanel(folder_name="objectives")
 
             # input / obj layout
         in_out_layout = QHBoxLayout()
