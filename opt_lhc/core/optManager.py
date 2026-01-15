@@ -31,9 +31,9 @@ class OptManager(QObject):
         self.train_X_list = None
         self.train_Y_list = None
 
-        self.server_controller.get_received.connect(
-            self.empty_data
-        )
+        # self.server_controller.get_received.connect(
+        #     self.empty_data
+        # )
     
 
     @property
@@ -98,15 +98,12 @@ class OptManager(QObject):
                                   address="tcp://*:1254", 
                                   freedom=0, 
                                   device=DEVICE_OPT,
-                                  data={})
+                                  data={},
+                                  empty_data_after_get=True)
             
             # bridge server -> controller (to emit signal when the saving path is changed)
             self.serv.set_on_saving_path_changed(
                 self.server_controller.on_server_save_path
-            )
-            
-            self.serv.set_on_get(
-                self.server_controller.on_get
             )
 
             self.serv.set_on_opt(
@@ -122,7 +119,8 @@ class OptManager(QObject):
             self.serv.stop() # stop the server
 
     
-    def empty_data(self) -> None:
-        if self.serv.reset_data:
-            self.serv.set_data({})
-            print("server is empty")
+    # def empty_data(self) -> None:
+    #     print("did nothing")
+    #     # if self.serv.reset_data:
+    #     #     self.serv.set_data({})
+    #     #     print("server is empty")
