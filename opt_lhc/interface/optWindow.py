@@ -200,5 +200,5 @@ class OptWindow(QMainWindow):
         '''
         if self.execution_panel.is_online_enabled():
             self.opt_manager.serv.stop()
-        log.info("Server stopped.")
+            log.info("Server stopped.")
         event.accept()
