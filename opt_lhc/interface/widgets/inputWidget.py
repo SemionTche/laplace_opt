@@ -49,7 +49,7 @@ class InputWidget(QWidget):
 
     def set_up(self) -> None:
         '''
-        Build the widget of the InputWidget class.
+        Build the widgets inside InputWidget.
         '''
         # input line layout
         line_layout = QHBoxLayout(self)
@@ -66,7 +66,7 @@ class InputWidget(QWidget):
 
         # state
         self.state_checkBox = QCheckBox()
-        self.state_checkBox.setToolTip(f"Enable {self.name}")
+        self.state_checkBox.setToolTip(f"Include input '{self.name}' in config")
         self.state_checkBox.setFixedWidth(20)
         line_layout.addWidget(self.state_checkBox)
 
@@ -236,5 +236,6 @@ class InputWidget(QWidget):
         return self.state_checkBox.isChecked()
 
     def enable_address(self, enable: bool) -> None:
+        '''Enable / disable the 'address' and 'position_index' fields.'''
         self.address_label.setEnabled(enable)
         self.position_label.setEnabled(enable)
