@@ -1,7 +1,7 @@
 # libraries
 from PyQt6.QtWidgets import (
-    QGroupBox, QVBoxLayout, QComboBox, QWidget, 
-    QSpinBox, QGridLayout, QDoubleSpinBox
+    QGroupBox, QVBoxLayout, QComboBox, QWidget, QLabel,
+    QSpinBox, QGridLayout, QDoubleSpinBox, QLineEdit
 )
 from PyQt6.QtCore import QSettings
 
@@ -12,6 +12,7 @@ from log_laplace.log_lhc import log
 # project
 from utils.getter import get_classes
 from utils.standard_widgets import load_standard_widgets
+from utils.path_standard_widget import PathStandardWidget
 from model_construction.initializations.initialization_structure import InitializationStructure
 
 
@@ -137,15 +138,25 @@ class InitializationPanel(QGroupBox):
     ### helpers
 
     def get_initialization(self) -> dict[str, dict[InitializationStructure, dict[str, int | float | bool]]]:
+        '''
+        Return the initialization dictionary indicating the chosen initialization structure
+        along with the selected parameters.
+        '''
+        # get the current class
         cls = list(self.init_cls.values())[self.selector.currentIndex()]
+        
         params = {}
 
-        for k, w in self.param_widgets.items():
-            if isinstance(w, QSpinBox | QDoubleSpinBox):
-                params[k] = w.value()
-            elif isinstance(w, QComboBox):
-                params[k] = (w.currentIndex() == 0)
-            else:
-                params[k] = w.text()
+        for k, w in self.param_widgets.items():  # for every parameter widget
+            
+            if isinstance(w, QSpinBox | QDoubleSpinBox):  # if it is a value container
+                params[k] = w.value()                     #     get the value
+            
+            elif isinstance(w, QComboBox):                # elif it is a QComboBox
+                if w.currentText() in ["True", "False"]:  #     if it is a boolean QComboBox
+                    params[k] = (w.currentIndex() == 0)   #          get the boolean value
+            
+            elif isinstance(w, (QLineEdit, QLabel, PathStandardWidget)):  # elif it is a text container
+                params[k] = w.text()                                            # get the text
 
         return {"cls": cls, "params": params}

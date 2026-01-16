@@ -3,7 +3,9 @@ from PyQt6.QtWidgets import (
     QGroupBox, QGridLayout, QRadioButton,
     QCheckBox, QLineEdit, QPushButton, QLabel, QFileDialog
 )
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal, QSettings
+
+import pathlib
 
 from log_laplace.log_lhc import log
 
@@ -79,12 +81,35 @@ class ExecutionPanel(QGroupBox):
         self.update_read_server_state() # enable / disable the read_server radiobutton
         self.update_read_file_state()   # enable / disable the read_entry
 
+        # define the default execution (reading and saving) path
+        p = pathlib.Path(__file__)
+        self.settings = QSettings(
+            str(p.parent.parent.parent / "config.ini"), # read the config.ini file in root app
+            QSettings.Format.IniFormat
+        )
+        
+        # get and set default saving path
+        default_saving_path = self.settings.value(
+            "interface/default_saving_path",    # get 
+            defaultValue="", 
+            type=str
+        )
+        self.saving_entry.setText(default_saving_path)
+        
+        # get and set default reading path
+        default_reading_path = self.settings.value(
+            "interface/default_reading_path",    # get the value default reading path
+            defaultValue="", 
+            type=str
+        )
+        self.read_entry.setText(default_reading_path)
+
 
     def actions(self) -> None:
         '''
         Defines the actions of the ExecutionPanel class.
         '''
-        # when the server checkbox is toggled, use emit a PyQt6 signal
+        # when the server checkbox is toggled, emit a PyQt6 signal (to start server)
         self.server_checkbox.toggled.connect(self.update_online_state)
         
         # when the read from file radiobutton is toggled, enable / disable the read_entry
@@ -93,25 +118,49 @@ class ExecutionPanel(QGroupBox):
         # when the lock_button is pressed, enable / disable the widgets
         self.lock_button.toggled.connect(self.set_locked)
 
-        # select the reading folder
+        # when the read button is pressed, select the reading folder
         self.read_browse_button.clicked.connect(
             lambda: self.browse_folder(is_read=True)
         )
         
-        # select the saving folder
+        # when the save button is pressed, select the saving folder
         self.save_browse_button.clicked.connect(
             lambda: self.browse_folder(is_read=False)
         )
 
-        # display in the logs when the read entry is changed
+        # when the reading path is modified, change the default reading path
         self.read_entry.textChanged.connect(
-            lambda path : log.debug(f"Reading folder modified, new reading folder: {path}")
+            self.on_read_path_changed
         )
-        
-        # display in the logs when the read entry is changed
+
+        # when the saving path is modified, change the default saving path
         self.saving_entry.textChanged.connect(
-            lambda path : log.debug(f"Saving folder modified, new saving folder: {path}")
+            self.on_save_path_changed
         )
+
+
+    def on_read_path_changed(self, path: str) -> None:
+        '''
+        Change the default reading path in 'config.ini' and
+        display it in the logs.
+        '''
+        self.settings.setValue(
+            "interface/default_reading_path",
+            path
+        )
+        log.debug(f"Reading folder modified, new reading folder: {path}")
+
+
+    def on_save_path_changed(self, path: str) -> None:
+        '''
+        Change the default saving path in 'config.ini' and
+        display it in the logs.
+        '''
+        self.settings.setValue(
+            "interface/default_saving_path",
+            path
+        )
+        log.debug(f"Saving folder modified, new saving folder: {path}")
 
 
     def update_online_state(self, checked: bool) -> None:
