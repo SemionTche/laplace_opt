@@ -32,8 +32,8 @@ class ExecutionPanel(QGroupBox):
 
         # Online execution
         self.server_checkbox = QCheckBox("Run online (start server)")
-        self.server_label = QLabel("")  # indicates the optimization server address (when server is up)
-        self.server_label.setEnabled(False)
+        self.server_entry = QLineEdit("")  # indicates the optimization server address
+        self.server_entry.setReadOnly(True)
 
         # Data source
             # file
@@ -59,7 +59,7 @@ class ExecutionPanel(QGroupBox):
         # exc_layout
         exc_layout.addWidget(self.server_checkbox, 0, 0)
         exc_layout.addWidget(QLabel("Server address:"), 0, 1)
-        exc_layout.addWidget(self.server_label, 0, 2)
+        exc_layout.addWidget(self.server_entry, 0, 2)
 
         exc_layout.addWidget(self.read_file, 1, 0)
         exc_layout.addWidget(QLabel("Reading path:"), 1, 1)
@@ -103,13 +103,23 @@ class ExecutionPanel(QGroupBox):
             lambda: self.browse_folder(is_read=False)
         )
 
+        # display in the logs when the read entry is changed
+        self.read_entry.textChanged.connect(
+            lambda path : log.debug(f"Reading folder modified, new reading folder: {path}")
+        )
+        
+        # display in the logs when the read entry is changed
+        self.saving_entry.textChanged.connect(
+            lambda path : log.debug(f"Saving folder modified, new saving folder: {path}")
+        )
+
 
     def update_online_state(self, checked: bool) -> None:
         '''
         Change the server state and emit the realted signal.
         '''
         if not self.lock_button.isChecked():       # if the lock button is not pressed
-            self.server_label.setEnabled(checked)  # enable / disable the server address label
+            self.server_entry.setEnabled(checked)  # enable / disable the server address label
         
         self.update_read_server_state()  # enable / disable the read_server radiobutton
         
@@ -131,8 +141,9 @@ class ExecutionPanel(QGroupBox):
             self.server_checkbox.isChecked()      # if the server box is checked 
             and not self.lock_button.isChecked()  # and the lock button not pressed
         )
-        self.read_server.setEnabled(enabled) # enable / disable the server reading radiobutton
-    
+        self.read_server.setEnabled(enabled)   # enable / disable the server reading radiobutton
+        self.saving_entry.setReadOnly(enabled) # in server mode, cannot change the saving path
+
 
     def update_read_file_state(self) -> None:
         '''
@@ -170,11 +181,6 @@ class ExecutionPanel(QGroupBox):
 
         for w in widgets: # for every widget
             w.setEnabled(not locked) # lock / unlock it (locked = True means disable -> Enable = False)
-
-        # enable / disable the server address label only if the server is on
-        self.server_label.setEnabled(
-            self.server_checkbox.isChecked() and not locked
-        )
 
         # lock / unlock the server radiobutton and the 
         # reading widgets according to the current chosen mode
@@ -247,17 +253,15 @@ class ExecutionPanel(QGroupBox):
         return self.saving_entry.text().strip()
     
     def get_server_address(self) -> str:
-        return self.server_label.text().strip()
+        return self.server_entry.text().strip()
 
         
         ### setters
     def set_path_reading(self, path: str) -> None:
         self.read_entry.setText(path)
-        log.debug(f"Reading folder modified, new reading folder: {path}")
     
     def set_path_saving(self, path: str) -> None:
         self.saving_entry.setText(path)
-        log.debug(f"Saving folder modified, new saving folder: {path}")
     
     def set_server_address(self, address: str) -> None:
-        return self.server_label.setText(address)
+        return self.server_entry.setText(address)
