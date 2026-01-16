@@ -204,11 +204,9 @@ class ExecutionPanel(QGroupBox):
         if path:
             # update the corresponding entry
             if is_read:
-                self.read_entry.setText(path)
-                log.debug(f"Reading folder modified, new reading folder: {path}")
+                self.set_path_reading(path)
             else:
-                self.saving_entry.setText(path)
-                log.debug(f"Saving folder modified, new saving folder: {path}")
+                self.set_path_saving(path)
 
 
     ### helpers
@@ -255,9 +253,11 @@ class ExecutionPanel(QGroupBox):
         ### setters
     def set_path_reading(self, path: str) -> None:
         self.read_entry.setText(path)
+        log.debug(f"Reading folder modified, new reading folder: {path}")
     
     def set_path_saving(self, path: str) -> None:
         self.saving_entry.setText(path)
+        log.debug(f"Saving folder modified, new saving folder: {path}")
     
     def set_server_address(self, address: str) -> None:
         return self.server_label.setText(address)
