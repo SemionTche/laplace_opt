@@ -160,7 +160,7 @@ class OptWindow(QMainWindow):
         if level == ValidationLevel.ERROR:
             # make an error message box
             QMessageBox.critical(self, "Invalid configuration", message)
-            log.error("Invalid configuration.")
+            log.error(f"Invalid configuration: {message}")
             return
         
         # elif there is a warning
@@ -175,9 +175,9 @@ class OptWindow(QMainWindow):
             )
             # let the user decide to continue or quit
             if reply == QMessageBox.StandardButton.No:
-                log.warning(f"{message} Optimization canceled.")
+                log.warning(f"{message} Answer: canceled.")
                 return
-            log.warning(f"{message} Continue.")
+            log.warning(f"{message} Answer: continue.")
 
         log.info("Starting optimization with form:\n" + json_style(form))
         self.execution_panel.set_locked(True)  # lock the ExecutionPanel to prevent saving modifications

@@ -3,6 +3,9 @@ from PyQt6.QtWidgets import (
     QGroupBox, QVBoxLayout, QComboBox, QWidget, 
     QSpinBox, QGridLayout, QDoubleSpinBox
 )
+from PyQt6.QtCore import QSettings
+
+import pathlib
 
 from log_laplace.log_lhc import log
 
@@ -57,9 +60,26 @@ class InitializationPanel(QGroupBox):
         self.selector.addItems(
             cls.display_name for cls in self.init_cls.values()
         )
-        default_init = 1
-        self.selector.setCurrentIndex(default_init)
-        self.update_parameters(default_init)    # create the parameter widget
+
+        # define the default initialization structure
+        p = pathlib.Path(__file__)
+        self.settings = QSettings(
+            str(p.parent.parent.parent / "config.ini"), # read the config.ini file in root app
+            QSettings.Format.IniFormat
+        )
+        default_init = self.settings.value(
+            "interface/default_initialization_name",    # get the value default init structure name
+            defaultValue="", 
+            type=str
+        )
+        
+        if default_init:                                # if there is a default init
+            for i, cls_name in enumerate(self.init_cls.keys()):  # for every init structure
+                if cls_name == default_init:                     # if it's the default one
+                    self.selector.setCurrentIndex(i)             # set the selector
+                    self.update_parameters(i)                    # create the widgets
+        else:
+            self.update_parameters(0)                   # else the default is position 0
 
 
     def actions(self) -> None:
@@ -68,6 +88,14 @@ class InitializationPanel(QGroupBox):
         '''
         # when a new initialization is selected, update the parameter widgets
         self.selector.currentIndexChanged.connect(self.update_parameters)
+
+        # when the new initialization is selected, update the config.ini default init
+        self.selector.currentIndexChanged.connect(
+            lambda index: self.settings.setValue(
+                "interface/default_initialization_name", 
+                list(self.init_cls.keys())[index]
+            )
+        )
 
 
     def clear_param(self) -> None:
@@ -91,6 +119,8 @@ class InitializationPanel(QGroupBox):
         # get the corresponding init class
         cls = list(self.init_cls.values())[index]
 
+        log.debug(f"New initialization selected: '{cls.__name__}'")
+
         # get the class parameters
         parameters = cls.get_parameters()
 
@@ -106,7 +136,7 @@ class InitializationPanel(QGroupBox):
 
     ### helpers
 
-    def get_initialization(self) -> dict[str, dict[InitializationStructure, dict[str, int, float, bool]]]:
+    def get_initialization(self) -> dict[str, dict[InitializationStructure, dict[str, int | float | bool]]]:
         cls = list(self.init_cls.values())[self.selector.currentIndex()]
         params = {}
 
