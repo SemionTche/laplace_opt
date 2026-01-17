@@ -4,6 +4,8 @@ from PyQt6.QtWidgets import (
     QWidget, QComboBox
 )
 
+from log_laplace.log_lhc import log
+
 # project
 from utils.standard_widgets import load_standard_widgets
 
@@ -35,6 +37,8 @@ class HyperparameterPanel(QGroupBox):
                 item.widget().deleteLater()     # delete it (next event loop)
         self.widgets.clear()                    # clear the widgets dictionary
 
+        log.debug("Hyperparameter widgets cleared.")
+
 
     def load_from_classes(self, classes: list[StratOrAcq]) -> None:
         '''
@@ -48,6 +52,7 @@ class HyperparameterPanel(QGroupBox):
         col = 0
 
         for cls in classes:   # for every class
+            
             # merge core_parameters (if present) and parameters
             if hasattr(cls, "core_parameters"):
                 params = {**getattr(cls, "core_parameters", {}), **getattr(cls, "parameters", {})}
@@ -55,8 +60,8 @@ class HyperparameterPanel(QGroupBox):
                 params = getattr(cls, "parameters", {})
 
             widgets, row, col = load_standard_widgets(    # load the standard widgets
-                self.hyper_layout,              # in the 'hyper_layout'
-                params,                 # depending on it's parameter dictionary
+                self.hyper_layout,                        # in the 'hyper_layout'
+                params,                                   # depending on it's parameter dictionary
                 max_per_row=6,
                 start_row=row,
                 start_col=col
@@ -65,15 +70,17 @@ class HyperparameterPanel(QGroupBox):
             # update the widget dictionary
             for name, w in widgets.items():
                 self.widgets[(cls, name)] = w  # tuple field (class, class_name): widget
+        
+        log.debug("Hyperparameter widgets loaded.")
 
     ### helpers
 
-    def get_parameters(self) -> dict[StratOrAcq, dict[str, int, float, bool]] :
+    def get_parameters(self) -> dict[StratOrAcq, dict[str, int | float | bool | str]] :
         '''
         Get a dictionary of the current hyperparameter widget values
         ordered as {class: {param_name: value}}.
         '''
-        result: dict[type, dict[str, float, int, bool]] = {}
+        result: dict[type, dict[str, int | float | bool | str]] = {}
 
         for (cls, name), widget in self.widgets.items(): # for every param widget
 
@@ -82,8 +89,11 @@ class HyperparameterPanel(QGroupBox):
             
             elif isinstance(widget, QComboBox):  # if it is a QComboBox
                 if widget.currentText() in ["True", "False"]:  # checking for "True" or "False"
-                    value = widget.currentIndex() == 0   # the value is "True" if "True is selected" else otherwise
+                    value = (widget.currentIndex() == 0)   # the value is "True" if "True is selected" else otherwise
             
+            elif hasattr(widget, "text"):
+                value = widget.text()
+
             else:   # drop other widgets
                 continue
 

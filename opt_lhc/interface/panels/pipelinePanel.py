@@ -44,6 +44,24 @@ class PipelinePanel(QGroupBox):
 
         self.set_up()  # build the widgets
 
+        # define the default combo box selection for each stage
+        for stage, combo in self.combos.items():
+            # get the default combo box selection for this stage
+            title, _, default_in_config = self.stages[stage]
+            default_name = get_from_config(
+                module="interface", 
+                item=default_in_config, 
+                default_value="", 
+                type=str
+            )
+            # for each stage class
+            for index, cls_name in enumerate(self.classes[stage].keys()):
+                if cls_name == default_name:  # if the class is the default one
+                    if index > 0:             # and the selection not already valid
+                        combo.setCurrentIndex(index)  # set the current selection
+                    else:
+                        log.debug(f"New {title} selected: '{cls_name}'") # else print the selection in logs
+
 
     def set_up(self) -> None:
         '''
@@ -69,20 +87,9 @@ class PipelinePanel(QGroupBox):
             cls_dict = get_classes(category)  # dict{class_names, classes}
             self.classes[stage] = cls_dict    # keep an acces to the classes
 
-            # get the default combo box selection for this stage
-            default_name = get_from_config(
-                module="interface", 
-                item=default_in_config, 
-                default_value="", 
-                type=str
-            )
-
             # add an item in the combo box for each class
-            for index, (name, cls) in enumerate(cls_dict.items()):
+            for name, cls in cls_dict.items():
                 combo.addItem(cls.display_name, userData=name)
-                
-                if cls.__name__ == default_name: # if the class is the default combo box selection
-                    combo.setCurrentIndex(index) # set the combo box to this item
 
             # emit a signal when any combo box is changed 
             combo.currentIndexChanged.connect(
@@ -107,9 +114,7 @@ class PipelinePanel(QGroupBox):
 
 
     def on_current_index_changed(self, index: int, stage: str) -> None:
-        '''When a combo box is changed, emit a signal and indicate it in the logs'''
-        self.selection_changed.emit()  # emit the signal
-        
+        '''When a combo box is changed, emit a signal and indicate it in the logs'''        
         # get stage information
         title, category, default_in_config = self.stages[stage]
         # get the class name selected
@@ -123,6 +128,8 @@ class PipelinePanel(QGroupBox):
         )
 
         log.debug(f"New {title} selected: '{val}'")
+
+        self.selection_changed.emit()  # emit the signal
 
 
     ### helpers

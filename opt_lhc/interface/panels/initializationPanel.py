@@ -14,6 +14,7 @@ from utils.getter import get_classes
 from utils.standard_widgets import load_standard_widgets
 from utils.config_helper import get_from_config, set_in_config
 from utils.path_standard_widget import PathStandardWidget
+
 from model_construction.initializations.initialization_structure import InitializationStructure
 
 
@@ -143,7 +144,7 @@ class InitializationPanel(QGroupBox):
         # get the current class
         cls = list(self.init_cls.values())[self.selector.currentIndex()]
         
-        params = {}
+        params: dict[str, int | float | bool | str] = {}
 
         for k, w in self.param_widgets.items():  # for every parameter widget
             
