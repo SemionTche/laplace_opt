@@ -9,6 +9,9 @@ import pathlib
 
 from log_laplace.log_lhc import log
 
+# project
+from utils.config_helper import get_from_config, set_in_config
+
 
 class ExecutionPanel(QGroupBox):
     '''
@@ -81,25 +84,21 @@ class ExecutionPanel(QGroupBox):
         self.update_read_server_state() # enable / disable the read_server radiobutton
         self.update_read_file_state()   # enable / disable the read_entry
 
-        # define the default execution (reading and saving) path
-        p = pathlib.Path(__file__)
-        self.settings = QSettings(
-            str(p.parent.parent.parent / "config.ini"), # read the config.ini file in root app
-            QSettings.Format.IniFormat
-        )
-        
-        # get and set default saving path
-        default_saving_path = self.settings.value(
-            "interface/default_saving_path",    # get 
-            defaultValue="", 
+        # get the default execution (reading and saving) path
+            # get and set default saving path
+        default_saving_path = get_from_config(
+            module="interface",
+            item="default_saving_path",
+            default_value="",
             type=str
         )
         self.saving_entry.setText(default_saving_path)
         
-        # get and set default reading path
-        default_reading_path = self.settings.value(
-            "interface/default_reading_path",    # get the value default reading path
-            defaultValue="", 
+            # get and set default reading path
+        default_reading_path = get_from_config(
+            module="interface",
+            item="default_reading_path",
+            default_value="",
             type=str
         )
         self.read_entry.setText(default_reading_path)
@@ -144,9 +143,10 @@ class ExecutionPanel(QGroupBox):
         Change the default reading path in 'config.ini' and
         display it in the logs.
         '''
-        self.settings.setValue(
-            "interface/default_reading_path",
-            path
+        set_in_config(
+            module="interface",
+            item="default_reading_path",
+            val=path
         )
         log.debug(f"Reading folder modified, new reading folder: {path}")
 
@@ -156,9 +156,10 @@ class ExecutionPanel(QGroupBox):
         Change the default saving path in 'config.ini' and
         display it in the logs.
         '''
-        self.settings.setValue(
-            "interface/default_saving_path",
-            path
+        set_in_config(
+            module="interface",
+            item="default_saving_path",
+            val=path
         )
         log.debug(f"Saving folder modified, new saving folder: {path}")
 

@@ -12,6 +12,7 @@ from log_laplace.log_lhc import log
 # project
 from utils.getter import get_classes
 from utils.standard_widgets import load_standard_widgets
+from utils.config_helper import get_from_config, set_in_config
 from utils.path_standard_widget import PathStandardWidget
 from model_construction.initializations.initialization_structure import InitializationStructure
 
@@ -62,15 +63,11 @@ class InitializationPanel(QGroupBox):
             cls.display_name for cls in self.init_cls.values()
         )
 
-        # define the default initialization structure
-        p = pathlib.Path(__file__)
-        self.settings = QSettings(
-            str(p.parent.parent.parent / "config.ini"), # read the config.ini file in root app
-            QSettings.Format.IniFormat
-        )
-        default_init = self.settings.value(
-            "interface/default_initialization_name",    # get the value default init structure name
-            defaultValue="", 
+        # get the default initialization structure
+        default_init = get_from_config(
+            module="interface", 
+            item="default_initialization_name", 
+            default_value="",
             type=str
         )
         
@@ -92,9 +89,10 @@ class InitializationPanel(QGroupBox):
 
         # when the new initialization is selected, update the config.ini default init
         self.selector.currentIndexChanged.connect(
-            lambda index: self.settings.setValue(
-                "interface/default_initialization_name", 
-                list(self.init_cls.keys())[index]
+            lambda index: set_in_config(
+                module="interface",
+                item="default_initialization_name",
+                val=list(self.init_cls.keys())[index]
             )
         )
 
