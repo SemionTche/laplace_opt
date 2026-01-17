@@ -4,21 +4,25 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import pyqtSignal
 
+from log_laplace.log_lhc import log
+
 # project
 from utils.getter import get_classes
 from utils.standard_widgets import place_labeled_widgets
+from utils.config_helper import get_from_config, set_in_config
 
 from model_construction.strategies.strategy_structure import StrategyStructure
 from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
 
 StratOrAcq = StrategyStructure | AcquisitionStructure
 
+
 class PipelinePanel(QGroupBox):
     '''
     Panel enabling the selection of the optimization strategy and
     acquisition function.
 
-    Read the available features in the respecting folders using
+    Read the available features in the corresponding folders using
     'get_classes' import.
     '''
     # emit a signal when any combo box is changed
@@ -31,8 +35,8 @@ class PipelinePanel(QGroupBox):
         # the first element is the title, the second the folder
         # in which the classes must be read
         self.stages = {
-            "strategy": ("Strategy", "strategies"),
-            "acquisition": ("Acquisition", "acquisitions"),
+            "strategy": ("Strategy", "strategies", "default_strategy_name"),
+            "acquisition": ("Acquisition", "acquisitions", "default_acquisition_name"),
         }
         # for each stage, there is a dictionary of the corresponding classes
         self.classes: dict[str, dict[str, StratOrAcq]] = {}
@@ -53,7 +57,7 @@ class PipelinePanel(QGroupBox):
         items = []  # list of (label, widget) to be placed in the grid
 
         # for each stage (strategy, acquisition, ...)
-        for stage, (title, category) in self.stages.items():
+        for stage, (title, category, default_in_config) in self.stages.items():
 
             # create the combo box
             combo = QComboBox()
@@ -65,12 +69,28 @@ class PipelinePanel(QGroupBox):
             cls_dict = get_classes(category)  # dict{class_names, classes}
             self.classes[stage] = cls_dict    # keep an acces to the classes
 
+            # get the default combo box selection for this stage
+            default_name = get_from_config(
+                module="interface", 
+                item=default_in_config, 
+                default_value="", 
+                type=str
+            )
+
             # add an item in the combo box for each class
-            for name, cls in cls_dict.items():
+            for index, (name, cls) in enumerate(cls_dict.items()):
                 combo.addItem(cls.display_name, userData=name)
+                
+                if cls.__name__ == default_name: # if the class is the default combo box selection
+                    combo.setCurrentIndex(index) # set the combo box to this item
 
             # emit a signal when any combo box is changed 
-            combo.currentIndexChanged.connect(self.selection_changed.emit)
+            combo.currentIndexChanged.connect(
+                lambda index, *, stage=stage: self.on_current_index_changed(
+                    index=index,
+                    stage=stage
+                )
+            )
 
             self.combos[stage] = combo  # keep an acces to the combo box
 
@@ -84,6 +104,26 @@ class PipelinePanel(QGroupBox):
             items,
             max_per_row=6,
         )
+
+
+    def on_current_index_changed(self, index: int, stage: str) -> None:
+        '''When a combo box is changed, emit a signal and indicate it in the logs'''
+        self.selection_changed.emit()  # emit the signal
+        
+        # get stage information
+        title, category, default_in_config = self.stages[stage]
+        # get the class name selected
+        val = list(self.classes[stage].keys())[index]
+        
+        # set the new default in config
+        set_in_config(
+            module="interface",
+            item=default_in_config,
+            val=val
+        )
+
+        log.debug(f"New {title} selected: '{val}'")
+
 
     ### helpers
 

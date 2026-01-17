@@ -12,9 +12,10 @@ from model_construction.acquisitions.acquisition_structure import AcquisitionStr
 
 StratOrAcq = StrategyStructure | AcquisitionStructure
 
+
 class OptPanel(QGroupBox):
     '''
-    Optimization Panel contained two panels, the PipelinePanel,
+    This panel containes two panels, the PipelinePanel,
     enabling the strategy and acquisition function choice and
     the HyperparameterPanel, updated depending on the active
     strategy and acquisition function, allowing to define the
@@ -89,7 +90,7 @@ class OptPanel(QGroupBox):
         self.hyperparams.load_from_classes(selected.values()) # load the corresponding widgets
 
 
-    def get_opt(self) -> dict[str, bool, dict[str, dict[str, StratOrAcq, dict[str, int, float, bool]]]]:
+    def get_opt(self) -> dict[str, bool | dict[str, dict[str, StratOrAcq | dict[str, int | float | bool | str]]]]:
         '''
         Return the OptPanel configuration, including a
         boolean 'enabled' to define if the OptPanel should be used.

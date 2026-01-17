@@ -32,11 +32,11 @@ def is_date_folder(path: pathlib.Path) -> bool:
         return False
 
 
-def make_form(exec, 
+def make_form(exec: dict[str, bool | str], 
               inputs: dict[str, InputStructure], 
               obj: dict[str, ObjectiveStructure], 
-              init: dict[str, dict[InitializationStructure, dict[str, int, float, bool]]], 
-              opt: dict[str, bool, dict[str, dict[str, StratOrAcq, dict[str, int, float, bool]]]]
+              init: dict[str, InitializationStructure | dict[str, int | float | bool | str]], 
+              opt: dict[str, bool | dict[str, dict[str, StratOrAcq | dict[str, int | float | bool | str]]]]
             ) -> tuple[dict, tuple[ValidationLevel, str]]:
     '''
     Create the form dictionary of an optimization.

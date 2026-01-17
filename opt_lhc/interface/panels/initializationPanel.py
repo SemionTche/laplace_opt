@@ -135,7 +135,7 @@ class InitializationPanel(QGroupBox):
 
     ### helpers
 
-    def get_initialization(self) -> dict[str, dict[InitializationStructure, dict[str, int | float | bool]]]:
+    def get_initialization(self) -> dict[str, InitializationStructure | dict[str, int | float | bool | str]]:
         '''
         Return the initialization dictionary indicating the chosen initialization structure
         along with the selected parameters.

@@ -267,7 +267,7 @@ class ExecutionPanel(QGroupBox):
 
     ### helpers
 
-    def get_execution(self) -> dict[str, bool]:
+    def get_execution(self) -> dict[str, bool | str]:
         '''
         Return the execution dictionary defining the
         online / offline, reading and saving procedure. 
