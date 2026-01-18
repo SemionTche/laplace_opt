@@ -281,6 +281,7 @@ class ExecutionPanel(QGroupBox):
 
         return execution
 
+
         # checkers
     def is_online_enabled(self) -> bool:
         return self.server_checkbox.isChecked()

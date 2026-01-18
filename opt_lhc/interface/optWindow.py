@@ -44,7 +44,7 @@ class OptWindow(QMainWindow):
         # set title, geometry and style
         self.setWindowTitle("Optimization Window")
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
-        self.setGeometry(100, 30, 1500, 800)
+        self.setGeometry(100, 30, 1200, 700)
 
         # icon
         icon_path = p.parent / 'icons' # path to the icon folder

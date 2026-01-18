@@ -65,7 +65,9 @@ class Optimizer(QObject):
 
         log.info("This is important info")
 
-        return data
+        self.new_candidates.emit(data)
+
+        # return data
 
 
     def build_data_payload(self, X: torch.Tensor, 

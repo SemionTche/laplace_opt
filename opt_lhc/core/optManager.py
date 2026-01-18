@@ -1,13 +1,15 @@
 # libraries
-import torch
 from PyQt6.QtCore import pyqtSignal, QObject
 
 from server_lhc.serverLHC import ServerLHC
 from server_lhc.protocol import DEVICE_OPT
 from server_lhc.serverController import ServerController
 
+from log_laplace.log_lhc import log
+
 # project
 from core.optimizer import Optimizer
+
 from utils.save_configuration import save_config
 
 
@@ -18,12 +20,13 @@ class OptManager(QObject):
     def __init__(self):
         super().__init__() # heritage from QObject
 
-        # controller to emit signals from server
+        # controller class to emit signals from server
         self.server_controller = ServerController()
 
-        self.is_saving = False
-        self.is_online = False
-        self.is_opt = False
+        self.is_saving: bool = False
+        self.is_online: bool = False
+        self.is_opt: bool = False
+        self.is_runing: bool = False
         self._opt_form = {}
 
         self.strategy = None
@@ -31,10 +34,6 @@ class OptManager(QObject):
         self.train_X_list = None
         self.train_Y_list = None
 
-        # self.server_controller.get_received.connect(
-        #     self.empty_data
-        # )
-    
 
     @property
     def opt_form(self) -> dict:
@@ -52,38 +51,48 @@ class OptManager(QObject):
                     the optimization dictionary required to
                     start an initialization or an optimization.
         '''
-        self.set_form(opt_form)                         # set the opt_form as attribut of the class
-        
-        self.optimizer = Optimizer(self.opt_form)
-        
-        self.is_online = self.opt_form["exec"]["is_online"]  # whether the optimization is accessible from the server
-        self.is_opt = self.opt_form["opt"]["enabled"]
-        data = self.optimizer.init_opt()
-        print(f"[Data set to server] data = {data}")
-        
-        if self.is_online:
-            self.serv.set_data(data)                 # add the payload to the server
+        self.set_form(opt_form)  # set and save the opt_form
 
+        self.optimizer = Optimizer(self.opt_form)  # make an optimizer drived by this form
+
+        self.is_online = self.opt_form["exec"]["is_online"]  # is it an online init + optimization
+        self.is_opt = self.opt_form["opt"]["enabled"]        # is there an optimization
+        
+        if self.opt_form["exec"]["saving_path"]:             # is the model saved
+            self.is_saving = True
+
+        if self.is_online:
+
+            # when the server received an CMD_OPT, update the optimizer
             self.server_controller.opt_received.connect(
                 self.optimizer.update_opt
             )
 
+            # when new candidates are provided, update the server payload
             self.optimizer.new_candidates.connect(
                 self.up_serv_temp
             )
-    
+
+        self.optimizer.init_opt()   # get the first candidates
+
+
+    def stop_opt(self):
+
+        if self.is_online:
+            self.server_controller.opt_received.disconnect()
+
+            self.optimizer.new_candidates.disconnect()
+
+        self.is_runing = False
+        self.is_online = False
+        self.is_opt = False
+        self.is_saving = False
+
+
     def up_serv_temp(self, data: dict):
         print("here we are on business")
         self.serv.set_data(data)
         print(f"serv data update = {self.serv.data}")
-
-    # def print_test(data: dict):
-    #     print(f"test passed {data}")
-
-    def set_form(self, opt_form: dict) -> None:
-        '''Helper that set and save the 'opt_form' dictionary of the optimization.'''
-        self._opt_form = opt_form     # set the attribute
-        self.is_saving = save_config(opt_form)  # save the configuration
 
 
     def server_launch(self, server_state: bool) -> None:
@@ -118,9 +127,10 @@ class OptManager(QObject):
         else: # if off
             self.serv.stop() # stop the server
 
-    
-    # def empty_data(self) -> None:
-    #     print("did nothing")
-    #     # if self.serv.reset_data:
-    #     #     self.serv.set_data({})
-    #     #     print("server is empty")
+
+    ### helpers
+
+    def set_form(self, opt_form: dict) -> None:
+        '''Helper setting and saving the 'opt_form' dictionary.'''
+        self._opt_form = opt_form               # set the attribute
+        self.is_saving = save_config(opt_form)  # save the configuration
