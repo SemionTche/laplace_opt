@@ -36,11 +36,6 @@ def save_config(opt_form: dict) -> bool:
         date_folder = base_path / date.today().isoformat() # add today in path name
         date_folder.mkdir(exist_ok=True)                   # create the today folder
 
-    # add current date and time to the opt_form
-    now = datetime.now()
-    opt_form["saved_date"] = now.date().isoformat()
-    opt_form["saved_time"] = now.time().isoformat(timespec="seconds")
-
     index = get_next_optimization_index(date_folder)  # get the index optimization form
 
     filename = f"optimization_form_{index:06d}.json"  # json file name

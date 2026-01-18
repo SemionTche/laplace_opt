@@ -1,6 +1,6 @@
 # libraries
 from enum import Enum
-from datetime import date, datetime
+from datetime import datetime, date
 import pathlib
 
 # project
@@ -41,7 +41,14 @@ def make_form(exec: dict[str, bool | str],
     '''
     Create the form dictionary of an optimization.
     '''
+    # add current date and time to the optimization form
+    now = datetime.now()
+    saved_date = now.date().isoformat()
+    saved_time = now.time().isoformat(timespec="seconds")
+
     form = {
+        "saved_date": saved_date,
+        "saved_time": saved_time,
         "exec": exec,
         "inputs": inputs,
         "obj": obj,
