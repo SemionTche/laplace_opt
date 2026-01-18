@@ -15,7 +15,7 @@ from utils.save_configuration import save_config
 
 class OptManager(QObject):
 
-    on_server_address = pyqtSignal(str)     # is_on and server_address
+    on_server_address = pyqtSignal(str)  # transmit the optimizer server address
 
     def __init__(self):
         super().__init__() # heritage from QObject
@@ -28,12 +28,6 @@ class OptManager(QObject):
         self.is_opt: bool = False
         self.is_runing: bool = False
         self._opt_form = {}
-
-        self.strategy = None
-        self.model = None
-        self.train_X_list = None
-        self.train_Y_list = None
-
 
     @property
     def opt_form(self) -> dict:
@@ -117,7 +111,7 @@ class OptManager(QObject):
 
             # define the functions used by the server on specific messages
                 
-                # when the CMD_SAVE is received, emit signal to change the saving path
+                # when the CMD_SAVE is received, emit a signal to change the saving path
             self.serv.set_on_saving_path_changed(
                 self.server_controller.on_server_save_path
             )

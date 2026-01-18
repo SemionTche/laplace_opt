@@ -91,10 +91,10 @@ class InOutPanel(QGroupBox):
 
     ### helpers
 
-    def enable_addresses(self, enable: bool):
+    def enable_ip_port(self, enable: bool):
         '''
         Enable / disable all the InputWidget | ObjectiveWidget 
-        addresses of the panel.
+        ip:port of the panel.
         '''
         for widget in self.rows.values():                             # for every widget
             if isinstance(widget, (InputWidget, ObjectiveWidget)):    # if it is an 'InputWidget' or an 'ObjectiveWidget'

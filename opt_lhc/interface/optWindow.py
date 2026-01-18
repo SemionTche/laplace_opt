@@ -111,11 +111,11 @@ class OptWindow(QMainWindow):
 
         # enable / disable input addresses with respect to the ExecutionPanel checkbox
         self.execution_panel.server_state_changed.connect(
-            self.input_panel.enable_addresses
+            self.input_panel.enable_ip_port
         )
         # enable / disable objective addresses with respect to the ExecutionPanel checkbox
         self.execution_panel.server_state_changed.connect(
-            self.objective_panel.enable_addresses
+            self.objective_panel.enable_ip_port
         )
         
         # change the saving path when the server get the "SAVE" cmd
