@@ -190,6 +190,8 @@ class OptWindow(QMainWindow):
         '''
         log.debug("Stop button pressed.")
 
+        self.opt_manager.stop_opt()
+
         self.execution_panel.set_locked(False)  # unlock the ExecutionPanel
         pass
 
@@ -201,6 +203,5 @@ class OptWindow(QMainWindow):
         Close the server stored in 'OptManager'.
         '''
         if self.execution_panel.is_online_enabled():
-            self.opt_manager.serv.stop()
-            log.info("Server stopped.")
+            self.opt_manager.server_launch(server_state=False)
         event.accept()

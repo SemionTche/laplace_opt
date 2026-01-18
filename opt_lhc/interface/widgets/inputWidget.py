@@ -35,7 +35,7 @@ class InputWidget(QWidget):
         self.instance: InputStructure = cls()  # create a class instance
 
         # get relevant features from the instance
-        self.address = self.instance.address
+        self.ip_port = self.instance.ip_port
         self.position_index = self.instance.position_index
         self.description = self.instance.description
         self.unit = self.instance.unit
@@ -79,12 +79,12 @@ class InputWidget(QWidget):
         self.state_icon.setToolTip("Current state")
         line_layout.addWidget(self.state_icon)
 
-        # address
-        self.address_label = QLabel()
-        self.address_label.setText(self.address or "Unknown")
-        self.address_label.setEnabled(False)
-        self.address_label.setToolTip("The address of the input device used by the server")
-        line_layout.addWidget(self.address_label)
+        # ip_port
+        self.ip_port_label = QLabel()
+        self.ip_port_label.setText(self.ip_port or "Unknown")
+        self.ip_port_label.setEnabled(False)
+        self.ip_port_label.setToolTip("The ip:port of the input device used by the server")
+        line_layout.addWidget(self.ip_port_label)
 
         # position index
         self.position_label = QLabel()
@@ -239,7 +239,7 @@ class InputWidget(QWidget):
     def is_enabled(self) -> bool:
         return self.state_checkBox.isChecked()
 
-    def enable_address(self, enable: bool) -> None:
-        '''Enable / disable the 'address' and 'position_index' fields.'''
-        self.address_label.setEnabled(enable)
+    def enable_ip_port(self, enable: bool) -> None:
+        '''Enable / disable the 'ip_port' and 'position_index' fields.'''
+        self.ip_port_label.setEnabled(enable)
         self.position_label.setEnabled(enable)

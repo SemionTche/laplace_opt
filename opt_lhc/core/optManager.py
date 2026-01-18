@@ -61,14 +61,14 @@ class OptManager(QObject):
         if self.opt_form["exec"]["saving_path"]:             # is the model saved
             self.is_saving = True
 
-        if self.is_online:
+        if self.is_online: # if dealing with a server
 
-            # when the server received an CMD_OPT, update the optimizer
+            # when the server receives an CMD_OPT, update the optimizer
             self.server_controller.opt_received.connect(
                 self.optimizer.update_opt
             )
 
-            # when new candidates are provided, update the server payload
+            # when new candidates are provided by optimizer, update the server payload
             self.optimizer.new_candidates.connect(
                 self.up_serv_temp
             )
@@ -76,13 +76,17 @@ class OptManager(QObject):
         self.optimizer.init_opt()   # get the first candidates
 
 
-    def stop_opt(self):
+    def stop_opt(self) -> None:
+        '''
+        Stop the optimization process.
+        '''
+        if self.is_online:  # if the server is involved
 
-        if self.is_online:
+            # disconnect the relevant features
             self.server_controller.opt_received.disconnect()
-
             self.optimizer.new_candidates.disconnect()
 
+        # reset the checkers
         self.is_runing = False
         self.is_online = False
         self.is_opt = False
@@ -90,7 +94,6 @@ class OptManager(QObject):
 
 
     def up_serv_temp(self, data: dict):
-        print("here we are on business")
         self.serv.set_data(data)
         print(f"serv data update = {self.serv.data}")
 
@@ -103,18 +106,22 @@ class OptManager(QObject):
         if server_state: # if on
             
             # create the server
-            self.serv = ServerLHC(name="Optimization", 
-                                  address="tcp://*:1254", 
-                                  freedom=0, 
-                                  device=DEVICE_OPT,
-                                  data={},
-                                  empty_data_after_get=True)
-            
-            # bridge server -> controller (to emit signal when the saving path is changed)
+            self.serv = ServerLHC(
+                name="Optimization", 
+                address="tcp://*:1254", 
+                freedom=0, 
+                device=DEVICE_OPT,
+                data={},
+                empty_data_after_get=True
+            )
+
+            # define the functions used by the server on specific messages
+                
+                # when the CMD_SAVE is received, emit signal to change the saving path
             self.serv.set_on_saving_path_changed(
                 self.server_controller.on_server_save_path
             )
-
+                # when CMD_OPT is received, emit signal to update the optimizer
             self.serv.set_on_opt(
                 self.server_controller.on_opt
             )
@@ -124,8 +131,9 @@ class OptManager(QObject):
             # emit a signal to transmit the server address to the ExecutionPanel
             self.on_server_address.emit(self.serv.address_for_client)
         
-        else: # if off
+        else:                # else means server off
             self.serv.stop() # stop the server
+            log.info("Server stopped.")
 
 
     ### helpers

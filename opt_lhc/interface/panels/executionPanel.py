@@ -177,7 +177,7 @@ class ExecutionPanel(QGroupBox):
         self.read_file.setChecked(not checked)   # uncheck the file reading radio button
         
         self.server_state_changed.emit(checked)  # emit a signal to start / stop the server
-        log.debug("Server checked." if checked else "Server unchecked.")
+        log.debug("Server box checked." if checked else "Server box unchecked.")
 
 
     def update_read_server_state(self) -> None:

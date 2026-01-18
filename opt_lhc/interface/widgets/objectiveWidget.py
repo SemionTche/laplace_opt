@@ -35,7 +35,7 @@ class ObjectiveWidget(QWidget):
         self.instance: ObjectiveStructure = cls()  # make an instance
 
         # get relevant features from the instance
-        self.address = self.instance.address
+        self.ip_port = self.instance.ip_port
         self.description = self.instance.description
         self.minimize = self.instance.minimize
 
@@ -73,12 +73,12 @@ class ObjectiveWidget(QWidget):
         self.state_icon.setToolTip("Current state")
         line_layout.addWidget(self.state_icon)
 
-        # address
-        self.address_label = QLabel()
-        self.address_label.setText(self.address or "Unknown")
-        self.address_label.setEnabled(False)
-        self.address_label.setToolTip("The address of the input device used by the server")
-        line_layout.addWidget(self.address_label)
+        # ip_port
+        self.ip_port_label = QLabel()
+        self.ip_port_label.setText(self.ip_port or "Unknown")
+        self.ip_port_label.setEnabled(False)
+        self.ip_port_label.setToolTip("The ip:port of the input device used by the server")
+        line_layout.addWidget(self.ip_port_label)
 
         # name label
         self.name_label = QLabel(self.name)
@@ -145,6 +145,6 @@ class ObjectiveWidget(QWidget):
     def is_minimize(self) -> bool:
         return self.mode.currentText() == "Minimize"
     
-    def enable_address(self, enable: bool) -> None:
-        '''Enable / disable the 'address' field.'''
-        self.address_label.setEnabled(enable)
+    def enable_ip_port(self, enable: bool) -> None:
+        '''Enable / disable the 'ip:port' field.'''
+        self.ip_port_label.setEnabled(enable)

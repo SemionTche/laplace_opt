@@ -11,7 +11,9 @@ class LaserEnergy(InputStructure):
         name = "laser_energy"
         unit = "J"
         safe_bounds = (0.0, 100.0)
-        address = "tmp 5"
+        # address = "tmp 5"
+        ip = "tmp"
+        port = "5"
 
         description = "Laser energy"
         symbol = "E_laser"
@@ -24,7 +26,9 @@ class LaserEnergy(InputStructure):
             bounds=bounds, 
             safe_bounds=safe_bounds, 
             unit=unit, 
-            address=address, 
+            # address=address, 
+            ip=ip,
+            port=port,
             description=description,
             symbol=symbol,
             position_index=position_index

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 class ObjectiveStructure(ABC):
     
-    def __init__(self, name: str, unit: str, minimize: bool, description: str, symbol:str, address: str, position_index: int, output_key:str):
+    def __init__(self, name: str, unit: str, minimize: bool, description: str, symbol:str, ip: str, port: str, position_index: int, output_key:str):
 
         self._name = name
         self._unit = unit
@@ -11,7 +11,9 @@ class ObjectiveStructure(ABC):
         self.description = description
         self.symbol = symbol
 
-        self.address = address
+        self.ip = ip
+        self.port = port
+        # self.address = address
         self.position_index = position_index
 
         self.output_key = output_key
@@ -23,6 +25,14 @@ class ObjectiveStructure(ABC):
     @property
     def minimize(self) -> bool:
         return self._minimize
+    
+    @property
+    def ip_port(self) -> bool:
+        return f"{self.ip}:{self.port}"
+
+    @property
+    def address(self) -> bool:
+        return f"tcp://{self.ip}:{self.port}"
     
     @property
     def unit(self) -> str:

@@ -13,8 +13,10 @@ class GasJetTransverse(InputStructure):
         name = "gas_jet_transverse"
         unit = "mm"
         safe_bounds = (0.0, 15.0)
-        address = "147.250.140.65:5555"
-        
+        # address = "147.250.140.65:5555"
+        ip = "192.168.1.191"
+        port = "5555"
+
         description = "Transverse position of the gas jet."
         symbol = "x_gas"
 
@@ -26,7 +28,9 @@ class GasJetTransverse(InputStructure):
             bounds=bounds, 
             safe_bounds=safe_bounds, 
             unit=unit, 
-            address=address, 
+            # address=address,
+            ip = ip,
+            port = port, 
             description=description,
             symbol=symbol,
             position_index=position_index

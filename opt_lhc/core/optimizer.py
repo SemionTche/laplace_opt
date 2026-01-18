@@ -14,7 +14,8 @@ class Optimizer(QObject):
     new_candidates = pyqtSignal(dict)
 
     def __init__(self, opt_form: dict):
-        super().__init__() # heritage QObject
+        super().__init__()          # heritage QObject
+        
         self.opt_form = opt_form   # the optimization formular
 
         self.is_opt: bool = opt_form["opt"]["enabled"]  # whether to make an optimization or not
@@ -161,7 +162,7 @@ class Optimizer(QObject):
             bounds.append(cls.bounds)     # add the boundaries in the list
             # create the field to gather the address and the boundaries
             bounds_dict[name] = {
-                "address": cls.address, 
+                "address": cls.ip_port, #cls.address, 
                 "bounds": cls.bounds, 
                 "position_index": cls.position_index
             }

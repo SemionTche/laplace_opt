@@ -98,7 +98,7 @@ class InOutPanel(QGroupBox):
         '''
         for widget in self.rows.values():                             # for every widget
             if isinstance(widget, (InputWidget, ObjectiveWidget)):    # if it is an 'InputWidget' or an 'ObjectiveWidget'
-                widget.enable_address(enable)                         # enable / disable the address
+                widget.enable_ip_port(enable)                     # enable / disable the ip:port and position index
 
 
         ### getters
