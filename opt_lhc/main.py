@@ -5,7 +5,7 @@ import sys
 from log_laplace.log_lhc import LoggerLHC, log
 
 # Initialize the logger
-LoggerLHC("opt_laplace", file_level="debug", console_level="info")
+LoggerLHC("laplace_opt", file_level="debug", console_level="info")
 log.info("Starting OptWindow...")
 
 # project
