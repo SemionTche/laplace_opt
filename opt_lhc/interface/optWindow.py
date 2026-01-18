@@ -189,6 +189,8 @@ class OptWindow(QMainWindow):
         Function used when 'stop_button' is pressed.
         '''
         log.debug("Stop button pressed.")
+
+        self.execution_panel.set_locked(False)  # unlock the ExecutionPanel
         pass
 
     
