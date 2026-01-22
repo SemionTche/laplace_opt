@@ -51,7 +51,7 @@ def get_objectives(objective_opt) -> dict[str, list[str]]:
 
 def build_data_payload(X: torch.Tensor, 
                        inputs: dict,
-                       objective,
+                       objectives,
                         *,
                         is_init: bool,
                         is_opt: bool) -> dict:
@@ -66,6 +66,8 @@ def build_data_payload(X: torch.Tensor,
                 inputs: (dict)
                     the input main informations: 
                         {name: {"bounds": ..., "address": ..., "position_index": ...}}
+                    
+                objectives: (dict)
 
                 is_init: (bool)
                     indicating if it is the initialization suggested points.
@@ -108,7 +110,7 @@ def build_data_payload(X: torch.Tensor,
             "is_init": is_init,
             "is_opt": is_opt,
             "samples": samples,
-            "obj": objective
+            "obj": objectives
         }
 
         return payload

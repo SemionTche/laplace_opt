@@ -2,6 +2,28 @@
 import json
 import inspect
 import importlib
+import torch
+
+
+def print_batch(X: torch.Tensor, inputs: dict) -> str:
+    '''
+    Print the values that each input should take. Use a X 'torch.Tensor'
+    for the values and a 'inputs' dictionary for the input addresses.
+    '''
+    addresses = [v["address"] for v in inputs.values()]  # make a list of addresses
+    position_index = [v["position_index"] for v in inputs.values()]
+
+    lines = []
+    for i in range(X.shape[0]):                            # for each sample
+        lines.append(f"batch {i + 1}:")                     # print which sample it is
+        for j in range(X.shape[1]):                          # for each candidate
+            coords = ", ".join(
+                f"{addr}|{pos}={X[i, j, k].item():.6g}"            # for each input, address = value
+                for k, (addr, pos) in enumerate(zip(addresses, position_index))
+            )
+            lines.append(f"  Candidate {j + 1}: {coords}")   # print the candidate
+    
+    return "\n".join(lines)
 
 
 def json_style(d: dict) -> str:

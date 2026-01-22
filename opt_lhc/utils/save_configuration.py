@@ -4,6 +4,8 @@ import json
 import re
 from datetime import date
 
+from laplace_log import log
+
 # project
 from utils.json_encoder import OptimizationJSONEncoder
 from utils.model_form import is_date_folder
@@ -44,7 +46,7 @@ def save_config(opt_form: dict) -> bool:
     with output_file.open("w", encoding="utf-8") as f:  # write the file
         json.dump(opt_form, f, indent=4, cls=OptimizationJSONEncoder) # using 'OptimizationJSONEncoder' for classes
     
-    print(f"[CONFIG SAVED] Configuration saved to {output_file}")
+    log.info(f"Configuration saved to: '{output_file}'")
     return True  # the file was saved
 
 

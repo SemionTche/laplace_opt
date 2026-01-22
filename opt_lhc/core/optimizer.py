@@ -9,6 +9,7 @@ from laplace_log import log
 
 # project
 from core.optimizerContext import OptimizationContext
+from utils.json_encoder import json_style, print_batch
 from utils.build_payload import (
     get_inputs, get_objectives, build_data_payload
 )
@@ -28,15 +29,16 @@ class Optimizer(QObject):
 
         self.is_opt: bool = opt_form["opt"]["enabled"]  # whether to make an optimization or not
 
-        # inputs and outputs of the model
+        # inputs and outputs of the model: {class_name: class()}
         self.inputs_opt: dict = opt_form["inputs"]
         self.objectives_opt: dict = opt_form["obj"]
-        
-        self.init: dict = opt_form["init"]  # the initialization process
         self.objective_list = list(self.objectives_opt.values())
         
+        # the initialization process
+        self.init: dict = opt_form["init"]
 
         if self.is_opt:
+            # strategy and acquisition function
             self.strat: dict = opt_form["opt"]["pipeline"]["strategy"]
             self.acq: dict = opt_form["opt"]["pipeline"]["acquisition"]
 
@@ -46,8 +48,9 @@ class Optimizer(QObject):
 
         
         self.inputs, self.bounds = get_inputs(self.inputs_opt) # get the boundaries from the input dictionary
-        print(self.inputs)
-        self.objective = get_objectives(self.objectives_opt)
+        log.info("Optimization inputs:\n" + json_style(self.inputs))
+        self.objectives = get_objectives(self.objectives_opt)
+        log.info("Optimization objectives:\n" + json_style(self.objectives))
 
         self.train_X_list_raw = None  # list of lists
         self.train_Y_list_raw = None
@@ -58,43 +61,28 @@ class Optimizer(QObject):
         '''
         Use the initialization refered in the 'opt_form' dictrionary.
         '''
-        init_cls = self.init["cls"]()
-        init_params = self.init["params"]
-
-        self.init_x = init_cls.generate(bounds=self.bounds, **init_params)  # generate the first candidates
-
-        data = build_data_payload(                       # make the payload for the server
-            self.init_x,
-            self.inputs,
-            self.objective,
-            is_init=True,
-            is_opt=False,
-        )
-
-        print(f"Sobol suggestion:\n{self.format_print(self.init_x, self.inputs)}") # print the sample candidates
-
-        self.new_candidates.emit(data)
-
-
-    def format_print(self, X: torch.Tensor, inputs: dict) -> str:
-        '''
-        Print the values that each input should take. Use a X 'torch.Tensor'
-        for the values and a 'inputs' for the input addresses.
-        '''
-        addresses = [v["address"] for v in inputs.values()]  # make a list of addresses
-        position_index = [v["position_index"] for v in inputs.values()]
-
-        lines = []
-        for i in range(X.shape[0]):                            # for each sample
-            lines.append(f"batch {i + 1}:")                     # print which sample it is
-            for j in range(X.shape[1]):                          # for each candidate
-                coords = ", ".join(
-                    f"{addr}|{pos}={X[i, j, k].item():.6g}"            # for each input, address = value
-                    for k, (addr, pos) in enumerate(zip(addresses, position_index))
-                )
-                lines.append(f"  Candidate {j + 1}: {coords}")   # print the candidate
+        if not self.opt_form:   # if there is no optimization form
+            return              # do not continue
         
-        return "\n".join(lines)
+        init_cls = self.init["cls"]()      # create an instance of the initialization
+        init_params = self.init["params"]  # load the initialization parameters
+
+        self.init_x, self.init_y = init_cls.generate(bounds=self.bounds, **init_params)  # generate the first candidates
+
+        # if there is no y-elements
+        if not self.init_y:
+            # make the payload for the server
+            data = build_data_payload(
+                self.init_x,
+                self.inputs,
+                self.objectives,
+                is_init=True,
+                is_opt=False,
+            )
+
+            log.info(f"Init suggestion:\n{print_batch(self.init_x, self.inputs)}") # print the sample candidates
+
+            self.new_candidates.emit(data)  # emit the new candidates to sample
     
     
     def build_model(self, context: OptimizationContext) -> None:
@@ -211,7 +199,7 @@ class Optimizer(QObject):
             ext = candidates.unsqueeze(1)
             print(f"candidates are : {candidates}, candidates updated = {ext}")
             
-            data = build_data_payload(ext, self.inputs, self.objective, is_opt=True, is_init=False)
+            data = build_data_payload(ext, self.inputs, self.objectives, is_opt=True, is_init=False)
             print(f"data build payload candidates = {data}")
             self.new_candidates.emit(data)
             # self.send_to_server(candidates)
