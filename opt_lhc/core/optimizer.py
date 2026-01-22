@@ -173,14 +173,14 @@ class Optimizer(QObject):
 
 
     def get_objective_spec(self) -> dict[str, list[str]]:
-        """
+        '''
         Build objective specification grouped by address.
 
         Returns:
             {
                 address: [output_key_1, output_key_2, ...]
             }
-        """
+        '''
         obj_spec: dict[str, list[str]] = {}
 
         for obj in self.objectives.values():
@@ -196,9 +196,9 @@ class Optimizer(QObject):
 
 
     def _compute_address_sizes(self, bounds_dict: dict) -> dict[str, int]:
-        """
+        '''
         Returns {address: size_of_motor_list}
-        """
+        '''
         sizes = defaultdict(int)
 
         for info in bounds_dict.values():
@@ -266,9 +266,9 @@ class Optimizer(QObject):
 
 
     def suggest_next_points(self) -> torch.Tensor:
-        """
+        '''
         High-level API used by UI / server.
-        """
+        '''
         # if self.train_X_list is None:
         #     raise RuntimeError("No training data available.")
 
@@ -307,7 +307,7 @@ class Optimizer(QObject):
     #     return runtime_inputs
 
     def _sync_context(self):
-        """Convert raw lists into tensors and update OptimizationContext."""
+        '''Convert raw lists into tensors and update OptimizationContext.'''
         train_X_list = []
         train_Y_list = []
 
@@ -389,87 +389,3 @@ class Optimizer(QObject):
 
         # Build / update context
         self._sync_context()
-
-
-
-
-        # print("[OPT] train_X_list status:")
-        # for i, X in enumerate(self.train_X_list):
-        #     print(f"  train_X_list[{i}] = {X}")
-
-        # print("[OPT] train_Y_list status:")
-        # for i, Y in enumerate(self.train_Y_list):
-        #     print(f"  train_Y_list[{i}] = {Y}")
-
-    # def update_opt(self, data: dict) -> None:
-    #     print(f"[CMD_OPT] data = {data}")
-    #     results = data["results"]
-
-    #     # Lazy init: one list per objective
-    #     if self.train_X_list is None:
-    #         num_obj = len(results[0]["output"])
-    #         self.train_X_list = [[] for _ in range(num_obj)]
-    #         self.train_Y_list = [[] for _ in range(num_obj)]
-
-    #     for r in results:
-    #         x = torch.tensor(
-    #             next(iter(r["inputs"].values())),
-    #             dtype=torch.float32,
-    #         )
-
-    #         for obj_idx, y_val in enumerate(r["output"]):
-    #             if y_val is None:
-    #                 continue
-
-    #             self.train_X_list[obj_idx].append(x)
-    #             self.train_Y_list[obj_idx].append(
-    #                 torch.tensor([y_val], dtype=torch.float32)
-    #             )
-
-    #     # Convert lists → tensors
-    #     for i in range(len(self.train_X_list)):
-    #         if len(self.train_X_list[i]) == 0:
-    #             continue
-
-    #         self.train_X_list[i] = torch.stack(self.train_X_list[i], dim=0)
-    #         self.train_Y_list[i] = torch.stack(self.train_Y_list[i], dim=0)
-
-    #     print("[OPT] train_X_list status:")
-    #     for i, X in enumerate(self.train_X_list):
-    #         print(f"  train_X_list[{i}] = {X}")
-
-    #     print("[OPT] train_Y_list status:")
-    #     for i, Y in enumerate(self.train_Y_list):
-    #         print(f"  train_Y_list[{i}] = {Y}")
-
-    #     self.build_strategy_model()
-
-
-
-    # def build_strategy_model(self) -> None:
-    #     """
-    #     Instantiate the optimization strategy and build its model
-    #     using the current training data.
-    #     """
-    #     if not self.is_opt:
-    #         return
-
-    #     if self.train_X_list is None or self.train_Y_list is None:
-    #         return
-
-    #     # Require at least one objective with data
-    #     if not any(len(X) > 0 for X in self.train_X_list):
-    #         return
-
-    #     pipeline = self.opt_form["opt"]["pipeline"]
-    #     strategy_dict = pipeline["strategy"]
-    #     strategy_cls = strategy_dict["cls"]
-    #     strategy_params = strategy_dict.get("params", {})
-
-    #     self.strategy = strategy_cls()
-    #     self.model = self.strategy.build_model(
-    #         self.train_X_list,
-    #         self.train_Y_list,
-    #         self.bounds,
-    #         **strategy_params,
-    #     )

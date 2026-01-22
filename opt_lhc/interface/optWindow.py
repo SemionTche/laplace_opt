@@ -1,7 +1,7 @@
 # libraries
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, 
-    QHBoxLayout, QPushButton, QMessageBox
+    QHBoxLayout, QPushButton, QMessageBox, QLabel
 )
 from PyQt6.QtGui import QIcon
 
@@ -83,6 +83,10 @@ class OptWindow(QMainWindow):
         # Block 5: Start and Stop buttons
         bottom_layout = QHBoxLayout()
         bottom_layout.addStretch()
+            # state label
+        self.status_label = QLabel("🟢 Ready")
+        self.status_label.setStyleSheet("font-weight: bold;")
+        bottom_layout.addWidget(self.status_label)
             # Stop
         self.stop_button = QPushButton("Stop")
         self.stop_button.setFixedWidth(120)
@@ -180,7 +184,7 @@ class OptWindow(QMainWindow):
             log.warning(f"{message} Answer: continue.")
 
         log.info("Starting optimization with form:\n" + json_style(form))
-        self.execution_panel.set_locked(True)  # lock the ExecutionPanel to prevent saving modifications
+        self.set_opt_state(True)
         self.opt_manager.init_process(form)    # send the config dictionary to the optimization manager
 
 
@@ -192,10 +196,23 @@ class OptWindow(QMainWindow):
 
         self.opt_manager.stop_opt()
 
-        self.execution_panel.set_locked(False)  # unlock the ExecutionPanel
+        self.set_opt_state(False)
         pass
 
     
+    def set_opt_state(self, optimizing: bool):
+        if optimizing:
+            self.status_label.setText("🟡 Optimizing...")
+            self.status_label.setStyleSheet("color: orange; font-weight: bold;")
+            self.start_button.setEnabled(False)      # lock the start button
+            self.execution_panel.set_locked(True)    # lock the ExecutionPanel
+        else:
+            self.status_label.setText("🟢 Ready")
+            self.status_label.setStyleSheet("color: green; font-weight: bold;")
+            self.start_button.setEnabled(True)      # unlock the start button
+            self.execution_panel.set_locked(False)  # unlock the ExecutionPanel
+
+
     def closeEvent(self, event) -> None:
         '''
         Function called when the window is closing.
