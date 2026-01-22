@@ -90,7 +90,7 @@ class ExecutionPanel(QGroupBox):
             default_value="",
             type=str
         )
-        self.saving_entry.setText(default_saving_path)
+        self.set_path_saving(default_saving_path)
         
             # get and set default reading path
         default_reading_path = get_from_config(
@@ -99,7 +99,7 @@ class ExecutionPanel(QGroupBox):
             default_value="",
             type=str
         )
-        self.read_entry.setText(default_reading_path)
+        self.set_path_reading(default_reading_path)
 
 
     def actions(self) -> None:
@@ -307,10 +307,12 @@ class ExecutionPanel(QGroupBox):
         
         ### setters
     def set_path_reading(self, path: str) -> None:
-        self.read_entry.setText(path)
+        if not self.is_locked():
+            self.read_entry.setText(path)
     
     def set_path_saving(self, path: str) -> None:
-        self.saving_entry.setText(path)
+        if not self.is_locked():
+            self.saving_entry.setText(path)
     
     def set_server_address(self, address: str) -> None:
         return self.server_entry.setText(address)
