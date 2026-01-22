@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import pyqtSignal
 
-from log_laplace.log_lhc import log
+from laplace_log import log
 
 # project
 from utils.getter import get_classes
@@ -60,7 +60,7 @@ class PipelinePanel(QGroupBox):
                     if index > 0:             # and the selection not already valid
                         combo.setCurrentIndex(index)  # set the current selection
                     else:
-                        log.debug(f"New {title} selected: '{cls_name}'") # else print the selection in logs
+                        log.info(f"New {title} selected: '{cls_name}'") # else print the selection in logs
 
 
     def set_up(self) -> None:
@@ -127,7 +127,7 @@ class PipelinePanel(QGroupBox):
             val=val
         )
 
-        log.debug(f"New {title} selected: '{val}'")
+        log.info(f"New {title} selected: '{val}'")
 
         self.selection_changed.emit()  # emit the signal
 

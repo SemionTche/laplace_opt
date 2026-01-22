@@ -1,11 +1,11 @@
 # libraries
 from PyQt6.QtCore import pyqtSignal, QObject
 
-from server_lhc.serverLHC import ServerLHC
-from server_lhc.protocol import DEVICE_OPT
-from server_lhc.serverController import ServerController
+from laplace_server.server_lhc import ServerLHC
+from laplace_server.protocol import DEVICE_OPT
+from laplace_server.server_controller import ServerController
 
-from log_laplace.log_lhc import log
+from laplace_log import log
 
 # project
 from core.optimizer import Optimizer
@@ -113,7 +113,7 @@ class OptManager(QObject):
                 
                 # when the CMD_SAVE is received, emit a signal to change the saving path
             self.serv.set_on_saving_path_changed(
-                self.server_controller.on_server_save_path
+                self.server_controller.on_saving_path_changed
             )
                 # when CMD_OPT is received, emit signal to update the optimizer
             self.serv.set_on_opt(
@@ -131,7 +131,6 @@ class OptManager(QObject):
 
 
     ### helpers
-
     def set_form(self, opt_form: dict) -> None:
         '''Helper setting and saving the 'opt_form' dictionary.'''
         self._opt_form = opt_form               # set the attribute

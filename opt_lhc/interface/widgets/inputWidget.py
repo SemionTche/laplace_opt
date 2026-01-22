@@ -7,7 +7,7 @@ from PyQt6.QtGui import QIcon
 
 import pathlib
 
-from log_laplace.log_lhc import log
+from laplace_log import log
 
 # project
 from model_construction.inputs.input_structure import InputStructure
@@ -188,7 +188,7 @@ class InputWidget(QWidget):
         self.max_spin.setEnabled(enabled)
 
         self.safe_label.setEnabled(enabled) # enable / disable safe label
-        log.debug(f"Input '{self.name}' added." if enabled else f"Input '{self.name}' removed.")
+        log.info(f"Input '{self.name}' added." if enabled else f"Input '{self.name}' removed.")
 
 
     def update_instance_bounds(self) -> None:
@@ -201,7 +201,7 @@ class InputWidget(QWidget):
         bounds = self.get_value()            # get the boundary values
         if bounds is not None:               # if the value is valid
             self.instance.set_bounds(bounds) # update the instance boundaries
-            log.debug(f"Input '{self.name}' boundaries changed, new boundaries = {bounds}")
+            log.info(f"Input '{self.name}' boundaries changed, new boundaries = {bounds}")
 
 
     def update_min_max(self) -> None:

@@ -8,8 +8,7 @@ from PyQt6.QtGui import QIcon
 import qdarkstyle
 import pathlib
 
-from log_laplace.log_lhc import log
-from log_laplace.utils import json_style
+from laplace_log import log
 
 # project
 from interface.panels.executionPanel import ExecutionPanel
@@ -20,6 +19,7 @@ from interface.panels.optPanel import OptPanel
 from core.optManager import OptManager
 
 from utils.model_form import make_form, ValidationLevel
+from utils.json_encoder import json_style
 
 
 class OptWindow(QMainWindow):

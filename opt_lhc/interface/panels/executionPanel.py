@@ -7,7 +7,7 @@ from PyQt6.QtCore import Qt, pyqtSignal, QSettings
 
 import pathlib
 
-from log_laplace.log_lhc import log
+from laplace_log import log
 
 # project
 from utils.config_helper import get_from_config, set_in_config
@@ -176,8 +176,8 @@ class ExecutionPanel(QGroupBox):
         self.read_server.setChecked(checked)     # check the server reading radio button
         self.read_file.setChecked(not checked)   # uncheck the file reading radio button
         
-        self.server_state_changed.emit(checked)  # emit a signal to start / stop the server
         log.debug("Server box checked." if checked else "Server box unchecked.")
+        self.server_state_changed.emit(checked)  # emit a signal to start / stop the server
 
 
     def update_read_server_state(self) -> None:

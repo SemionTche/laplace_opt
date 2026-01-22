@@ -16,7 +16,8 @@ class ElectronCharge(ObjectiveStructure):
 
         # address = "tcp://147.250.140.65:5556"
         # address = "tcp://192.168.1.191:5556"
-        ip = "192.168.1.191"
+        # ip = "192.168.1.191"
+        ip = "147.250.140.65"
         port = "5556"
 
         position_index = 0

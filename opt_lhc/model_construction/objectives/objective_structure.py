@@ -27,11 +27,11 @@ class ObjectiveStructure(ABC):
         return self._minimize
     
     @property
-    def ip_port(self) -> bool:
+    def ip_port(self) -> str:
         return f"{self.ip}:{self.port}"
 
     @property
-    def address(self) -> bool:
+    def address(self) -> str:
         return f"tcp://{self.ip}:{self.port}"
     
     @property

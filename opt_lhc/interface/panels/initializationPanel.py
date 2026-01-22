@@ -7,7 +7,7 @@ from PyQt6.QtCore import QSettings
 
 import pathlib
 
-from log_laplace.log_lhc import log
+from laplace_log import log
 
 # project
 from utils.getter import get_classes
@@ -119,7 +119,7 @@ class InitializationPanel(QGroupBox):
         # get the corresponding init class
         cls = list(self.init_cls.values())[index]
 
-        log.debug(f"New initialization selected: '{cls.__name__}'")
+        log.info(f"New initialization selected: '{cls.__name__}'")
 
         # get the class parameters
         parameters = cls.get_parameters()

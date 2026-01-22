@@ -15,7 +15,8 @@ class GasJetLongitudinal(InputStructure):
         safe_bounds = (-2.0, 10.0)
         # address = "147.250.140.65:5555"
         # address = "192.168.1.191:5555"
-        ip = "192.168.1.191"
+        # ip = "192.168.1.191"
+        ip = "147.250.140.65"
         port = "5555"
 
         description = "Position of the gas jet along the propagation axis."

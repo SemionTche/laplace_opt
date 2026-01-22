@@ -5,7 +5,7 @@ from PyQt6.QtCore import pyqtSignal, QObject
 from botorch.optim import optimize_acqf
 from botorch.utils.transforms import normalize, unnormalize
 
-from log_laplace.log_lhc import log
+from laplace_log import log
 
 from core.optimizerContext import OptimizationContext
 

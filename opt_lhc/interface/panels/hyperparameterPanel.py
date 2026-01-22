@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
     QWidget, QComboBox
 )
 
-from log_laplace.log_lhc import log
+from laplace_log import log
 
 # project
 from utils.standard_widgets import load_standard_widgets

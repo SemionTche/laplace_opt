@@ -7,7 +7,7 @@ from PyQt6.QtGui import QIcon
 
 import pathlib
 
-from log_laplace.log_lhc import log
+from laplace_log import log
 
 # project
 from model_construction.objectives.objective_structure import ObjectiveStructure
@@ -120,7 +120,7 @@ class ObjectiveWidget(QWidget):
         self.state_icon.setPixmap(icon.pixmap(16, 16))
 
         self.mode.setEnabled(enabled)
-        log.debug(f"Objective '{self.name}' added." if enabled else f"Objective '{self.name}' removed.")
+        log.info(f"Objective '{self.name}' added." if enabled else f"Objective '{self.name}' removed.")
 
 
     def on_mode_changed(self) -> None:
@@ -134,7 +134,7 @@ class ObjectiveWidget(QWidget):
             self.instance.set_minimize(False)
             min_max = "Maximize"
         
-        log.debug(f"Objective '{self.name}' min/max changed, new min/max = '{min_max}'")
+        log.info(f"Objective '{self.name}' min/max changed, new min/max = '{min_max}'.")
 
 
     ### helpers
