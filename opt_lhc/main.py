@@ -11,7 +11,7 @@ from laplace_server.protocol import LOGGER_NAME
 LoggerLHC("laplace.opt", file_level="debug", console_level="info")
 log.info("Starting OptWindow...")
 
-logging.getLogger(LOGGER_NAME).setLevel(logging.DEBUG)
+logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)
 
 # project
 from interface.optWindow import OptWindow

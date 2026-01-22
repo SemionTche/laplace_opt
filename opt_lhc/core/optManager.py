@@ -14,10 +14,14 @@ from utils.save_configuration import save_config
 
 
 class OptManager(QObject):
+    '''
+    '''
 
     on_server_address = pyqtSignal(str)  # transmit the optimizer server address
 
     def __init__(self):
+        '''
+        '''
         super().__init__() # heritage from QObject
 
         # controller class to emit signals from server
