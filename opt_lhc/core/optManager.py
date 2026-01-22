@@ -26,7 +26,6 @@ class OptManager(QObject):
         self.is_saving: bool = False
         self.is_online: bool = False
         self.is_opt: bool = False
-        self.is_runing: bool = False
         self._opt_form = {}
 
     @property
@@ -52,8 +51,6 @@ class OptManager(QObject):
         self.is_online = self.opt_form["exec"]["is_online"]  # is it an online init + optimization
         self.is_opt = self.opt_form["opt"]["enabled"]        # is there an optimization
         
-        if self.opt_form["exec"]["saving_path"]:             # is the model saved
-            self.is_saving = True
 
         if self.is_online: # if dealing with a server
 
@@ -64,7 +61,7 @@ class OptManager(QObject):
 
             # when new candidates are provided by optimizer, update the server payload
             self.optimizer.new_candidates.connect(
-                self.up_serv_temp
+                self.serv.set_data
             )
 
         self.optimizer.init_opt()   # get the first candidates
@@ -81,15 +78,9 @@ class OptManager(QObject):
             self.optimizer.new_candidates.disconnect()
 
         # reset the checkers
-        self.is_runing = False
         self.is_online = False
         self.is_opt = False
         self.is_saving = False
-
-
-    def up_serv_temp(self, data: dict):
-        self.serv.set_data(data)
-        print(f"serv data update = {self.serv.data}")
 
 
     def server_launch(self, server_state: bool) -> None:
