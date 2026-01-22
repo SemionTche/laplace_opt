@@ -106,10 +106,11 @@ class OptPanel(QGroupBox):
 
         pipeline_cfg = {} # make the pipeline dictionary
 
-        for stage, cls in pipeline_classes.items(): # for every stage
-            pipeline_cfg[stage] = {                 # create a dictionary
-                "cls": cls,                         # with the class
-                "params": hyperparams.get(cls, {})  # and the parameters
+        for stage, cls in pipeline_classes.items():  # for every stage
+            pipeline_cfg[stage] = {                  # create a dictionary
+                "cls": cls,                          # with the class
+                "params": hyperparams.get(cls, {}),  # and the parameters
+                "core_params": cls.core_parameters if issubclass(cls, StrategyStructure) else {}
             }
 
         return {"enabled": True, "pipeline": pipeline_cfg}
