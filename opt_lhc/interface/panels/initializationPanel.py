@@ -3,9 +3,6 @@ from PyQt6.QtWidgets import (
     QGroupBox, QVBoxLayout, QComboBox, QWidget, QLabel,
     QSpinBox, QGridLayout, QDoubleSpinBox, QLineEdit
 )
-from PyQt6.QtCore import QSettings
-
-import pathlib
 
 from laplace_log import log
 

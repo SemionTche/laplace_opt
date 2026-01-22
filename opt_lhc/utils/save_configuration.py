@@ -2,7 +2,7 @@
 import pathlib
 import json
 import re
-from datetime import datetime, date
+from datetime import date
 
 # project
 from utils.json_encoder import OptimizationJSONEncoder

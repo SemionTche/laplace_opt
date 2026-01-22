@@ -3,9 +3,7 @@ from PyQt6.QtWidgets import (
     QGroupBox, QGridLayout, QRadioButton,
     QCheckBox, QLineEdit, QPushButton, QLabel, QFileDialog
 )
-from PyQt6.QtCore import Qt, pyqtSignal, QSettings
-
-import pathlib
+from PyQt6.QtCore import Qt, pyqtSignal
 
 from laplace_log import log
 
