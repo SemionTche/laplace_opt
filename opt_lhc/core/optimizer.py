@@ -9,19 +9,29 @@ from laplace_log import log
 
 # project
 from core.optimizerContext import OptimizationContext, Observation
-from utils.json_encoder import json_style, print_batch, print_evaluations, format_candidate_batch
+from utils.json_encoder import json_style, print_evaluations, format_candidate_batch
 from utils.build_payload import (
     get_inputs, get_objectives, build_data_payload
 )
 
 class Optimizer(QObject):
     '''
+    Manages candidate generation, model building, and acquisition optimization.
+
+    Uses an OptimizationContext to store training data and objectives, 
+    supports initialization strategies, and emits new candidates via signals.
     '''
     
     new_candidates = pyqtSignal(dict)
 
     def __init__(self, opt_form: dict):
         '''
+        Initialize the Optimizer with a given configuration.
+
+        Args:
+            opt_form: (dict)
+                Dictionary specifying inputs, objectives, initialization, 
+                and optimization pipeline parameters.
         '''
         super().__init__()         # heritage QObject
         

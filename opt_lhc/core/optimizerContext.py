@@ -8,15 +8,36 @@ from laplace_log import log
 
 @dataclass
 class Observation:
+    '''
+    Represents a single evaluation result of the optimizer.
+
+    Attributes:
+        x: (torch.Tensor)
+            Input vector for the evaluation.
+        y: (torch.Tensor)
+            Corresponding objective values.
+    '''
     x: torch.Tensor    # shape [d]
     y: torch.Tensor    # shape [n_obj]
 
 
 class OptimizationContext:
     '''
+    Stores training data, bounds, and objectives for optimization.
+
+    Provides methods to access baseline points and compute reference points
+    for acquisition functions.
     '''
     def __init__(self, bounds, objectives):
         '''
+        Initialize the optimization context with problem definition.
+
+        Args:
+            bounds: (torch.Tensor) 
+                Bounds for each input variable.
+
+            objectives: (dict)
+                Dictionary of objectives to optimize.
         '''
         self.bounds = bounds
         self.objectives = objectives
@@ -27,18 +48,40 @@ class OptimizationContext:
 
     
     def add_observation(self, x: torch.Tensor, y: torch.Tensor) -> None:
-        """
-        x: shape [d]
-        y: shape [n_obj]
-        """
+        '''
+        Add a single observation to the context.
+
+        Args:
+            x: (torch.Tensor)
+                Input vector of shape [d].
+            y: (torch.Tensor)
+                Corresponding objective values of shape [n_obj].
+        '''
         self._observations.append(Observation(x=x, y=y))
+        log.debug(f"Observation added: x={x.tolist()}, y={y.tolist()}")
 
 
     def add_observations(self, observations: list[Observation]) -> None:
+        '''
+        Add multiple observations at once.
+
+        Args:
+            observations: (list[Observation])
+                List of Observation instances.
+        '''
         self._observations.extend(observations)
+        log.debug(f"{len(observations)} observations added. Total now: {len(self._observations)}")
 
 
     def X_by_objective(self) -> list[torch.Tensor]:
+        '''
+        Get input tensors grouped by objective.
+
+        Returns:
+            list[torch.Tensor]: 
+                List of tensors, one per objective, containing 
+                the input vectors for valid observations.
+        '''
         Xs = [[] for _ in range(self.n_obj)]
 
         for obs in self._observations:
@@ -53,6 +96,14 @@ class OptimizationContext:
     
 
     def Y_by_objective(self) -> list[torch.Tensor]:
+        '''
+        Get output tensors grouped by objective.
+
+        Returns:
+            list[torch.Tensor]: 
+                List of tensors, one per objective, containing 
+                the corresponding objective values.        
+        '''
         Ys = [[] for _ in range(self.n_obj)]
 
         for obs in self._observations:
@@ -67,14 +118,43 @@ class OptimizationContext:
 
 
     def get_X_baseline(self) -> torch.Tensor:
+        '''
+        Get all unique evaluated input points.
+
+        Returns:
+            torch.Tensor: 
+                Concatenated and unique inputs across all observations.        
+        '''
         if not self._observations:
-            raise RuntimeError("No baseline points available.")
+            log.warning("No baseline points available.")
 
         X = torch.stack([obs.x for obs in self._observations])
+        log.debug(f"Baseline points retrieved: {X.shape[0]} points")
         return torch.unique(X, dim=0)
+    
+
+    def get_X_baseline_normalized(self) -> torch.Tensor:
+        '''
+        Get normalized baseline inputs according to bounds.
+
+        Returns:
+            torch.Tensor: 
+                Normalized unique input points.
+        '''
+        return normalize(self.get_X_baseline(), self.bounds)
 
 
     def compute_ref_point(self) -> torch.Tensor:
+        '''
+        Compute a reference point for multi-objective optimization.
+
+        For each objective, uses max+10% range if minimizing,
+        or min-10% range if maximizing.
+
+        Returns:
+            torch.Tensor: 
+                Reference point vector of shape [n_obj].
+        '''
         ref = []
 
         Y = torch.stack([obs.y for obs in self._observations])
@@ -83,46 +163,12 @@ class OptimizationContext:
             yi = Y[:, i]
 
             if obj.minimize:
-                ref.append(yi.max() + 0.1 * yi.abs().max())
+                val = yi.max() + 0.1 * yi.abs().max()
             else:
-                ref.append(yi.min() - 0.1 * yi.abs().max())
+                val = yi.min() - 0.1 * yi.abs().max()
+            ref.append(val)
+        
+        ref_tensor = torch.tensor(ref, dtype=torch.double)
+        log.debug(f"Reference point computed: {ref_tensor.tolist()}")
 
-        return torch.tensor(ref, dtype=torch.double)
-
-
-    
-    # def get_X_baseline(self) -> torch.Tensor:
-    #     """
-    #     Return the union of all evaluated design points,
-    #     suitable for NEHVI / LogNEHVI.
-    #     """
-    #     Xs = []
-
-    #     for X in self.train_X_list:
-    #         if isinstance(X, torch.Tensor) and X.numel() > 0:
-    #             Xs.append(X)
-
-    #     if len(Xs) == 0:
-    #         raise RuntimeError("No baseline points available.")
-
-    #     # concatenate and drop duplicates
-    #     X_all = torch.cat(Xs, dim=0)
-    #     X_unique = torch.unique(X_all, dim=0)
-
-    #     return X_unique
-    
-    def get_X_baseline_normalized(self) -> torch.Tensor:
-        return normalize(self.get_X_baseline(), self.bounds)
-    
-
-    # def compute_ref_point(self) -> torch.Tensor:
-    #     ref = []
-    #     for i, obj in enumerate(self.objectives.values()):
-    #         y = self.train_Y_list[i].squeeze(-1)
-
-    #         if obj.minimize:
-    #             ref.append(y.max() + 0.1 * y.abs().max())
-    #         else:
-    #             ref.append(y.min() - 0.1 * y.abs().max())
-
-    #     return torch.tensor(ref, dtype=torch.double)
+        return ref_tensor
