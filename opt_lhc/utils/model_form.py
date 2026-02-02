@@ -1,6 +1,6 @@
 # libraries
 from enum import Enum
-from datetime import date, datetime
+from datetime import datetime, date
 import pathlib
 
 # project
@@ -32,16 +32,23 @@ def is_date_folder(path: pathlib.Path) -> bool:
         return False
 
 
-def make_form(exec, 
+def make_form(exec: dict[str, bool | str], 
               inputs: dict[str, InputStructure], 
               obj: dict[str, ObjectiveStructure], 
-              init: dict[str, dict[InitializationStructure, dict[str, int, float, bool]]], 
-              opt: dict[str, bool, dict[str, dict[str, StratOrAcq, dict[str, int, float, bool]]]]
+              init: dict[str, InitializationStructure | dict[str, int | float | bool | str]], 
+              opt: dict[str, bool | dict[str, dict[str, StratOrAcq | dict[str, int | float | bool | str]]]]
             ) -> tuple[dict, tuple[ValidationLevel, str]]:
     '''
     Create the form dictionary of an optimization.
     '''
+    # add current date and time to the optimization form
+    now = datetime.now()
+    saved_date = now.date().isoformat()
+    saved_time = now.time().isoformat(timespec="seconds")
+
     form = {
+        "saved_date": saved_date,
+        "saved_time": saved_time,
         "exec": exec,
         "inputs": inputs,
         "obj": obj,
@@ -80,7 +87,6 @@ def check_form(form: dict) -> tuple[ValidationLevel, str]:
 
         # initialization
         init_dict = form["init"]
-        # init_data = next(iter(init_dict.values()), None)
 
         if init_dict is not None:
             init_cls = init_dict["cls"]

@@ -9,13 +9,16 @@ def check_bounds_format(bounds: Sequence[float]):
     if len(bounds) != 2 or bounds[0] > bounds[1]:
         raise ValueError("bounds must have exactly 2 elements: (min, max)")
 
+
 class InputStructure(ABC):
     
     def __init__(self, name: str, 
                  bounds: Sequence[float], 
                  safe_bounds: Sequence[float], 
-                 unit: str, 
-                 address: str,
+                 unit: str,
+                 ip: str,
+                 port: str, 
+                #  address: str,
                  description: str,
                  symbol: str,
                  position_index: int):
@@ -24,7 +27,9 @@ class InputStructure(ABC):
         check_bounds_format(safe_bounds)
 
         self._name = name
-        self._address = address
+        self.ip = ip
+        self.port = port
+        # self._address = address
         self._bounds = bounds
         self._safe_bounds = safe_bounds
         self._unit = unit
@@ -48,7 +53,13 @@ class InputStructure(ABC):
     
     @property
     def address(self) -> str:
-        return self._address
+        # return self._address
+        # return f"tcp://{self.ip}:{self.port}"
+        return self.ip_port
+    
+    @property
+    def ip_port(self) -> str:
+        return f"{self.ip}:{self.port}"
     
     @property
     def unit(self) -> str:

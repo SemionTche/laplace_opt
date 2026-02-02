@@ -1,5 +1,6 @@
 # libraries
 from botorch.utils.sampling import draw_sobol_samples
+import torch
 
 # project
 from model_construction.initializations.initialization_structure import InitializationStructure
@@ -36,7 +37,7 @@ class SobolInitialization(InitializationStructure):
         }
     }
 
-    def generate(self, bounds, n_samples: int = 16, q_candidates: int = 1, seed: int = 0):
+    def generate(self, bounds, n_samples: int = 16, q_candidates: int = 1, seed: int = 0) -> tuple[torch.Tensor, None]:
         # bounds: Tensor [2, d]
         X = draw_sobol_samples(
             bounds=bounds,
@@ -46,4 +47,4 @@ class SobolInitialization(InitializationStructure):
         ).squeeze(1)
         if X.dim() == 2:
             X = X.unsqueeze(1)  # n x d  → n x 1 x d
-        return X
+        return (X, None)

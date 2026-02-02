@@ -7,13 +7,16 @@ from PyQt6.QtGui import QIcon
 
 import pathlib
 
+from laplace_log import log
+
 # project
 from model_construction.objectives.objective_structure import ObjectiveStructure
 
+
 class ObjectiveWidget(QWidget):
     '''
-    ObjectiveWidget defines the line of an objective. The objective 
-    must have it's own class file in 'model_construction/objectives' 
+    Define the objective line. The objective must have 
+    it's own class file in 'model_construction/objectives' 
     and respect the 'ObjectiveStructure' format.
     '''
     def __init__(self, name: str, cls: type[ObjectiveStructure]):
@@ -23,21 +26,35 @@ class ObjectiveWidget(QWidget):
                     name of the class used for this line.
 
                 cls: (type)
-                    the class of the objective.
+                    the objective class.
+                    (must heritate from 'ObjectiveStructure')
         '''
         super().__init__() # heritage from QWidget
 
         self.name = name
         self.instance: ObjectiveStructure = cls()  # make an instance
 
+        # get relevant features from the instance
+        self.ip_port = self.instance.ip_port
+        self.description = self.instance.description
+        self.minimize = self.instance.minimize
+
+        self.set_up()  # build the objective widget
+        self.actions() # defines the actions of ObjectiveWidget
+
+
+    def set_up(self) -> None:
+        '''
+        Build the widgets inside ObjectiveWidget.
+        '''
         # main objective line layout
         line_layout = QHBoxLayout(self)
-        line_layout.setContentsMargins(4, 2, 4, 2)
-        line_layout.setSpacing(8)
-        self.setLayout(line_layout)
+        line_layout.setContentsMargins(4, 2, 4, 2)  # widget margin
+        line_layout.setSpacing(8)                   # spacing
+        self.setLayout(line_layout)                 # set layout
 
-        p = pathlib.Path(__file__)       # get the path of the file
-        icon_path = p.parent / 'icons'   # path to the icon folder
+        p = pathlib.Path(__file__)              # get the file path
+        icon_path = p.parent.parent / 'icons'   # get the icon folder path
 
         # build the check and uncheck icons
         self.connected_icon = QIcon(str(icon_path / 'connected.png'))
@@ -45,40 +62,28 @@ class ObjectiveWidget(QWidget):
 
         # state
         self.state_checkBox = QCheckBox()
-        self.state_checkBox.setToolTip(f"Include objective '{name}' in config")
+        self.state_checkBox.setToolTip(f"Include objective '{self.name}' in config")
         self.state_checkBox.setFixedWidth(20)
         line_layout.addWidget(self.state_checkBox)
 
         # state icon
-        self.state_icon = QLabel() # create a blank label
+        self.state_icon = QLabel()                                       # create a blank label
         self.state_icon.setFixedWidth(20)
         self.state_icon.setPixmap(self.disconnected_icon.pixmap(16, 16)) # add an image
         self.state_icon.setToolTip("Current state")
         line_layout.addWidget(self.state_icon)
 
-        # address
-        self.address_label = QLabel()
-        self.address = self.instance.address      # get address from the instance
-        self.address_label.setText(self.address or "Unknown")
-        self.address_label.setEnabled(False)
-        self.address_label.setToolTip("The address of the input device used by the server")
-        line_layout.addWidget(self.address_label)
-
-        # position index
-        self.position_label = QLabel()
-        self.position_index = self.instance.position_index
-        self.position_label.setText(str(self.position_index) or "Unknown")
-        self.position_label.setEnabled(False)
-        self.position_label.setFixedWidth(20)
-        self.position_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.position_label.setToolTip("The position of the input device in the server list")
-        line_layout.addWidget(self.position_label)
+        # ip_port
+        self.ip_port_label = QLabel()
+        self.ip_port_label.setText(self.ip_port or "Unknown")
+        self.ip_port_label.setEnabled(False)
+        self.ip_port_label.setToolTip("The ip:port of the input device used by the server")
+        line_layout.addWidget(self.ip_port_label)
 
         # name label
-        self.name_label = QLabel(name)
+        self.name_label = QLabel(self.name)
         self.name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.tip = self.instance.description
-        self.name_label.setToolTip(self.tip)
+        self.name_label.setToolTip(self.description)
         line_layout.addWidget(self.name_label)
 
         # minimize/maximize selector
@@ -88,17 +93,15 @@ class ObjectiveWidget(QWidget):
         line_layout.addWidget(self.mode)
 
         # defines the default combo box display
-        if self.instance.minimize is False:
+        if not self.minimize:
             self.mode.setCurrentIndex(1)  # set maximize
 
         self.mode.setEnabled(False)  # disabled by default
 
-        self.actions() # defines the class actions
-
 
     def actions(self) -> None:
         '''
-        Defines the actions of ObjectiveWidget class.
+        Defines the actions of the ObjectiveWidget class.
         '''
         # when the state changes, enable / disable the mode and change the icon
         self.state_checkBox.stateChanged.connect(self.on_state_changed)
@@ -117,6 +120,7 @@ class ObjectiveWidget(QWidget):
         self.state_icon.setPixmap(icon.pixmap(16, 16))
 
         self.mode.setEnabled(enabled)
+        log.info(f"Objective '{self.name}' added." if enabled else f"Objective '{self.name}' removed.")
 
 
     def on_mode_changed(self) -> None:
@@ -125,8 +129,13 @@ class ObjectiveWidget(QWidget):
         '''
         if self.is_minimize():
             self.instance.set_minimize(True)
+            min_max = "Minimize"
         else:
             self.instance.set_minimize(False)
+            min_max = "Maximize"
+        
+        log.info(f"Objective '{self.name}' min/max changed, new min/max = '{min_max}'.")
+
 
     ### helpers
 
@@ -136,6 +145,6 @@ class ObjectiveWidget(QWidget):
     def is_minimize(self) -> bool:
         return self.mode.currentText() == "Minimize"
     
-    def enable_address(self, enable: bool) -> None:
-        self.address_label.setEnabled(enable)
-        self.position_label.setEnabled(enable)
+    def enable_ip_port(self, enable: bool) -> None:
+        '''Enable / disable the 'ip:port' field.'''
+        self.ip_port_label.setEnabled(enable)

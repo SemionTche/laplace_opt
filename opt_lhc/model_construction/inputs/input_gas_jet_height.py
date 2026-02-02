@@ -15,7 +15,11 @@ class GasJetHeight(InputStructure):
         name = "gas_jet_height"
         unit = "mm"
         safe_bounds = (-2.0, 10.0)
-        address = "147.250.140.65:5555"
+        # address = "147.250.140.65:5555"
+        # address = "192.168.1.191:5555"
+        # ip = "192.168.1.191"
+        ip = "147.250.140.65"
+        port = "5555"
         
         description = "Vertical position of the gas jet."
         symbol = "y_gas"
@@ -28,7 +32,9 @@ class GasJetHeight(InputStructure):
             bounds=bounds, 
             safe_bounds=safe_bounds, 
             unit=unit, 
-            address=address, 
+            # address=address, 
+            ip=ip,
+            port=port,
             description=description,
             symbol=symbol,
             position_index=position_index

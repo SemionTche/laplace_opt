@@ -14,7 +14,10 @@ class GasPressure(InputStructure):
         unit = "bar"
         self._gas_type = gas_type
         safe_bounds = (0.0, 300.0)
-        address = "tmp 4"
+        # address = "tmp 4"
+
+        ip = "tmp"
+        port = "4"
 
         description = "Gas pressure"
         symbol = "P_gas"
@@ -27,7 +30,9 @@ class GasPressure(InputStructure):
             bounds=bounds, 
             safe_bounds=safe_bounds, 
             unit=unit, 
-            address=address, 
+            # address=address, 
+            ip=ip,
+            port=port,
             description=description,
             symbol=symbol,
             position_index=position_index

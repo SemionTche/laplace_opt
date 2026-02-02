@@ -43,7 +43,7 @@ class InitializationStructure(ABC):
         return cls.parameters
 
     @abstractmethod
-    def generate(self, bounds, **kwargs):
+    def generate(self, bounds, **kwargs) -> tuple:
         '''
         Returns initial sample coordinates (X vector).
         '''

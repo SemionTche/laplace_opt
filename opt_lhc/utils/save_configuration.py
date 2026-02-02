@@ -2,7 +2,9 @@
 import pathlib
 import json
 import re
-from datetime import datetime, date
+from datetime import date
+
+from laplace_log import log
 
 # project
 from utils.json_encoder import OptimizationJSONEncoder
@@ -36,11 +38,6 @@ def save_config(opt_form: dict) -> bool:
         date_folder = base_path / date.today().isoformat() # add today in path name
         date_folder.mkdir(exist_ok=True)                   # create the today folder
 
-    # add current date and time to the opt_form
-    now = datetime.now()
-    opt_form["saved_date"] = now.date().isoformat()
-    opt_form["saved_time"] = now.time().isoformat(timespec="seconds")
-
     index = get_next_optimization_index(date_folder)  # get the index optimization form
 
     filename = f"optimization_form_{index:06d}.json"  # json file name
@@ -49,7 +46,7 @@ def save_config(opt_form: dict) -> bool:
     with output_file.open("w", encoding="utf-8") as f:  # write the file
         json.dump(opt_form, f, indent=4, cls=OptimizationJSONEncoder) # using 'OptimizationJSONEncoder' for classes
     
-    print(f"[CONFIG SAVED] Configuration saved to {output_file}")
+    log.info(f"Configuration saved to: '{output_file}'")
     return True  # the file was saved
 
 

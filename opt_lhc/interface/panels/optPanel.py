@@ -4,17 +4,18 @@ from PyQt6.QtWidgets import (
 )
 
 # project
-from interface.pipelinePanel import PipelinePanel
-from interface.hyperparameterPanel import HyperparameterPanel
+from interface.panels.pipelinePanel import PipelinePanel
+from interface.panels.hyperparameterPanel import HyperparameterPanel
 
 from model_construction.strategies.strategy_structure import StrategyStructure
 from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
 
 StratOrAcq = StrategyStructure | AcquisitionStructure
 
+
 class OptPanel(QGroupBox):
     '''
-    Optimization Panel contained two panels, the PipelinePanel,
+    This panel containes two panels, the PipelinePanel,
     enabling the strategy and acquisition function choice and
     the HyperparameterPanel, updated depending on the active
     strategy and acquisition function, allowing to define the
@@ -89,7 +90,7 @@ class OptPanel(QGroupBox):
         self.hyperparams.load_from_classes(selected.values()) # load the corresponding widgets
 
 
-    def get_opt(self) -> dict[str, bool, dict[str, dict[str, StratOrAcq, dict[str, int, float, bool]]]]:
+    def get_opt(self) -> dict[str, bool | dict[str, dict[str, StratOrAcq | dict[str, int | float | bool | str]]]]:
         '''
         Return the OptPanel configuration, including a
         boolean 'enabled' to define if the OptPanel should be used.
@@ -105,10 +106,11 @@ class OptPanel(QGroupBox):
 
         pipeline_cfg = {} # make the pipeline dictionary
 
-        for stage, cls in pipeline_classes.items(): # for every stage
-            pipeline_cfg[stage] = {                 # create a dictionary
-                "cls": cls,                         # with the class
-                "params": hyperparams.get(cls, {})  # and the parameters
+        for stage, cls in pipeline_classes.items():  # for every stage
+            pipeline_cfg[stage] = {                  # create a dictionary
+                "cls": cls,                          # with the class
+                "params": hyperparams.get(cls, {}),  # and the parameters
+                "core_params": cls.core_parameters if issubclass(cls, StrategyStructure) else {}
             }
 
         return {"enabled": True, "pipeline": pipeline_cfg}

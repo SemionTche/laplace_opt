@@ -15,7 +15,7 @@ from core.optimizerContext import OptimizationContext
 from model_construction.strategies.strategy_structure import StrategyStructure
 
 
-class ModelList(StrategyStructure):
+class TestStrast(StrategyStructure):
     '''
     Independent-output Gaussian Process model.
 
@@ -23,7 +23,7 @@ class ModelList(StrategyStructure):
     The resulting models are combined into a ModelListGP.
     '''
 
-    display_name = "Independent GP (ModelList)"
+    display_name = "TEST STRAT"
     description = (
         "Independent Gaussian Process for each output dimension. "
         "Assumes outputs are conditionally independent given X."
@@ -53,11 +53,11 @@ class ModelList(StrategyStructure):
     def build_model(self, context: OptimizationContext, **params):
         models = []
         
-        train_X_list = context.X_by_objective()
-        train_Y_list = context.Y_by_objective()
+        train_X_list = context.train_X_list
+        train_Y_list = context.train_Y_list
         bounds = context.bounds
 
-        standardize = params.get("standardize_outputs", False)
+        standardize = params.get("standardize_outputs", None)
 
         for X, Y in zip(train_X_list, train_Y_list):
             X_norm = normalize(X, bounds)

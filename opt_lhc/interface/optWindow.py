@@ -1,23 +1,25 @@
 # libraries
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, 
-    QHBoxLayout, QPushButton, QMessageBox
+    QHBoxLayout, QPushButton, QMessageBox, QLabel
 )
 from PyQt6.QtGui import QIcon
 
 import qdarkstyle
 import pathlib
-import torch
+
+from laplace_log import log
 
 # project
-from interface.executionPanel import ExecutionPanel
-from interface.inOutPanel import InOutPanel
-from interface.initializationPanel import InitializationPanel
-from interface.optPanel import OptPanel
+from interface.panels.executionPanel import ExecutionPanel
+from interface.panels.inOutPanel import InOutPanel
+from interface.panels.initializationPanel import InitializationPanel
+from interface.panels.optPanel import OptPanel
 
 from core.optManager import OptManager
 
 from utils.model_form import make_form, ValidationLevel
+from utils.json_encoder import json_style
 
 
 class OptWindow(QMainWindow):
@@ -26,11 +28,12 @@ class OptWindow(QMainWindow):
 
         super().__init__() # heritage from QMainWindow
 
-        self.opt_manager = OptManager()
+        self.opt_manager = OptManager()  # class managing the optimization
         
         self.set_up()  # build the window panels and buttons
 
         self.actions() # defines the actions of the window
+
 
     def set_up(self) -> None:
         '''
@@ -41,7 +44,7 @@ class OptWindow(QMainWindow):
         # set title, geometry and style
         self.setWindowTitle("Optimization Window")
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
-        self.setGeometry(100, 30, 1500, 800)
+        self.setGeometry(100, 30, 1200, 700)
 
         # icon
         icon_path = p.parent / 'icons' # path to the icon folder
@@ -58,22 +61,16 @@ class OptWindow(QMainWindow):
         main_layout.addWidget(self.execution_panel)
 
         # Block 2: Inputs
-        self.input_panel = InOutPanel(
-            title="Available Inputs",
-            folder_name="inputs"
-        )
+        self.input_panel = InOutPanel(folder_name="inputs")
 
         # Block 2: Objectives
-        self.objective_panel = InOutPanel(
-            title="Available Objectives",
-            folder_name="objectives"
-        )
+        self.objective_panel = InOutPanel(folder_name="objectives")
 
             # input / obj layout
-        middle_layout = QHBoxLayout()
-        middle_layout.addWidget(self.input_panel, stretch=1)
-        middle_layout.addWidget(self.objective_panel, stretch=1)
-        main_layout.addLayout(middle_layout)
+        in_out_layout = QHBoxLayout()
+        in_out_layout.addWidget(self.input_panel, stretch=1)
+        in_out_layout.addWidget(self.objective_panel, stretch=1)
+        main_layout.addLayout(in_out_layout)
 
         # Block 3: Init
         self.init_panel = InitializationPanel()
@@ -86,6 +83,10 @@ class OptWindow(QMainWindow):
         # Block 5: Start and Stop buttons
         bottom_layout = QHBoxLayout()
         bottom_layout.addStretch()
+            # state label
+        self.status_label = QLabel("🟢 Ready")
+        self.status_label.setStyleSheet("font-weight: bold;")
+        bottom_layout.addWidget(self.status_label)
             # Stop
         self.stop_button = QPushButton("Stop")
         self.stop_button.setFixedWidth(120)
@@ -107,18 +108,18 @@ class OptWindow(QMainWindow):
         self.start_button.clicked.connect(self.on_start)
         self.stop_button.clicked.connect(self.on_stop)
 
-        # turn on / off the server according to the server signal
+        # turn on / off the server according to the ExecutionPanel checkbox
         self.execution_panel.server_state_changed.connect(
             self.opt_manager.server_launch
         )
 
-        # enable / disable input addresses with respect to the server signal
+        # enable / disable input addresses with respect to the ExecutionPanel checkbox
         self.execution_panel.server_state_changed.connect(
-            self.input_panel.enable_addresses
+            self.input_panel.enable_ip_port
         )
-
+        # enable / disable objective addresses with respect to the ExecutionPanel checkbox
         self.execution_panel.server_state_changed.connect(
-            self.objective_panel.enable_addresses
+            self.objective_panel.enable_ip_port
         )
         
         # change the saving path when the server get the "SAVE" cmd
@@ -131,13 +132,26 @@ class OptWindow(QMainWindow):
             self.execution_panel.set_server_address
         )
     
+
     def on_start(self) -> None:
+        '''
+        Function used when 'start_button' is pressed. Create a 
+        config dictionary gathering the panel informations and 
+        transmit it to the optimization manager.
+
+        Check if the panel informations are sufficient to continue,
+        raise error and warning message box if needed.
+        '''
+        log.debug("Start button pressed.")
+
+        # gather the panel informations
         execution = self.execution_panel.get_execution()
         inputs = self.input_panel.get_enabled_rows()
         objectives = self.objective_panel.get_enabled_rows()
         init = self.init_panel.get_initialization()
         opt = self.opt_panel.get_opt()
 
+        # make the config dictionary
         form, (level, message) = make_form(
             exec=execution,
             inputs=inputs,
@@ -146,15 +160,16 @@ class OptWindow(QMainWindow):
             opt=opt
         )
 
+        # if there is an error
         if level == ValidationLevel.ERROR:
-            QMessageBox.critical(
-                self,
-                "Invalid configuration",
-                message
-            )
+            # make an error message box
+            QMessageBox.critical(self, "Invalid configuration", message)
+            log.error(f"Invalid configuration: {message}")
             return
         
-        if level == ValidationLevel.WARNING:
+        # elif there is a warning
+        elif level == ValidationLevel.WARNING:
+            # make a warning message box
             reply = QMessageBox.warning(
                 self,
                 "Configuration warning",
@@ -162,41 +177,48 @@ class OptWindow(QMainWindow):
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No
             )
+            # let the user decide to continue or quit
             if reply == QMessageBox.StandardButton.No:
+                log.warning(f"{message} Answer: canceled.")
                 return
-            
-        print("Starting optimization with form:")
-        print(form)
-        self.execution_panel.set_locked(True)
-        self.opt_manager.init_process(form)
+            log.warning(f"{message} Answer: continue.")
+
+        log.info("Starting optimization with form:\n" + json_style(form))
+        self.set_opt_state(True)
+        self.opt_manager.init_process(form)    # send the config dictionary to the optimization manager
 
 
     def on_stop(self):
+        '''
+        Function used when 'stop_button' is pressed.
+        '''
+        log.debug("Stop button pressed.")
+
+        self.opt_manager.stop_opt()
+
+        self.set_opt_state(False)
         pass
 
-    def get_bounds_from_inputs(self) -> torch.Tensor:
-        bounds = []
-
-        for row in self.input_panel.get_rows().values():
-            if row.is_enabled():
-                value = row.get_value()
-                if value is None:
-                    raise ValueError(f"Invalid bounds for input '{row.name}'")
-                bounds.append(value)
-
-        if not bounds:
-            raise RuntimeError("No inputs enabled")
-
-        # shape: [2, D] → torch format expected by BO libs
-        bounds = torch.tensor(bounds, dtype=torch.float32).T
-        return bounds
-
     
+    def set_opt_state(self, optimizing: bool):
+        if optimizing:
+            self.status_label.setText("🟡 Optimizing...")
+            self.status_label.setStyleSheet("color: orange; font-weight: bold;")
+            self.start_button.setEnabled(False)      # lock the start button
+            self.execution_panel.set_locked(True)    # lock the ExecutionPanel
+        else:
+            self.status_label.setText("🟢 Ready")
+            self.status_label.setStyleSheet("color: green; font-weight: bold;")
+            self.start_button.setEnabled(True)      # unlock the start button
+            self.execution_panel.set_locked(False)  # unlock the ExecutionPanel
+
+
     def closeEvent(self, event) -> None:
         '''
         Function called when the window is closing.
-        Close every client of client manager.
+        
+        Close the server stored in 'OptManager'.
         '''
         if self.execution_panel.is_online_enabled():
-            self.opt_manager.serv.stop()
+            self.opt_manager.server_launch(server_state=False)
         event.accept()
