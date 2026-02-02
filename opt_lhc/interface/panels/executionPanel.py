@@ -308,10 +308,12 @@ class ExecutionPanel(QGroupBox):
         ### setters
     def set_path_reading(self, path: str) -> None:
         if not self.is_locked():
+            log.info(f"Reading path setted: '{path}'")
             self.read_entry.setText(path)
     
     def set_path_saving(self, path: str) -> None:
         if not self.is_locked():
+            log.info(f"Saving path setted: '{path}'")
             self.saving_entry.setText(path)
     
     def set_server_address(self, address: str) -> None:

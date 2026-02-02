@@ -58,7 +58,7 @@ class OptManager(QObject):
 
         if self.is_online: # if dealing with a server
 
-            # when the server receives an CMD_OPT, update the optimizer
+            # when the server receives a CMD_OPT, update the optimizer
             self.server_controller.opt_received.connect(
                 self.optimizer.update_opt
             )
@@ -85,6 +85,7 @@ class OptManager(QObject):
         self.is_online = False
         self.is_opt = False
         self.is_saving = False
+        log.info("Optimization stopped.")
 
 
     def server_launch(self, server_state: bool) -> None:

@@ -8,8 +8,8 @@ from botorch.utils.transforms import normalize, unnormalize
 from laplace_log import log
 
 # project
-from core.optimizerContext import OptimizationContext
-from utils.json_encoder import json_style, print_batch
+from core.optimizerContext import OptimizationContext, Observation
+from utils.json_encoder import json_style, print_batch, print_evaluations, format_candidate_batch
 from utils.build_payload import (
     get_inputs, get_objectives, build_data_payload
 )
@@ -23,9 +23,9 @@ class Optimizer(QObject):
     def __init__(self, opt_form: dict):
         '''
         '''
-        super().__init__()          # heritage QObject
+        super().__init__()         # heritage QObject
         
-        self.opt_form = opt_form   # the optimization formular
+        self.opt_form = opt_form   # the optimization form
 
         self.is_opt: bool = opt_form["opt"]["enabled"]  # whether to make an optimization or not
 
@@ -41,25 +41,23 @@ class Optimizer(QObject):
             # strategy and acquisition function
             self.strat: dict = opt_form["opt"]["pipeline"]["strategy"]
             self.acq: dict = opt_form["opt"]["pipeline"]["acquisition"]
-
-            self.model = None
-            self.train_X_list = None
-            self.train_Y_list = None
-
         
         self.inputs, self.bounds = get_inputs(self.inputs_opt) # get the boundaries from the input dictionary
         log.info("Optimization inputs:\n" + json_style(self.inputs))
+        
         self.objectives = get_objectives(self.objectives_opt)
         log.info("Optimization objectives:\n" + json_style(self.objectives))
 
-        self.train_X_list_raw = None  # list of lists
-        self.train_Y_list_raw = None
-        self.context = None
+        self.context = OptimizationContext(
+            bounds=self.bounds,
+            objectives=self.objectives_opt,
+        )
 
 
-    def init_opt(self):
+    def init_opt(self) -> None:
         '''
-        Use the initialization refered in the 'opt_form' dictrionary.
+        Use the initialization refered in the 'opt_form' dictrionary
+        to provide the first candidates to sampled.
         '''
         if not self.opt_form:   # if there is no optimization form
             return              # do not continue
@@ -71,6 +69,7 @@ class Optimizer(QObject):
 
         # if there is no y-elements
         if not self.init_y:
+            
             # make the payload for the server
             data = build_data_payload(
                 self.init_x,
@@ -80,12 +79,16 @@ class Optimizer(QObject):
                 is_opt=False,
             )
 
-            log.info(f"Init suggestion:\n{print_batch(self.init_x, self.inputs)}") # print the sample candidates
+            log.info(f"Init suggestion:\n{format_candidate_batch(self.init_x, self.inputs)}") # print the sample candidates
 
             self.new_candidates.emit(data)  # emit the new candidates to sample
     
     
     def build_model(self, context: OptimizationContext) -> None:
+        log.debug(
+            f"Building model using strategy "
+            f"{self.strat['cls'].__name__}"
+        )
         self.strategy_cls = self.strat["cls"]()
         strategy_params = self.strat.get("params", {})
 
@@ -93,8 +96,14 @@ class Optimizer(QObject):
             context=context,
             **strategy_params,
         )
-    
-    def build_acquisition(self, context) -> None:
+        log.debug("Model built.")
+
+
+    def build_acquisition(self, context: OptimizationContext) -> None:
+        log.debug(
+            f"Building acquisition using "
+            f"{self.acq['cls'].__name__}"
+        )
         acq_cls = self.acq["cls"]()
         acq_params = self.acq.get("params", {})
 
@@ -103,10 +112,15 @@ class Optimizer(QObject):
             context=context,
             **acq_params,
         )
+        log.debug("Acquisition built.")
 
 
-    def optimize(self):
-        params = self.strat.get("params", {})
+    def optimize(self) -> torch.Tensor:
+        '''
+        Function optimizing the model.
+        Return the candidates in physical space.
+        '''
+        params = self.strat.get("params", {})  
 
         candidate_norm, acq_value = optimize_acqf(
             acq_function=self.acquisition,
@@ -115,108 +129,92 @@ class Optimizer(QObject):
             num_restarts=params.get("num_restarts", None),
             raw_samples=params.get("raw_samples", None),
         )
-        print(f"unnormalized candidates = {unnormalize(candidate_norm, self.bounds)}")
-        print(f"candidates = {candidate_norm}")
-        return unnormalize(candidate_norm, self.bounds)
-
-
-    def suggest_next_points(self) -> torch.Tensor:
-        '''
-        High-level API used by UI / server.
-        '''
-        # if self.train_X_list is None:
-        #     raise RuntimeError("No training data available.")
-
-        # # at least one objective must have data
-        # if not any(len(X) > 0 for X in self.train_X_list):
-        #     raise RuntimeError("No objective has observations.")
+        log.info(
+            f"Optimization completed. "
+            f"Number of candidates: {params.get('q_candidates', 1)}"
+        )
         
-        if self.train_X_list_raw is None or not any(self.train_X_list_raw):
-            raise RuntimeError("No training data available.")
-        
-        # self.context = OptimizationContext(
-        #     train_X_list=self.train_X_list,
-        #     train_Y_list=self.train_Y_list,
-        #     bounds=self.bounds,
-        #     objectives=self.objectives_opt,
-        # )
+        # value of the candidates for debuging
+        log.debug(f"Candidate (normalized): {candidate_norm}")
+        log.debug(f"Candidate (physical): {unnormalize(candidate_norm, self.bounds)}")
 
+        return unnormalize(candidate_norm, self.bounds) # return the candidates in physical space
+
+
+    def suggest_candidates(self) -> torch.Tensor:
+        '''
+        Make the suggestion of new candidates.
+        '''
+        log.info("Suggesting new candidates...")
+
+        # get the context values
+        X_list = self.context.X_by_objective()
+        Y_list = self.context.Y_by_objective()
+
+        if all(X.numel() == 0 for X in X_list):       # verify if all objectives got positions
+            log.warning(
+                "Some objectives have no data yet; "
+                "optimization may be unstable"
+            )
+    
+        for i, (X, Y) in enumerate(zip(X_list, Y_list)):    # for each objective
+            log.debug(                                      # print the shape of inputs / outputs for debuging
+                f"Objective {i}: "
+                f"X={tuple(X.shape)} {X.dtype}, "
+                f"Y={tuple(Y.shape)} {Y.dtype}"
+            )
+
+        # build the model
         self.build_model(self.context)
         self.build_acquisition(self.context)
-        return self.optimize()
+
+        return self.optimize()  # optimize the model
 
 
-    # def runtime_args(self, cls) -> dict:
-    #     runtime_inputs = {}
+    def update_opt(self, data: dict) -> None:
+        '''
+        Add the received data to the context, looks for new suggestions
+        and emit a signal to send the new requested points. 
+        '''
+        log.info(f"Data received:\n" + 
+                 print_evaluations(data.get("results", []), self.inputs)
+        )
+        
+        observations = self._parse_results(data)   # make the tensor observations
 
-    #     if "sampler" in cls.requires:
-    #         runtime_inputs["sampler"] = cls.get_sampler(self.acq.get("params", {})["mc_samples"])
+        for obs in observations:
+            self.context.add_observation(obs.x, obs.y)  # add the observations to the context
+        log.info(f"Context updated: total_observations={len(self.context._observations)}")
 
-    #     if "X_baseline" in cls.requires:
-    #         Xb = self.get_X_baseline()
-    #         runtime_inputs["X_baseline"] = normalize(Xb, self.bounds)
+        if not self.is_opt:  # if there is no optimization
+            log.debug("Optimization disabled: no suggestion available.")
+            return           # end here
 
-    #     if "ref_point" in cls.requires:
-    #         runtime_inputs["ref_point"] = self.compute_ref_point()
+        candidates = self.suggest_candidates() # else suggest candidates
 
-    #     return runtime_inputs
+        # make the payload for the server
+        payload = build_data_payload(
+            candidates.unsqueeze(1),
+            self.inputs,
+            self.objectives,
+            is_opt=True,
+            is_init=False,
+        )
 
-    def _sync_context(self):
-        '''Convert raw lists into tensors and update OptimizationContext.'''
-        train_X_list = []
-        train_Y_list = []
-
-        for X_raw, Y_raw in zip(self.train_X_list_raw, self.train_Y_list_raw):
-            if not X_raw:
-                train_X_list.append(torch.empty(0, self.bounds.shape[1], dtype=torch.float64))
-                train_Y_list.append(torch.empty(0, 1, dtype=torch.float64))
-            else:
-                train_X_list.append(torch.stack(X_raw))
-                train_Y_list.append(torch.stack(Y_raw))
-
-        self.train_X_list = train_X_list
-        self.train_Y_list = train_Y_list
-
-        if self.context is None:
-            # build context for the first time
-            self.context = OptimizationContext(
-                train_X_list=self.train_X_list,
-                train_Y_list=self.train_Y_list,
-                bounds=self.bounds,
-                objectives=self.objectives_opt,
-            )
-        else:
-            # update tensors in existing context
-            self.context.train_X_list = self.train_X_list
-            self.context.train_Y_list = self.train_Y_list
+        log.info("Emitting new candidates to server...")
+        self.new_candidates.emit(payload)  # look for new candidates
 
 
-    def update_opt(self, data: dict):
-        self._update_training_data(data)
+    def _parse_results(self, data: dict) -> list[Observation]:
+        '''
+        Extract the data received from the server to make
+        the observation tensors.
+        '''
+        observations = []
 
-        if self.is_opt:
-            candidates = self.suggest_next_points()
-            ext = candidates.unsqueeze(1)
-            print(f"candidates are : {candidates}, candidates updated = {ext}")
+        for r in data["results"]:  # for every results
             
-            data = build_data_payload(ext, self.inputs, self.objectives, is_opt=True, is_init=False)
-            print(f"data build payload candidates = {data}")
-            self.new_candidates.emit(data)
-            # self.send_to_server(candidates)
-
-
-    def _update_training_data(self, data: dict) -> None:
-        print(f"[CMD_OPT] data = {data}")
-        results = data["results"]
-
-        # Lazy init of raw lists
-        if self.train_X_list_raw is None:
-            n_obj = len(self.objective_list)
-            self.train_X_list_raw = [[] for _ in range(n_obj)]
-            self.train_Y_list_raw = [[] for _ in range(n_obj)]
-
-        for r in results:
-            # rebuild x in deterministic order
+            # build x (the input position)
             x_vals = []
             for name in self.inputs:
                 info = self.inputs[name]
@@ -224,23 +222,29 @@ class Optimizer(QObject):
                 pos = info["position_index"]
                 x_vals.append(r["inputs"][addr][pos])
 
-            x = torch.tensor(x_vals, dtype=torch.float64)
+            x = torch.tensor(x_vals, dtype=torch.double)
+
+            # build y (the objective values)
+            y_vals = torch.full(               # make the 'nan' torch tensor
+                (len(self.objective_list),), 
+                float("nan"),
+                dtype=torch.double
+            )
 
             outputs = r["outputs"]
-
-            for obj_idx, obj in enumerate(self.objective_list):
+            for i, obj in enumerate(self.objective_list):   # for every objective
                 addr = obj.address
                 key = obj.output_key
 
-                if addr not in outputs or key not in outputs[addr]:
-                    continue
+                if addr in outputs and key in outputs[addr]:
+                    y_vals[i] = outputs[addr][key][0]       # fill the torch tensor
 
-                values = outputs[addr][key]
-                for v in values:
-                    self.train_X_list_raw[obj_idx].append(x)
-                    self.train_Y_list_raw[obj_idx].append(
-                        torch.tensor([v], dtype=torch.float64)
-                    )
+            observations.append(Observation(x=x, y=y_vals))  # add the observations
+        
+        log.debug(
+            f"Parsed {len(observations)} observations "
+            f"(inputs_dim={observations[0].x.numel() if observations else 'n/a'}, "
+            f"n_obj={len(self.objective_list)})"
+        )
 
-        # Build / update context
-        self._sync_context()
+        return observations
