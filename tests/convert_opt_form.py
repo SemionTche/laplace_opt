@@ -1,0 +1,78 @@
+from typing import Dict
+from laplace_opt.utils.json_encoder import load_class
+from pathlib import Path
+import sys
+
+# Make sure laplace_opt is in sys.path
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from laplace_opt.utils.getter import get_classes
+
+
+def convert_opt_form(opt_form: Dict) -> Dict:
+    """
+    Convert human-readable optimization form to optimizer-ready format
+    with **actual class objects** instead of strings or dicts.
+    """
+    new_opt_form = {}
+
+    # ------------------
+    # Initialization
+    # ------------------
+    init_classes = get_classes("initializations")
+    init_name, init_params = next(iter(opt_form["init"].items()))
+    if init_name not in init_classes:
+        raise ImportError(f"Cannot find initialization class {init_name}")
+    new_opt_form["init"] = {
+        "cls": init_classes[init_name],
+        "params": {**init_params, "seed": 0},
+    }
+
+    # ------------------
+    # Inputs
+    # ------------------
+    input_classes = get_classes("inputs")
+    new_opt_form["inputs"] = {}
+    for name in opt_form["inputs"]:
+        if name not in input_classes:
+            raise ImportError(f"Cannot find input class {name}")
+        new_opt_form["inputs"][name] = input_classes[name]()
+
+    # ------------------
+    # Objectives
+    # ------------------
+    obj_classes = get_classes("objectives")
+    new_opt_form["obj"] = {}
+    for name in opt_form["obj"]:
+        if name not in obj_classes:
+            raise ImportError(f"Cannot find objective class {name}")
+        new_opt_form["obj"][name] = obj_classes[name]()
+
+    # ------------------
+    # Optimization pipeline
+    # ------------------
+    pipeline = opt_form.get("opt", {}).get("pipeline", {})
+
+    # Acquisition
+    acq_classes = get_classes("acquisitions")
+    acq_name, acq_params = next(iter(pipeline.get("acquisition", {}).items()))
+    if acq_name not in acq_classes:
+        raise ImportError(f"Cannot find acquisition class {acq_name}")
+
+    # Strategy
+    strat_classes = get_classes("strategies")
+    strat_name, strat_params = next(iter(pipeline.get("strategy", {}).items()))
+    if strat_name not in strat_classes:
+        raise ImportError(f"Cannot find strategy class {strat_name}")
+
+    new_opt_form["opt"] = {
+        "enabled": opt_form["opt"]["enabled"],
+        "pipeline": {
+            "acquisition": {"cls": acq_classes[acq_name], "params": acq_params},
+            "strategy": {"cls": strat_classes[strat_name], "params": strat_params},
+        },
+    }
+
+    return new_opt_form

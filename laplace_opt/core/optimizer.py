@@ -9,7 +9,9 @@ from laplace_log import log
 
 # project
 from core.optimizerContext import OptimizationContext, Observation
-from utils.json_encoder import json_style, print_evaluations, format_candidate_batch
+from utils.json_encoder import (
+    json_style, print_evaluations, format_candidate_batch
+)
 from utils.build_payload import (
     get_inputs, get_objectives, build_data_payload
 )
