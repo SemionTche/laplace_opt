@@ -15,12 +15,18 @@ from utils.save_form import save_opt_form
 
 class OptManager(QObject):
     '''
+    High-level manager coordinating optimization, server, and UI signals.
+
+    Handles optimizer lifecycle, server communication, and optimization state.
     '''
 
     on_server_address = pyqtSignal(str)  # transmit the optimizer server address
 
     def __init__(self):
         '''
+        Initialize the optimization manager.
+
+        Sets up controller objects and internal state flags.
         '''
         super().__init__() # heritage from QObject
 
@@ -40,8 +46,10 @@ class OptManager(QObject):
 
     def init_process(self, opt_form: dict) -> None:
         '''
-        Function used to inialize the 'OptManager' class.
-        The server part is handled separatly.
+        Initialize and start an optimization process.
+        
+        Creates the optimizer, configures server connections if online,
+        and requests the first batch of candidates.
 
             Arg:
                 opt_form: (dict)
@@ -72,9 +80,8 @@ class OptManager(QObject):
 
 
     def stop_opt(self) -> None:
-        '''
-        Stop the optimization process.
-        '''
+        '''Stop the optimization process.'''
+        
         if self.is_online:  # if the server is involved
 
             # disconnect the relevant features
@@ -90,8 +97,10 @@ class OptManager(QObject):
 
     def server_launch(self, server_state: bool) -> None:
         '''
-        Function made to turn on / off the OPT server according
-        to the state given in argument.
+        Start or stop the optimization server.
+        
+            Args:
+                server_state (bool): True to start the server, False to stop it.
         '''
         if server_state: # if on
             
