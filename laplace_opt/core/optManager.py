@@ -10,7 +10,7 @@ from laplace_log import log
 # project
 from core.optimizer import Optimizer
 
-from utils.save_configuration import save_config
+from utils.save_form import save_opt_form
 
 
 class OptManager(QObject):
@@ -130,4 +130,4 @@ class OptManager(QObject):
     def set_form(self, opt_form: dict) -> None:
         '''Helper setting and saving the 'opt_form' dictionary.'''
         self._opt_form = opt_form               # set the attribute
-        self.is_saving = save_config(opt_form)  # save the configuration
+        self.is_saving = save_opt_form(opt_form)  # save the configuration
