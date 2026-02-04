@@ -4,12 +4,12 @@ from PyQt6.QtWidgets import (
 )
 
 # project
-from interface.widgets.inputWidget import InputWidget
-from interface.widgets.objectiveWidget import ObjectiveWidget
+from ..widgets.inputWidget import InputWidget
+from ..widgets.objectiveWidget import ObjectiveWidget
 
-from utils.getter import get_classes
-from model_construction.inputs.input_structure import InputStructure
-from model_construction.objectives.objective_structure import ObjectiveStructure
+from ...utils.getter import get_classes
+from ...model_construction.inputs.input_structure import InputStructure
+from ...model_construction.objectives.objective_structure import ObjectiveStructure
 
 
 AVAILABLE_FOLDERS = ["inputs", "objectives"]

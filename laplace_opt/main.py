@@ -14,7 +14,7 @@ log.info("Starting OptWindow...")
 logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)
 
 # project
-from interface.optWindow import OptWindow
+from .interface.optWindow import OptWindow
 
 if __name__ == "__main__":
     app = QApplication(sys.argv) # create the app

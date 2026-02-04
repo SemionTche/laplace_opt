@@ -11,15 +11,15 @@ import pathlib
 from laplace_log import log
 
 # project
-from interface.panels.executionPanel import ExecutionPanel
-from interface.panels.inOutPanel import InOutPanel
-from interface.panels.initializationPanel import InitializationPanel
-from interface.panels.optPanel import OptPanel
+from .panels.executionPanel import ExecutionPanel
+from .panels.inOutPanel import InOutPanel
+from .panels.initializationPanel import InitializationPanel
+from .panels.optPanel import OptPanel
 
-from core.optManager import OptManager
+from ..core.optManager import OptManager
 
-from utils.model_form import make_form, ValidationLevel
-from utils.json_encoder import json_style
+from ..utils.model_form import make_form, ValidationLevel
+from ..utils.json_encoder import json_style
 
 
 class OptWindow(QMainWindow):

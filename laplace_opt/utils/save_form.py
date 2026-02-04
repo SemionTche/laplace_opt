@@ -7,8 +7,8 @@ from datetime import date
 from laplace_log import log
 
 # project
-from utils.json_encoder import OptimizationJSONEncoder
-from utils.model_form import is_date_folder
+from .json_encoder import OptimizationJSONEncoder
+from .model_form import is_date_folder
 
 
 def save_opt_form(opt_form: dict) -> bool:

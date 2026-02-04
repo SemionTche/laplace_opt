@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 
 # project
-from utils.path_standard_widget import PathStandardWidget
+from .path_standard_widget import PathStandardWidget
 
 
 def place_labeled_widgets(layout: QGridLayout,
