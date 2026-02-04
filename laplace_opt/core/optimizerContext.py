@@ -46,6 +46,16 @@ class OptimizationContext:
         self._observations: list[Observation] = []
         log.debug("Context created.")
 
+    @property
+    def Y_physical(self):
+        Y = torch.stack([obs.y for obs in self._observations])
+        Y_physical = Y.clone()
+
+        for i, obj in enumerate(self.objectives.values()):
+            if obj.minimize:
+                Y_physical[:, i] *= -1
+        return Y_physical
+
     
     def add_observation(self, x: torch.Tensor, y: torch.Tensor) -> None:
         '''
@@ -156,27 +166,33 @@ class OptimizationContext:
         '''
         Compute a reference point for multi-objective optimization.
 
-        For each objective, uses max+10% range if minimizing,
-        or min-10% range if maximizing.
+        The reference correspond to the **optimized space**.
 
         Returns:
             torch.Tensor: 
                 Reference point vector of shape [n_obj].
         '''
-        ref = []
+        # ref = []
 
         Y = torch.stack([obs.y for obs in self._observations])
 
+        ref = Y.min(dim=0).values - 0.1 * Y.abs().max(dim=0).values
+
+        return ref
+
+
+    def compute_ref_point_physical(self):
+        '''
+        Compute a reference point for multi-objective optimization.
+
+        The reference correspond to the **physical space**.
+
+        Returns:
+            torch.Tensor: 
+                Reference point vector of shape [n_obj].
+        '''
+        ref = self.compute_ref_point()
         for i, obj in enumerate(self.objectives.values()):
-            yi = Y[:, i]
-
             if obj.minimize:
-                val = yi.max() + 0.1 * yi.abs().max()
-            else:
-                val = yi.min() - 0.1 * yi.abs().max()
-            ref.append(val)
-        
-        ref_tensor = torch.tensor(ref, dtype=torch.double)
-        log.debug(f"Reference point computed: {ref_tensor.tolist()}")
-
-        return ref_tensor
+                ref[i] *= -1
+        return ref
