@@ -8,36 +8,36 @@ from laplace_log import log
 from ..dummy_server.dummy_server_response import dummy_server_results
 
 
-def pareto_front(Y: torch.Tensor) -> torch.Tensor:
-    '''
-    Compute the Pareto front assuming ALL objectives are maximized.
+# def pareto_front(Y: torch.Tensor) -> torch.Tensor:
+#     '''
+#     Compute the Pareto front assuming ALL objectives are maximized.
 
-    Args:
-        Y: Tensor of shape [n_points, 2]
+#     Args:
+#         Y: Tensor of shape [n_points, 2]
 
-    Returns:
-        Tensor of Pareto-optimal points, shape [n_pareto, 2]
-    '''
-    if Y.numel() == 0:
-        return Y
+#     Returns:
+#         Tensor of Pareto-optimal points, shape [n_pareto, 2]
+#     '''
+#     if Y.numel() == 0:
+#         return Y
 
-    if Y.shape[1] != 2:
-        raise ValueError("pareto_front currently supports exactly 2 objectives.")
+#     if Y.shape[1] != 2:
+#         raise ValueError("pareto_front currently supports exactly 2 objectives.")
 
-    # Sort by objective 0 (descending = best first)
-    order = torch.argsort(Y[:, 0], descending=True)
-    Y_sorted = Y[order]
+#     # Sort by objective 0 (descending = best first)
+#     order = torch.argsort(Y[:, 0], descending=True)
+#     Y_sorted = Y[order]
 
-    pareto_mask = torch.zeros(Y_sorted.shape[0], dtype=torch.bool)
+#     pareto_mask = torch.zeros(Y_sorted.shape[0], dtype=torch.bool)
 
-    best_y2 = -torch.inf
-    for i in range(Y_sorted.shape[0]):
-        y2 = Y_sorted[i, 1]
-        if y2 > best_y2:
-            pareto_mask[i] = True
-            best_y2 = y2
+#     best_y2 = -torch.inf
+#     for i in range(Y_sorted.shape[0]):
+#         y2 = Y_sorted[i, 1]
+#         if y2 > best_y2:
+#             pareto_mask[i] = True
+#             best_y2 = y2
 
-    return Y_sorted[pareto_mask]
+#     return Y_sorted[pareto_mask]
 
 
 
@@ -81,7 +81,7 @@ def run_multi_objective(optimizer,
         # compute Pareto front from all observed points
         Y = torch.stack([obs.y for obs in optimizer.context._observations])
         minimize_flags = [obj.minimize for obj in optimizer.context.objectives.values()]
-        front = pareto_front(Y)#, minimize_flags)
+        front = optimizer.context.get_pareto_front_physical()#, minimize_flags)
 
         # compare with previous front (skip first iteration)
     #     if pareto_history:
@@ -183,7 +183,7 @@ def plot_multi_objective_summary(optimizer,
     axs[0].set_ylabel("X2")
 
     # === Middle panel: Pareto front ===
-    final_front = pareto_front(all_values)#, minimize_flags)
+    final_front = optimizer.context.get_pareto_front_physical()#, minimize_flags)
 
         ### init
     for idx in range(n_init):

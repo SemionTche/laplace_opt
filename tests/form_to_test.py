@@ -22,10 +22,10 @@ OPT_FORM_1 = {
     ### objectives
     "obj": {
         "ElectronCharge": {
-            "minimize": True
+            "minimize": False
         },
         "ElectronEnergyMean": {
-            "minimize": False
+            "minimize": True
         },
     },
     

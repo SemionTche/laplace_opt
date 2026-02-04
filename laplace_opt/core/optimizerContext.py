@@ -49,14 +49,22 @@ class OptimizationContext:
     @property
     def Y_physical(self):
         Y = torch.stack([obs.y for obs in self._observations])
-        Y_physical = Y.clone()
+        Y_physical = self._to_physical(Y)
+        # Y_physical = Y.clone()
 
+        # for i, obj in enumerate(self.objectives.values()):
+        #     if obj.minimize:
+        #         Y_physical[:, i] *= -1
+        return Y_physical
+    
+    def _to_physical(self, Y_opt: torch.Tensor) -> torch.Tensor:
+        Y_phys = Y_opt.clone()
         for i, obj in enumerate(self.objectives.values()):
             if obj.minimize:
-                Y_physical[:, i] *= -1
-        return Y_physical
+                Y_phys[:, i] *= -1
+        return Y_phys
 
-    
+
     def add_observation(self, x: torch.Tensor, y: torch.Tensor) -> None:
         '''
         Add a single observation to the context.
@@ -196,3 +204,58 @@ class OptimizationContext:
             if obj.minimize:
                 ref[i] *= -1
         return ref
+    
+
+    def pareto_front(self, Y: torch.Tensor) -> torch.Tensor:
+        '''
+        Compute the Pareto front assuming ALL objectives are maximized.
+
+        Args:
+            Y: Tensor of shape [n_points, 2]
+
+        Returns:
+            Tensor of Pareto-optimal points, shape [n_pareto, 2]
+        '''
+        if Y.numel() == 0:
+            return Y
+
+        if Y.shape[1] != 2:
+            raise ValueError("pareto_front currently supports exactly 2 objectives.")
+
+        # Sort by objective 0 (descending = best first)
+        order = torch.argsort(Y[:, 0], descending=True)
+        Y_sorted = Y[order]
+
+        pareto_mask = torch.zeros(Y_sorted.shape[0], dtype=torch.bool)
+
+        best_y2 = -torch.inf
+        for i in range(Y_sorted.shape[0]):
+            y2 = Y_sorted[i, 1]
+            if y2 > best_y2:
+                pareto_mask[i] = True
+                best_y2 = y2
+
+        return Y_sorted[pareto_mask]
+
+
+    def get_pareto_front(self) -> torch.Tensor:
+        '''
+        Pareto front in optimization space (maximize/maximize).
+        This is the ONLY place where Pareto dominance is computed.
+        '''
+        Y = torch.stack([obs.y for obs in self._observations])
+        if Y.numel() == 0:
+            return Y
+
+        return self.pareto_front(Y)
+    
+
+    def get_pareto_front_physical(self) -> torch.Tensor:
+        '''
+        Pareto front expressed in physical objective space.
+        '''
+        Y_pareto_opt = self.get_pareto_front()
+        if Y_pareto_opt.numel() == 0:
+            return Y_pareto_opt
+
+        return self._to_physical(Y_pareto_opt)
