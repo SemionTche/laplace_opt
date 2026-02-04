@@ -56,9 +56,17 @@ class OptimizationContext:
                 Input vector of shape [d].
             y: (torch.Tensor)
                 Corresponding objective values of shape [n_obj].
+                (take the opposite value in case of minimization)
         '''
-        self._observations.append(Observation(x=x, y=y))
-        log.debug(f"Observation added: x={x.tolist()}, y={y.tolist()}")
+        y_corrected = y.clone()
+        for i, obj in enumerate(self.objectives.values()):
+            if obj.minimize:
+                y_corrected[i] = -y_corrected[i]
+        
+        self._observations.append(Observation(x=x, y=y_corrected))
+        log.debug(f"Observation added: x={x.tolist()}, y={y_corrected.tolist()}")
+        # self._observations.append(Observation(x=x, y=y))
+        # log.debug(f"Observation added: x={x.tolist()}, y={y.tolist()}")
 
 
     def add_observations(self, observations: list[Observation]) -> None:
