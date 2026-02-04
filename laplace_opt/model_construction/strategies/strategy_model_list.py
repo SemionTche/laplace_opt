@@ -11,8 +11,8 @@ from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 
 # project
-from core.optimizerContext import OptimizationContext
-from model_construction.strategies.strategy_structure import StrategyStructure
+from laplace_opt.core.optimizerContext import OptimizationContext
+from laplace_opt.model_construction.strategies.strategy_structure import StrategyStructure
 
 
 class ModelList(StrategyStructure):
@@ -83,54 +83,3 @@ class ModelList(StrategyStructure):
             models.append(gp)
 
         return ModelListGP(*models)
-    
-
-    # # ------------------------------------------------------------------
-    # # Model construction
-    # # ------------------------------------------------------------------
-    # def build_model(
-    #     self,
-    #     train_X: torch.Tensor,
-    #     train_Y: torch.Tensor,
-    #     bounds: torch.Tensor,
-    #     **params,
-    # ):
-    #     '''
-    #     Build and fit a ModelListGP composed of independent SingleTaskGPs.
-    #     '''
-
-    #     # normalize inputs
-    #     X_norm = normalize(train_X, bounds)
-
-    #     standardize = params.get("standardize_outputs", True)
-    #     noise = params.get("noise", None)
-
-    #     models: List[SingleTaskGP] = []
-
-    #     for i in range(train_Y.shape[-1]):
-    #         Y_i = train_Y[:, i : i + 1]
-
-    #         outcome_transform = (
-    #             Standardize(m=1) if standardize else None
-    #         )
-
-    #         if noise is None:
-    #             gp = SingleTaskGP(
-    #                 X_norm,
-    #                 Y_i,
-    #                 outcome_transform=outcome_transform,
-    #             )
-    #         else:
-    #             gp = SingleTaskGP(
-    #                 X_norm,
-    #                 Y_i,
-    #                 noise=torch.full_like(Y_i, noise),
-    #                 outcome_transform=outcome_transform,
-    #             )
-
-    #         mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-    #         fit_gpytorch_mll(mll)
-
-    #         models.append(gp)
-
-    #     return ModelListGP(*models)

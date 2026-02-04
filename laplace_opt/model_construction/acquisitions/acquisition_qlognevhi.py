@@ -4,8 +4,8 @@ from botorch.acquisition.multi_objective.logei import (
 )
 from botorch.sampling import SobolQMCNormalSampler
 
-from core.optimizerContext import OptimizationContext
-from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
+from laplace_opt.core.optimizerContext import OptimizationContext
+from laplace_opt.model_construction.acquisitions.acquisition_structure import AcquisitionStructure
 
 
 class qLogNEHVI(AcquisitionStructure):

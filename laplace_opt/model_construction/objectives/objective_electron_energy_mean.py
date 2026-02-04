@@ -1,8 +1,5 @@
-try:
-    from model_construction.objectives.objective_structure import ObjectiveStructure
-except ModuleNotFoundError:
-    # allow running the module directly (in __main__)
-    from objective_structure import ObjectiveStructure
+from laplace_opt.model_construction.objectives.objective_structure import ObjectiveStructure
+
 
 class ElectronEnergyMean(ObjectiveStructure):
 

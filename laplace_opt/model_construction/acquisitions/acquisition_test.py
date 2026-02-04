@@ -4,8 +4,8 @@ from botorch.acquisition.multi_objective.logei import (
 )
 from botorch.sampling import SobolQMCNormalSampler
 
-from core.optimizerContext import OptimizationContext
-from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
+from laplace_opt.core.optimizerContext import OptimizationContext
+from laplace_opt.model_construction.acquisitions.acquisition_structure import AcquisitionStructure
 
 
 class TestAcq(AcquisitionStructure):
@@ -17,12 +17,6 @@ class TestAcq(AcquisitionStructure):
             "default": 128,
             "description": "",
             "label": "mc_samples"
-        },
-        "alpha": {
-            "type": float, 
-            "default": 0.0,
-            "min": 0.0,
-            "max": 1.0
         },
     }
 

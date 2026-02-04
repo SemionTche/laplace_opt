@@ -2,7 +2,7 @@
 from typing import Sequence
 
 # project
-from model_construction.inputs.input_structure import InputStructure
+from laplace_opt.model_construction.inputs.input_structure import InputStructure
 
 class LaserEnergy(InputStructure):
 
