@@ -13,7 +13,6 @@ from tests.optimization.multi_objective_process import run_multi_objective
 from tests.test_function.target_function import target_function
 from tests.form_to_test import OPT_FORM_1
 
-OPT_FORM = OPT_FORM_1
 
 # Initialize the logger
 LoggerLHC("laplace.opt.tests", file_level="info", console_level="info")
@@ -24,20 +23,26 @@ log.info("Starting Opt Tests...")
 # ==========================
 # USER CONFIGURATION
 # ==========================
-TEST_MODE = "multi"      # "single" or "multi"
-n_iterations = 16        # number of candidate generation (number of optimization steps)
-
+n_iterations = 30        # number of candidate generation (number of optimization steps)
+OPT_FORM = OPT_FORM_1
 
 
 if __name__ == "__main__":
 
     OPT_FORM = convert_opt_form(OPT_FORM)  # convert the OPT_FORM made by the user in the version needed by the optimizer
 
-    log.info(f"Opt form:\n" + json_style(OPT_FORM))
+    log.info(f"Opt form:\n" + json_style(OPT_FORM))  # print the OPT_FORM in logs
 
-    optimizer = Optimizer(OPT_FORM)        # create the optimizer
+    optimizer = Optimizer(OPT_FORM)                  # create the optimizer
 
-    if TEST_MODE == "single":              # if single optimization test
+    if len(OPT_FORM["obj"]) > 1:                     # define the test mode (single of multi - objective)
+        TEST_MODE = "multi"
+    elif 1 >= len(OPT_FORM["obj"]) > 0:
+        TEST_MODE = "single"
+    else:
+        TEST_MODE = "Unknown"
+
+    if TEST_MODE == "single":                        # if single optimization test
         run_single_objective(optimizer)
     
     elif TEST_MODE == "multi":             # elif multi
