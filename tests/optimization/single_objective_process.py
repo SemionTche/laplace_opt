@@ -1,4 +1,9 @@
+# libraries
 import torch
+
+from laplace_log import log
+
+# tests
 from tests.test_function.target_function import target_function
 
 
@@ -10,6 +15,7 @@ def run_single_objective(optimizer, n_iterations: int = 15):
         optimizer: Initialized Optimizer instance
         n_iterations: Number of optimization steps
     '''
+    log.info("Single objective test...")
     best_value = -float("inf")
 
     for it in range(n_iterations):

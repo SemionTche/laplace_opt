@@ -36,10 +36,11 @@ def convert_opt_form(opt_form: dict) -> dict:
     # ------------------
     obj_classes = get_classes("objectives")
     new_opt_form["obj"] = {}
+    print(f"opt_form['obj'] = {opt_form['obj']}")
     for name in opt_form["obj"]:
         if name not in obj_classes:
             raise ImportError(f"Cannot find objective class {name}")
-        new_opt_form["obj"][name] = obj_classes[name]()
+        new_opt_form["obj"][name] = obj_classes[name](opt_form["obj"][name]["minimize"])
 
     # ------------------
     # Optimization pipeline

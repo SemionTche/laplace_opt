@@ -9,7 +9,7 @@ from ..dummy_server.dummy_server_response import dummy_server_results
 
 
 def pareto_front(Y: torch.Tensor) -> torch.Tensor:
-    """
+    '''
     Compute the Pareto front assuming ALL objectives are maximized.
 
     Args:
@@ -17,7 +17,7 @@ def pareto_front(Y: torch.Tensor) -> torch.Tensor:
 
     Returns:
         Tensor of Pareto-optimal points, shape [n_pareto, 2]
-    """
+    '''
     if Y.numel() == 0:
         return Y
 
@@ -41,113 +41,19 @@ def pareto_front(Y: torch.Tensor) -> torch.Tensor:
 
 
 
-
-# def _to_maximize_view(Y: torch.Tensor, minimize_flags: list[bool]) -> torch.Tensor:
-#     """
-#     Convert objectives so that all are maximized.
-#     Minimization objectives are negated.
-#     """
-#     flags = torch.tensor(minimize_flags, dtype=torch.bool, device=Y.device)
-#     return torch.where(flags, -Y, Y)
-
-
-# def pareto_front(Y: torch.Tensor, minimize_flags: list[bool]) -> torch.Tensor:
-#     """
-#     Compute Pareto front for 2 objectives using a sorting-based algorithm.
-
-#     Args:
-#         Y: Tensor of shape [n_points, 2]
-#         minimize_flags: list[bool] of length 2
-
-#     Returns:
-#         Tensor of Pareto-optimal points, shape [n_pareto, 2]
-#     """
-#     if Y.numel() == 0:
-#         return Y
-
-#     if Y.shape[1] != 2:
-#         raise ValueError("This Pareto implementation supports exactly 2 objectives.")
-
-#     # Convert to maximize-only formulation
-#     Ymax = _to_maximize_view(Y, minimize_flags)
-
-#     # Sort by first objective (descending: best first)
-#     order = torch.argsort(Ymax[:, 0], descending=True)
-#     Y_sorted = Ymax[order]
-#     Y_orig_sorted = Y[order]
-
-#     pareto_mask = torch.zeros(Y_sorted.shape[0], dtype=torch.bool)
-
-#     best_y2 = -torch.inf
-#     for i in range(Y_sorted.shape[0]):
-#         y2 = Y_sorted[i, 1]
-#         if y2 > best_y2:
-#             pareto_mask[i] = True
-#             best_y2 = y2
-
-#     return Y_orig_sorted[pareto_mask]
-
-
-
-# def is_dominated(y: torch.Tensor, Y: torch.Tensor, minimize_flags: list[bool]) -> bool:
-#     '''
-#     Check if a point y is dominated by any point in Y.
-
-#     Args:
-#         y: Tensor of shape [n_obj], the point to test.
-#         Y: Tensor of shape [n_points, n_obj], candidate points.
-#         minimize_flags: List of bool, True if the corresponding objective is to minimize.
-
-#     Returns:
-#         True if y is dominated by any point in Y, False otherwise.
-#     '''
-#     # Convert y and Y to a "maximize" view: negate the values for minimizing objectives
-#     y_adj = torch.where(torch.tensor(minimize_flags, dtype=torch.bool), -y, y)
-#     Y_adj = torch.where(torch.tensor(minimize_flags, dtype=torch.bool), -Y, Y)
-
-#     for yi in Y_adj:
-#         if torch.all(yi >= y_adj):  # y is dominated if some yi >= y in all objectives
-#             return True
-#     return False
-
-
-# def pareto_front(Y: torch.Tensor, minimize_flags: list[bool]) -> torch.Tensor:
-#     '''
-#     Compute the Pareto front (non-dominated points) from Y.
-
-#     Args:
-#         Y: Tensor of shape [n_points, n_obj], all observed points.
-#         minimize_flags: List of bool, True if the corresponding objective is to minimize.
-
-#     Returns:
-#         Tensor of shape [n_non_dominated, n_obj], containing the Pareto front.
-#     '''
-#     non_dom = []
-
-#     for i in range(Y.shape[0]):
-#         y = Y[i]
-#         other_points = torch.stack([Y[j] for j in range(Y.shape[0]) if j != i]) if Y.shape[0] > 1 else torch.empty(0, Y.shape[1])
-#         if other_points.shape[0] == 0 or not is_dominated(y, other_points, minimize_flags):
-#             non_dom.append(y)
-
-#     if non_dom:
-#         return torch.stack(non_dom)
-#     else:
-#         return torch.empty(0, Y.shape[1], dtype=Y.dtype)
-
-
 def run_multi_objective(optimizer, 
                         target_function, 
-                        n_iterations: int=15):
+                        n_iterations: int):
     '''
     Run a synchronous multi-objective optimization loop for testing.
 
     At each iteration, candidates proposed by the optimizer are evaluated
     using a dummy server and fed back to the optimizer.
     '''
-    last_payload = None
+    log.info("Multi objective test...")
+    last_payload = None                     # get the candidates
 
-    def capture(payload):
+    def capture(payload):                   # function made to catch the signal of new candidates
         nonlocal last_payload
         last_payload = payload
 
@@ -156,7 +62,7 @@ def run_multi_objective(optimizer,
 
     # generate the initialization
     optimizer.init_opt()
-    n_init = len(last_payload["samples"])
+    n_init = len(last_payload["samples"])  # the first payload is the initialization batch
 
     pareto_history = []  # list of tensors: pareto front after each iteration
 
@@ -178,25 +84,25 @@ def run_multi_objective(optimizer,
         front = pareto_front(Y)#, minimize_flags)
 
         # compare with previous front (skip first iteration)
-        if pareto_history:
-            prev_front = pareto_history[-1]
-            # check if any new point extends the front
-            new_points = []
-            for y in front:
-                if not any(torch.allclose(y, py) for py in prev_front):
-                    new_points.append(y)
-            log.debug(f"Iteration {it:02d} | {len(new_points)} new points extended the Pareto front")
-        else:
-            log.debug(f"Iteration {it:02d} | Pareto front initialized with {front.shape[0]} points")
+    #     if pareto_history:
+    #         prev_front = pareto_history[-1]
+    #         # check if any new point extends the front
+    #         new_points = []
+    #         for y in front:
+    #             if not any(torch.allclose(y, py) for py in prev_front):
+    #                 new_points.append(y)
+    #         log.debug(f"Iteration {it:02d} | {len(new_points)} new points extended the Pareto front")
+    #     else:
+    #         log.debug(f"Iteration {it:02d} | Pareto front initialized with {front.shape[0]} points")
 
-        pareto_history.append(front)
+    #     pareto_history.append(front)
 
-    log.debug(f"Pareto history: {pareto_history}")
+    # log.debug(f"Pareto history: {pareto_history}")
     
-    # final summary
-    log.info("=== Multi-objective optimization summary ===")
-    for i, front in enumerate(pareto_history):
-        log.info(f"Iter {i:02d} | Pareto front size: {front.shape[0]} points")
+    # # final summary
+    # log.info("=== Multi-objective optimization summary ===")
+    # for i, front in enumerate(pareto_history):
+    #     log.info(f"Iter {i:02d} | Pareto front size: {front.shape[0]} points")
 
     plot_multi_objective_summary(optimizer, target_function, n_init)
 
@@ -218,10 +124,9 @@ def plot_multi_objective_summary(optimizer,
 
     # --- Gather sampled data ---
     all_points = torch.stack([obs.x for obs in optimizer.context._observations])
-    all_values = torch.stack([obs.y for obs in optimizer.context._observations])
+    all_values = torch.stack([y for y in optimizer.context.Y_physical])
     init_points = all_points[:n_init]
     bo_points   = all_points[n_init:]
-    minimize_flags = [obj.minimize for obj in optimizer.context.objectives.values()]
 
     # --- Grid for imshow ---
     x1 = torch.linspace(optimizer.bounds[0, 0], optimizer.bounds[1, 0], n_grid)
@@ -279,7 +184,7 @@ def plot_multi_objective_summary(optimizer,
 
     # === Middle panel: Pareto front ===
     final_front = pareto_front(all_values)#, minimize_flags)
-    print(f"final_front = {final_front}")
+
         ### init
     for idx in range(n_init):
         axs[1].scatter(
@@ -319,9 +224,16 @@ def plot_multi_objective_summary(optimizer,
             color="tab:blue",
             zorder=3,
         )
+
+        axs[1].scatter(
+            final_front[:, 0],
+            final_front[:, 1],
+            color="tab:blue", s=150, ec="k", marker="^"
+        )
         
         ### ref point
-    ref = optimizer.context.compute_ref_point()
+    ref = optimizer.context.compute_ref_point_physical()
+
     axs[1].scatter(ref[0], ref[1], color="red", ec="k", zorder=4)
     axs[1].annotate("ref", (ref[0], ref[1]), xytext=(5, 5), textcoords="offset points")
 
