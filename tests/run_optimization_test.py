@@ -1,79 +1,51 @@
-import torch
+# libraries
+import logging
+from laplace_log import LoggerLHC, log
 
-import sys
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
+# project
 from laplace_opt.core.optimizer import Optimizer
+from laplace_opt.utils.json_encoder import json_style
 
+# tests
 from tests.convert_opt_form import convert_opt_form
 from tests.optimization.single_objective_process import run_single_objective
 from tests.optimization.multi_objective_process import run_multi_objective
+from tests.test_function.target_function import target_function
+from tests.form_to_test import OPT_FORM_1
+
+OPT_FORM = OPT_FORM_1
+
+# Initialize the logger
+LoggerLHC("laplace.opt.tests", file_level="info", console_level="info")
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+log.info("Starting Opt Tests...")
 
 
 # ==========================
 # USER CONFIGURATION
 # ==========================
 TEST_MODE = "multi"      # "single" or "multi"
-
-
-OPT_FORM = {
-    "init": {
-        "SobolInitialization": {
-            "n_samples": 3,
-            "q_candidates": 2,
-        }
-    },
-    
-    "inputs": {
-        "GasJetHeight": {"bounds": [0.0, 10.0]},
-        "GasJetLongitudinal": {"bounds": [0.0, 10.0]},
-    },
-    
-    "obj": {
-        "ElectronCharge": {"minimize": False},
-        "ElectronEnergyMean": {"minimize": False},
-    },
-    
-    "opt": {
-        "enabled": True,
-        "pipeline": {
-            "acquisition": {
-                "qLogNEHVI": {
-                    "alpha": 0.0,
-                    "mc_samples": 128
-                }
-            },
-            "strategy": {
-                "ModelList": {
-                    "num_restarts": 5,
-                    "number_shot": 1,
-                    "q_candidates": 2,
-                    "raw_samples": 10,
-                    "standardize_outputs": True
-                }
-            }
-        }
-    },
-}
+n_iterations = 16        # number of candidate generation (number of optimization steps)
 
 
 
 if __name__ == "__main__":
-    torch.manual_seed(0)
 
-    OPT_FORM = convert_opt_form(OPT_FORM)
-    print(OPT_FORM)
+    OPT_FORM = convert_opt_form(OPT_FORM)  # convert the OPT_FORM made by the user in the version needed by the optimizer
 
-    optimizer = Optimizer(OPT_FORM)
-    optimizer.init_opt()
+    log.info(f"Opt form:\n" + json_style(OPT_FORM))
 
-    if TEST_MODE == "single":
+    optimizer = Optimizer(OPT_FORM)        # create the optimizer
+
+    if TEST_MODE == "single":              # if single optimization test
         run_single_objective(optimizer)
-    elif TEST_MODE == "multi":
-        run_multi_objective(optimizer)
+    
+    elif TEST_MODE == "multi":             # elif multi
+        run_multi_objective(
+            optimizer, 
+            target_function=target_function, 
+            n_iterations=n_iterations
+        )
+    
     else:
         raise ValueError(f"Unknown TEST_MODE: {TEST_MODE}")

@@ -2,17 +2,14 @@ import torch
 from tests.test_function.target_function import target_function
 
 
-def run_single_objective(
-    optimizer,
-    n_iterations: int = 15,
-):
-    """
+def run_single_objective(optimizer, n_iterations: int = 15):
+    '''
     Generic single-objective optimization loop.
 
     Args:
         optimizer: Initialized Optimizer instance
         n_iterations: Number of optimization steps
-    """
+    '''
     best_value = -float("inf")
 
     for it in range(n_iterations):

@@ -1,21 +1,12 @@
-from typing import Dict
-from laplace_opt.utils.json_encoder import load_class
-from pathlib import Path
-import sys
-
-# Make sure laplace_opt is in sys.path
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
+# project
 from laplace_opt.utils.getter import get_classes
 
 
-def convert_opt_form(opt_form: Dict) -> Dict:
-    """
+def convert_opt_form(opt_form: dict) -> dict:
+    '''
     Convert human-readable optimization form to optimizer-ready format
-    with **actual class objects** instead of strings or dicts.
-    """
+    with actual class objects instead of strings or dicts.
+    '''
     new_opt_form = {}
 
     # ------------------
@@ -38,7 +29,7 @@ def convert_opt_form(opt_form: Dict) -> Dict:
     for name in opt_form["inputs"]:
         if name not in input_classes:
             raise ImportError(f"Cannot find input class {name}")
-        new_opt_form["inputs"][name] = input_classes[name]()
+        new_opt_form["inputs"][name] = input_classes[name](opt_form["inputs"][name]["bounds"])
 
     # ------------------
     # Objectives
