@@ -3,10 +3,9 @@ from laplace_opt.model_construction.objectives.objective_structure import Object
 
 class ElectronEnergyMean(ObjectiveStructure):
 
-    def __init__(self):
+    def __init__(self, minimize: bool = False):
         name = "electron_energy_mean"
         unit = "MeV"
-        minimize = False
 
         description = "The spectrum mean energy"
         symbol = r"$E_0$"

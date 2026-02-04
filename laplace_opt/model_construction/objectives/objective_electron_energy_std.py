@@ -3,11 +3,10 @@ from laplace_opt.model_construction.objectives.objective_structure import Object
 
 class ElectronEnergyStd(ObjectiveStructure):
 
-    def __init__(self):
+    def __init__(self, minimize: bool=True):
         
         name = "electron_energy_std"
         unit = "MeV"
-        minimize = True
         
         description = "The spectrum energy standard deviation"
         symbol = r"$\sigma_E$"

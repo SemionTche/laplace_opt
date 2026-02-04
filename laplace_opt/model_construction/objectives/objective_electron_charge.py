@@ -3,10 +3,9 @@ from laplace_opt.model_construction.objectives.objective_structure import Object
 
 class ElectronCharge(ObjectiveStructure):
 
-    def __init__(self):
+    def __init__(self, minimize = False):
         name = "electron_charge"
         unit = "pC"
-        minimize = False
 
         description = "The electron charge"
         symbol = r"$Q$"
