@@ -1,3 +1,4 @@
+# libraries
 import time
 import zmq
 import torch
@@ -8,7 +9,9 @@ from laplace_server.protocol import (
     make_get_request
 )
 
+# tests
 from tests.test_function.target_function import target_function
+
 
 CAMERA_ADDRESS = "tcp://*:5556"
 MOTOR_ADDRESS  = "tcp://147.250.140.65:5555"
@@ -60,7 +63,6 @@ if __name__ == "__main__":
 
     def on_get():
         payload = camera.measure()
-        # print(f"[Camera] Measured {payload}")
         server.set_data(payload)
 
     server.set_on_get(on_get)

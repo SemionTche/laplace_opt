@@ -1,8 +1,11 @@
+# libraries
 import time
 from laplace_server.server_lhc import ServerLHC
 from laplace_server.protocol import DEVICE_MOTOR
 
+
 ADDRESS = "tcp://*:5555"
+
 
 class DummyMotor:
     def __init__(self):
