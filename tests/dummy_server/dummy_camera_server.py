@@ -8,7 +8,7 @@ from laplace_server.protocol import (
     make_get_request
 )
 
-from target_function import target_function
+from tests.test_function.target_function import target_function
 
 CAMERA_ADDRESS = "tcp://*:5556"
 MOTOR_ADDRESS  = "tcp://147.250.140.65:5555"
