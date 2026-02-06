@@ -1,4 +1,4 @@
-OPT_FORM_1 = {
+OPT_FORM_MULTI = {
     
     ### initialization
     "init": {
@@ -59,7 +59,7 @@ OPT_FORM_1 = {
 
 
 
-OPT_FORM_2 = {
+OPT_FORM_SINGLE = {
     
     ### initialization
     "init": {
@@ -83,7 +83,7 @@ OPT_FORM_2 = {
     ### objectives
     "obj": {
         "ElectronCharge": {
-            "minimize": True
+            "minimize": False
         },
     },
     

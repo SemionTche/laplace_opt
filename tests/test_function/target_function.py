@@ -1,12 +1,15 @@
 import torch
 
 def target_function(x1, x2):
-    """
+    '''
     Objective that we want to optimize.
     
-    Args:
-        x1, x2: coordinates, can be scalars or batched tensors
-    """
+        Args:
+            x1, x2: coordinates, can be scalars or batched tensors
+        
+        Return:
+            stacked: torch.Tensor of shape [1, 2].
+    '''
     result_1 = (
         torch.exp(-(x1 - 2) ** 2 - (x2 - 4) ** 2)
         + torch.exp(-(x1 - 6) ** 2 / 10 - (x2 - 3) ** 2 / 4)
