@@ -183,7 +183,7 @@ def plot_multi_objective_summary(optimizer,
     axs[0].set_ylabel("X2")
 
     # === Middle panel: Pareto front ===
-    final_front = optimizer.context.get_pareto_front_physical()#, minimize_flags)
+    final_front = optimizer.context.get_pareto_front_physical()
 
         ### init
     for idx in range(n_init):

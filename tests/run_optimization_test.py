@@ -11,7 +11,7 @@ from tests.convert_opt_form import convert_opt_form
 from tests.optimization.single_objective_process import run_single_objective
 from tests.optimization.multi_objective_process import run_multi_objective
 from tests.test_function.target_function import target_function
-from tests.form_to_test import OPT_FORM_1
+from tests.form_to_test import OPT_FORM_1, OPT_FORM_2
 
 
 # Initialize the logger
@@ -24,7 +24,7 @@ log.info("Starting Opt Tests...")
 # USER CONFIGURATION
 # ==========================
 n_iterations = 30        # number of candidate generation (number of optimization steps)
-OPT_FORM = OPT_FORM_1
+OPT_FORM = OPT_FORM_2 # OPT_FORM_1
 
 
 if __name__ == "__main__":
@@ -43,7 +43,11 @@ if __name__ == "__main__":
         TEST_MODE = "Unknown"
 
     if TEST_MODE == "single":                        # if single optimization test
-        run_single_objective(optimizer)
+        run_single_objective(
+            optimizer,
+            target_function=target_function,
+            n_iterations=n_iterations
+        )
     
     elif TEST_MODE == "multi":             # elif multi
         run_multi_objective(
