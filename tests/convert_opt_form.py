@@ -46,25 +46,32 @@ def convert_opt_form(opt_form: dict) -> dict:
     # Optimization pipeline
     # ------------------
     pipeline = opt_form.get("opt", {}).get("pipeline", {})
+    is_opt = opt_form.get("opt", {}).get("enabled", False)
+    
+    if is_opt:
+        # Acquisition
+        acq_classes = get_classes("acquisitions")
+        acq_name, acq_params = next(iter(pipeline.get("acquisition", {}).items()))
+        if acq_name not in acq_classes:
+            raise ImportError(f"Cannot find acquisition class {acq_name}")
 
-    # Acquisition
-    acq_classes = get_classes("acquisitions")
-    acq_name, acq_params = next(iter(pipeline.get("acquisition", {}).items()))
-    if acq_name not in acq_classes:
-        raise ImportError(f"Cannot find acquisition class {acq_name}")
+        # Strategy
+        strat_classes = get_classes("strategies")
+        strat_name, strat_params = next(iter(pipeline.get("strategy", {}).items()))
+        if strat_name not in strat_classes:
+            raise ImportError(f"Cannot find strategy class {strat_name}")
 
-    # Strategy
-    strat_classes = get_classes("strategies")
-    strat_name, strat_params = next(iter(pipeline.get("strategy", {}).items()))
-    if strat_name not in strat_classes:
-        raise ImportError(f"Cannot find strategy class {strat_name}")
-
-    new_opt_form["opt"] = {
-        "enabled": opt_form["opt"]["enabled"],
-        "pipeline": {
-            "acquisition": {"cls": acq_classes[acq_name], "params": acq_params},
-            "strategy": {"cls": strat_classes[strat_name], "params": strat_params},
-        },
-    }
+        new_opt_form["opt"] = {
+            "enabled": opt_form["opt"]["enabled"],
+            "pipeline": {
+                "acquisition": {"cls": acq_classes[acq_name], "params": acq_params},
+                "strategy": {"cls": strat_classes[strat_name], "params": strat_params},
+            },
+        }
+    else:
+        new_opt_form["opt"] = {
+            "enabled": opt_form["opt"]["enabled"],
+            "pipeline": {}
+        }
 
     return new_opt_form

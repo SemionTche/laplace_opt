@@ -10,7 +10,7 @@ from laplace_opt.utils.json_encoder import json_style
 from tests.convert_opt_form import convert_opt_form
 from tests.test_optimization.test_optimization import run_test_optimization
 from tests.test_function.target_function import target_function
-from tests.form_to_test import OPT_FORM_MULTI, OPT_FORM_SINGLE
+from tests.form_to_test import OPT_FORM_MULTI, OPT_FORM_SINGLE, OPT_FORM_INIT
 
 
 # Initialize the logger
@@ -41,6 +41,8 @@ if __name__ == "__main__":
     else:
         TEST_MODE = "Unknown"
 
+    if not OPT_FORM["opt"]["enabled"]:
+        n_iterations = 1
 
     run_test_optimization(
             optimizer,
