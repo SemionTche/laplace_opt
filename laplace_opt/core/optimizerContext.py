@@ -46,15 +46,11 @@ class OptimizationContext:
         self._observations: list[Observation] = []
         log.debug("Context created.")
 
+
     @property
     def Y_physical(self):
         Y = torch.stack([obs.y for obs in self._observations])
         Y_physical = self._to_physical(Y)
-        # Y_physical = Y.clone()
-
-        # for i, obj in enumerate(self.objectives.values()):
-        #     if obj.minimize:
-        #         Y_physical[:, i] *= -1
         return Y_physical
     
     def _to_physical(self, Y_opt: torch.Tensor) -> torch.Tensor:
@@ -83,8 +79,6 @@ class OptimizationContext:
         
         self._observations.append(Observation(x=x, y=y_corrected))
         log.debug(f"Observation added: x={x.tolist()}, y={y_corrected.tolist()}")
-        # self._observations.append(Observation(x=x, y=y))
-        # log.debug(f"Observation added: x={x.tolist()}, y={y.tolist()}")
 
 
     def add_observations(self, observations: list[Observation]) -> None:
@@ -95,7 +89,9 @@ class OptimizationContext:
             observations: (list[Observation])
                 List of Observation instances.
         '''
-        self._observations.extend(observations)
+        log.debug(f"Observation size: {len(self._observations)}")
+        for obs in observations:
+            self.add_observation(obs.x, obs.y)
         log.debug(f"{len(observations)} observations added. Total now: {len(self._observations)}")
 
 
@@ -124,12 +120,17 @@ class OptimizationContext:
     def Y_by_objective(self) -> list[torch.Tensor]:
         '''
         Get output tensors grouped by objective.
+        (return the value in objective space, use 'Y_physical'
+        for return the objective in physical space)
 
         Returns:
             list[torch.Tensor]: 
                 List of tensors, one per objective, containing 
                 the corresponding objective values.        
         '''
+        if not self._observations:
+            log.warning("No observation available.")
+        
         Ys = [[] for _ in range(self.n_obj)]
 
         for obs in self._observations:
@@ -146,6 +147,8 @@ class OptimizationContext:
     def get_X_baseline(self) -> torch.Tensor:
         '''
         Get all unique evaluated input points.
+        (return the position in physical space, use 
+        'get_X_baseline_normalized' for the normalized space)
 
         Returns:
             torch.Tensor: 
@@ -156,12 +159,14 @@ class OptimizationContext:
 
         X = torch.stack([obs.x for obs in self._observations])
         log.debug(f"Baseline points retrieved: {X.shape[0]} points")
+
         return torch.unique(X, dim=0)
     
 
     def get_X_baseline_normalized(self) -> torch.Tensor:
         '''
         Get normalized baseline inputs according to bounds.
+        (use 'get_X_baseline' for physical space)
 
         Returns:
             torch.Tensor: 
@@ -170,7 +175,7 @@ class OptimizationContext:
         return normalize(self.get_X_baseline(), self.bounds)
 
 
-    def compute_ref_point(self) -> torch.Tensor:
+    def get_ref_point(self) -> torch.Tensor:
         '''
         Compute a reference point for multi-objective optimization.
 
@@ -180,8 +185,6 @@ class OptimizationContext:
             torch.Tensor: 
                 Reference point vector of shape [n_obj].
         '''
-        # ref = []
-
         Y = torch.stack([obs.y for obs in self._observations])
 
         ref = Y.min(dim=0).values - 0.1 * Y.abs().max(dim=0).values
@@ -189,7 +192,7 @@ class OptimizationContext:
         return ref
 
 
-    def compute_ref_point_physical(self):
+    def get_ref_point_physical(self):
         '''
         Compute a reference point for multi-objective optimization.
 
@@ -199,16 +202,16 @@ class OptimizationContext:
             torch.Tensor: 
                 Reference point vector of shape [n_obj].
         '''
-        ref = self.compute_ref_point()
+        ref = self.get_ref_point()
         for i, obj in enumerate(self.objectives.values()):
             if obj.minimize:
                 ref[i] *= -1
         return ref
     
 
-    def pareto_front(self, Y: torch.Tensor) -> torch.Tensor:
+    def compute_pareto_front(self, Y: torch.Tensor) -> torch.Tensor:
         '''
-        Compute the Pareto front assuming ALL objectives are maximized.
+        Compute the 2D Pareto front of the given Y tensor.
 
         Args:
             Y: Tensor of shape [n_points, 2]
@@ -240,19 +243,18 @@ class OptimizationContext:
 
     def get_pareto_front(self) -> torch.Tensor:
         '''
-        Pareto front in optimization space (maximize/maximize).
-        This is the ONLY place where Pareto dominance is computed.
+        2D Pareto front in optimization space (maximize/maximize).
         '''
         Y = torch.stack([obs.y for obs in self._observations])
         if Y.numel() == 0:
             return Y
 
-        return self.pareto_front(Y)
+        return self.compute_pareto_front(Y)
     
 
     def get_pareto_front_physical(self) -> torch.Tensor:
         '''
-        Pareto front expressed in physical objective space.
+        2D Pareto front expressed in physical objective space.
         '''
         Y_pareto_opt = self.get_pareto_front()
         if Y_pareto_opt.numel() == 0:

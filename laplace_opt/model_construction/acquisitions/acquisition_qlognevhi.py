@@ -40,7 +40,7 @@ class qLogNEHVI(AcquisitionStructure):
 
         return qLogNoisyExpectedHypervolumeImprovement(
             model=model,
-            ref_point=context.compute_ref_point(),
+            ref_point=context.get_ref_point(),
             X_baseline=context.get_X_baseline_normalized(),
             sampler=sampler,
             alpha=alpha,

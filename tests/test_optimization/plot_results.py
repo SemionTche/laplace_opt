@@ -182,7 +182,7 @@ def plot_multi_objective_summary(optimizer: Optimizer,
 
     ### Middle panel: Pareto front
     final_front = optimizer.context.get_pareto_front_physical()  # compute the Pareto front
-    ref = optimizer.context.compute_ref_point_physical()         # compute the reference point
+    ref = optimizer.context.get_ref_point_physical()         # compute the reference point
 
         # init
     for idx in range(n_init):               # for each initial position
