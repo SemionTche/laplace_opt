@@ -1,49 +1,20 @@
 # libraries
-import torch
 import matplotlib.pyplot as plt
+from typing import Callable
 
+import torch
 from laplace_log import log
+
+# project
+from laplace_opt.core.optimizer import Optimizer
 
 # tests
 from ..dummy_server.dummy_server_response import dummy_server_results
 
 
-# def pareto_front(Y: torch.Tensor) -> torch.Tensor:
-#     '''
-#     Compute the Pareto front assuming ALL objectives are maximized.
-
-#     Args:
-#         Y: Tensor of shape [n_points, 2]
-
-#     Returns:
-#         Tensor of Pareto-optimal points, shape [n_pareto, 2]
-#     '''
-#     if Y.numel() == 0:
-#         return Y
-
-#     if Y.shape[1] != 2:
-#         raise ValueError("pareto_front currently supports exactly 2 objectives.")
-
-#     # Sort by objective 0 (descending = best first)
-#     order = torch.argsort(Y[:, 0], descending=True)
-#     Y_sorted = Y[order]
-
-#     pareto_mask = torch.zeros(Y_sorted.shape[0], dtype=torch.bool)
-
-#     best_y2 = -torch.inf
-#     for i in range(Y_sorted.shape[0]):
-#         y2 = Y_sorted[i, 1]
-#         if y2 > best_y2:
-#             pareto_mask[i] = True
-#             best_y2 = y2
-
-#     return Y_sorted[pareto_mask]
-
-
-
-def run_multi_objective(optimizer, 
-                        target_function, 
-                        n_iterations: int):
+def run_multi_objective(optimizer: Optimizer, 
+                        target_function: Callable, 
+                        n_iterations: int) -> None:
     '''
     Run a synchronous multi-objective optimization loop for testing.
 
@@ -51,7 +22,7 @@ def run_multi_objective(optimizer,
     using a dummy server and fed back to the optimizer.
     '''
     log.info("Multi objective test...")
-    last_payload = None                     # get the candidates
+    last_payload = None                     # holder to get the candidates
 
     def capture(payload):                   # function made to catch the signal of new candidates
         nonlocal last_payload
@@ -61,58 +32,29 @@ def run_multi_objective(optimizer,
     optimizer.new_candidates.connect(capture)
 
     # generate the initialization
+    n_init = 0
     optimizer.init_opt()
-    n_init = len(last_payload["samples"])  # the first payload is the initialization batch
-
-    pareto_history = []  # list of tensors: pareto front after each iteration
+    if last_payload:
+        n_init = len(last_payload["samples"])  # the first payload is the initialization batch
 
     for it in range(n_iterations):  # for each step
         if last_payload is None:    # if no data got catched
             raise RuntimeError("No candidates received")  # raise an error
 
-        server_reply = dummy_server_results(last_payload, target_function) # otherwise get the results
+        # generate the dummy server response (evaluating the target function)
+        server_reply = dummy_server_results(last_payload, target_function)
 
         optimizer.update_opt(server_reply)  # update the server
 
-        ref = optimizer.context.compute_ref_point()  # compute the ref point (worse than every sampled one)
-        log.info(f"[Multi Obj] Iter {it:02d} | ref_point = {ref.tolist()}")  # add it in the log
-
-
-        # compute Pareto front from all observed points
-        Y = torch.stack([obs.y for obs in optimizer.context._observations])
-        minimize_flags = [obj.minimize for obj in optimizer.context.objectives.values()]
-        front = optimizer.context.get_pareto_front_physical()#, minimize_flags)
-
-        # compare with previous front (skip first iteration)
-    #     if pareto_history:
-    #         prev_front = pareto_history[-1]
-    #         # check if any new point extends the front
-    #         new_points = []
-    #         for y in front:
-    #             if not any(torch.allclose(y, py) for py in prev_front):
-    #                 new_points.append(y)
-    #         log.debug(f"Iteration {it:02d} | {len(new_points)} new points extended the Pareto front")
-    #     else:
-    #         log.debug(f"Iteration {it:02d} | Pareto front initialized with {front.shape[0]} points")
-
-    #     pareto_history.append(front)
-
-    # log.debug(f"Pareto history: {pareto_history}")
-    
-    # # final summary
-    # log.info("=== Multi-objective optimization summary ===")
-    # for i, front in enumerate(pareto_history):
-    #     log.info(f"Iter {i:02d} | Pareto front size: {front.shape[0]} points")
-
+    # at the end, plot the optimization result
     plot_multi_objective_summary(optimizer, target_function, n_init)
 
 
-
-def plot_multi_objective_summary(optimizer,
-                                 target_function,
+def plot_multi_objective_summary(optimizer: Optimizer,
+                                 target_function: Callable,
                                  n_init: int,
                                  n_grid: int = 50,
-                                 cmap="viridis"):
+                                 cmap="viridis") -> None:
     '''
     Plot a 3-panel summary of the multi-objective optimization:
       - Left: Objective 1 landscape + sampled points (annotated by order)
@@ -122,13 +64,13 @@ def plot_multi_objective_summary(optimizer,
 
     fig, axs = plt.subplots(1, 3, figsize=(18, 6))
 
-    # --- Gather sampled data ---
+    ### Gather sampled data
     all_points = torch.stack([obs.x for obs in optimizer.context._observations])
     all_values = torch.stack([y for y in optimizer.context.Y_physical])
     init_points = all_points[:n_init]
     bo_points   = all_points[n_init:]
 
-    # --- Grid for imshow ---
+    ### Grid for imshow
     x1 = torch.linspace(optimizer.bounds[0, 0], optimizer.bounds[1, 0], n_grid)
     x2 = torch.linspace(optimizer.bounds[0, 1], optimizer.bounds[1, 1], n_grid)
     X1, X2 = torch.meshgrid(x1, x2, indexing="ij")
@@ -142,7 +84,10 @@ def plot_multi_objective_summary(optimizer,
             Z1[i, j] = y[0, 0]
             Z2[i, j] = y[0, 1]
 
-    # === Left panel: Objective 1 ===
+
+    ### Left panel: Objective 1
+
+        # objective landscape
     im0 = axs[0].imshow(
         Z1.T.numpy(),
         origin="lower",
@@ -152,47 +97,50 @@ def plot_multi_objective_summary(optimizer,
     )
     fig.colorbar(im0, ax=axs[0], label="Objective 1")
 
-        ### init
-    for idx, pt in enumerate(init_points):
-        axs[0].scatter(
+        # init
+    for idx, pt in enumerate(init_points):          # for each initial position
+        axs[0].scatter(                             # plot the position
             pt[0].item(), pt[1].item(),
             color="tab:green", marker="o", ec="k", s=50, zorder=3
         )
-        axs[0].annotate(
+        axs[0].annotate(                            # annotate with the sampling index
             str(idx),
             (pt[0].item(), pt[1].item()),
             textcoords="offset points", xytext=(5, 5),
             ha="center", fontsize=10
         )
     
-        ### bo
-    for idx, pt in enumerate(bo_points, start=n_init):
-        axs[0].scatter(
+        # bo
+    for idx, pt in enumerate(bo_points, start=n_init):      # for each optimization
+        axs[0].scatter(                                     # plot the position
             pt[0].item(), pt[1].item(),
-            color="tab:orange", marker="o", ec="k", s=40, zorder=3
+            color="tab:orange", marker="o", ec="k", s=50, zorder=3
         )
-        axs[0].annotate(
+        axs[0].annotate(                                    # annotate with the sampling index
             str(idx),
             (pt[0].item(), pt[1].item()),
             textcoords="offset points", xytext=(5, 5),
             ha="center", fontsize=10
         )
-
+        
+        # labels
     axs[0].set_title("Objective 1")
     axs[0].set_xlabel("X1")
     axs[0].set_ylabel("X2")
 
-    # === Middle panel: Pareto front ===
-    final_front = optimizer.context.get_pareto_front_physical()
 
-        ### init
-    for idx in range(n_init):
-        axs[1].scatter(
+    ### Middle panel: Pareto front
+    final_front = optimizer.context.get_pareto_front_physical()  # compute the Pareto front
+    ref = optimizer.context.compute_ref_point_physical()         # compute the reference point
+
+        # init
+    for idx in range(n_init):               # for each initial position
+        axs[1].scatter(                     # plot the value
             all_values[idx, 0].item(),
             all_values[idx, 1].item(),
             color="tab:green", s=30, ec="k"
         )
-        axs[1].annotate(
+        axs[1].annotate(                    # annotate with the sampling index
             str(idx),
             (all_values[idx, 0].item(), all_values[idx, 1].item()),
             textcoords="offset points",
@@ -200,14 +148,14 @@ def plot_multi_objective_summary(optimizer,
             fontsize=9,
         )
 
-        ### bo
-    for idx in range(n_init, all_values.shape[0]):
-        axs[1].scatter(
+        # bo
+    for idx in range(n_init, all_values.shape[0]):      # for each optimization
+        axs[1].scatter(                                 # plot the value
             all_values[idx, 0].item(),
             all_values[idx, 1].item(),
             color="tab:blue", s=30, ec="k"
         )
-        axs[1].annotate(
+        axs[1].annotate(                                # annotate with the sampling index
             str(idx),
             (all_values[idx, 0].item(), all_values[idx, 1].item()),
             textcoords="offset points",
@@ -215,8 +163,8 @@ def plot_multi_objective_summary(optimizer,
             fontsize=9,
         )
 
-    if final_front.numel() > 0:
-        axs[1].step(
+    if final_front.numel() > 0:                         # if a Pareto was found
+        axs[1].step(                                    # print the Pareto line
             final_front[:, 0],
             final_front[:, 1],
             where="post",
@@ -225,23 +173,25 @@ def plot_multi_objective_summary(optimizer,
             zorder=3,
         )
 
-        axs[1].scatter(
+        axs[1].scatter(                                 # plot bigger the Pareto front values
             final_front[:, 0],
             final_front[:, 1],
-            color="tab:blue", s=150, ec="k", marker="^"
+            color="tab:blue", s=100, ec="k", marker="^"
         )
         
-        ### ref point
-    ref = optimizer.context.compute_ref_point_physical()
-
+        # ref point
     axs[1].scatter(ref[0], ref[1], color="red", ec="k", zorder=4)
     axs[1].annotate("ref", (ref[0], ref[1]), xytext=(5, 5), textcoords="offset points")
 
+        # labels
     axs[1].set_title("Final Pareto Front")
     axs[1].set_xlabel("Objective 1")
     axs[1].set_ylabel("Objective 2")
 
-    # === Right panel: Objective 2 ===
+
+    ### Right panel: Objective 2
+
+        # objective landscape
     im2 = axs[2].imshow(
         Z2.T.numpy(),
         origin="lower",
@@ -251,32 +201,33 @@ def plot_multi_objective_summary(optimizer,
     )
     fig.colorbar(im2, ax=axs[2], label="Objective 2")
 
-        ### init
-    for idx, pt in enumerate(init_points):
-        axs[2].scatter(
+        # init
+    for idx, pt in enumerate(init_points):                      # for each initial position
+        axs[2].scatter(                                         # plot the position
             pt[0].item(), pt[1].item(),
             color="tab:green", marker="o", ec="k", s=50, zorder=3
         )
-        axs[2].annotate(
+        axs[2].annotate(                                        # annotate with the sampling index
             str(idx),
             (pt[0].item(), pt[1].item()),
             textcoords="offset points", xytext=(5, 5),
             ha="center", fontsize=10
         )
     
-        ### bo
-    for idx, pt in enumerate(bo_points, start=n_init):
-        axs[2].scatter(
+        # bo
+    for idx, pt in enumerate(bo_points, start=n_init):          # for each optimization
+        axs[2].scatter(                                         # plot the position
             pt[0].item(), pt[1].item(),
-            color="tab:orange", marker="o", ec="k", s=40, zorder=3
+            color="tab:orange", marker="o", ec="k", s=50, zorder=3
         )
-        axs[2].annotate(
+        axs[2].annotate(                                        # annotate with the sampling index
             str(idx),
             (pt[0].item(), pt[1].item()),
             textcoords="offset points", xytext=(5, 5),
             ha="center", fontsize=10
         )
 
+        # labels
     axs[2].set_title("Objective 2")
     axs[2].set_xlabel("X1")
     axs[2].set_ylabel("X2")

@@ -25,7 +25,7 @@ OPT_FORM_1 = {
             "minimize": False
         },
         "ElectronEnergyMean": {
-            "minimize": True
+            "minimize": False
         },
     },
     

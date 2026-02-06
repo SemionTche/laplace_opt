@@ -24,7 +24,7 @@ log.info("Starting Opt Tests...")
 # USER CONFIGURATION
 # ==========================
 n_iterations = 30        # number of candidate generation (number of optimization steps)
-OPT_FORM = OPT_FORM_2 # OPT_FORM_1
+OPT_FORM = OPT_FORM_1 # OPT_FORM_1
 
 
 if __name__ == "__main__":
