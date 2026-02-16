@@ -1,0 +1,34 @@
+import torch
+
+def target_function(x1, x2):
+    '''
+    Objective that we want to optimize.
+    
+        Args:
+            x1, x2: coordinates, can be scalars or batched tensors
+        
+        Return:
+            stacked: torch.Tensor of shape [1, 2].
+    '''
+    result_1 = (
+        torch.exp(-(x1 - 2) ** 2 - (x2 - 4) ** 2)
+        + torch.exp(-(x1 - 6) ** 2 / 10 - (x2 - 3) ** 2 / 4)
+        + 1 / (x1 ** 2 + x2 ** 2 + 1)
+    )
+
+    result_2 = (
+        -torch.exp(-(x1 - 2) ** 2 - (x2 - 4) ** 2)
+        + 1 / (x1 ** 4 + x2 ** 2 + 1)
+        - torch.exp(-(x1 - 3) ** 2 / 8 - (x2 - 7) ** 2 / 6)
+    )
+    
+    # Assurer que result_1 et result_2 sont au moins 1D
+    result_1 = result_1.unsqueeze(0) if result_1.ndim == 0 else result_1
+    result_2 = result_2.unsqueeze(0) if result_2.ndim == 0 else result_2
+    
+    # Maintenant on les empile et on transpose pour obtenir [N, 2]
+    stacked = torch.stack([result_1, result_2], dim=-1)  # shape [N, 2]
+    epsilon = 0.1 * stacked.max() * torch.rand(stacked.shape[0], dtype=stacked.dtype)
+    stacked = stacked + epsilon
+
+    return stacked

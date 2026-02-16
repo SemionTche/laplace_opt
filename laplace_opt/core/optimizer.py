@@ -1,4 +1,5 @@
 # libraries
+import pathlib
 from PyQt6.QtCore import pyqtSignal, QObject
 
 import torch
@@ -8,7 +9,8 @@ from botorch.utils.transforms import normalize, unnormalize
 from laplace_log import log
 
 # project
-from ..core.optimizerContext import OptimizationContext, Observation
+from .optimizerContext import OptimizationContext, Observation
+from .modelSaver import ModelSaver
 from ..utils.json_encoder import (
     json_style, print_evaluations, format_candidate_batch
 )
@@ -53,6 +55,8 @@ class Optimizer(QObject):
             # strategy and acquisition function
             self.strat: dict = opt_form["opt"]["pipeline"]["strategy"]
             self.acq: dict = opt_form["opt"]["pipeline"]["acquisition"]
+            params: dict = self.strat.get("params", {})
+            save_period = params.get("save_period", 1)
         
         self.inputs, self.bounds = get_inputs(self.inputs_opt) # get the boundaries from the input dictionary
         log.info("Optimization inputs:\n" + json_style(self.inputs))
@@ -60,9 +64,17 @@ class Optimizer(QObject):
         self.objectives = get_objectives(self.objectives_opt)
         log.info("Optimization objectives:\n" + json_style(self.objectives))
 
+        self.suggestion_history = []
+
         self.context = OptimizationContext(
             bounds=self.bounds,
             objectives=self.objectives_opt,
+        )
+
+        self.model_saver = ModelSaver(
+            pathlib.Path(opt_form["exec"]["saving_path"]), 
+            save_period or 1,
+            bool(opt_form["exec"]["saving_path"])
         )
 
 
@@ -76,28 +88,58 @@ class Optimizer(QObject):
         
         init_cls = self.init["cls"]()      # create an instance of the initialization
         init_params = self.init["params"]  # load the initialization parameters
+        
+        try:
+            self.init_x, self.init_y = init_cls.generate(bounds=self.bounds, **init_params)  # generate the first candidates
 
-        self.init_x, self.init_y = init_cls.generate(bounds=self.bounds, **init_params)  # generate the first candidates
+            # if there is no y-elements
+            if self.init_y is None:
+                
+                # make the payload for the server
+                data = build_data_payload(
+                    self.init_x,
+                    self.inputs,
+                    self.objectives,
+                    is_init=True,
+                    is_opt=False,
+                )
 
-        # if there is no y-elements
-        if not self.init_y:
+                log.info(f"Init suggestion:\n{format_candidate_batch(self.init_x, self.inputs)}") # print the sample candidates
+                
+                if self.is_opt:
+                    params: dict = self.strat.get("params", {})
+                    torch.manual_seed(params.get("seed", 0))
+                
+                self.new_candidates.emit(data)  # emit the new candidates to sample
             
-            # make the payload for the server
-            data = build_data_payload(
-                self.init_x,
-                self.inputs,
-                self.objectives,
-                is_init=True,
-                is_opt=False,
-            )
+            elif self.init_y is not None and len(self.init_y) > 0:
+                print("here")
+            
+                log.info(f"Loaded {len(self.init_x)} previous observations from file.")
+                
+                for x, y in zip(self.init_x, self.init_y):
+                    self.context.add_observation(
+                        x.double(),
+                        y.double()
+                    )
+                # init_obs = Observation(self.init_x, self.init_y)
+                # self.context.add_observations([init_obs])
 
-            log.info(f"Init suggestion:\n{format_candidate_batch(self.init_x, self.inputs)}") # print the sample candidates
-            
-            if self.is_opt:
-                params = self.strat.get("params", {})
-                torch.manual_seed(params.get("seed", 0))
-            
-            self.new_candidates.emit(data)  # emit the new candidates to sample
+                if self.is_opt:
+                    candidates = self.suggest_candidates()
+
+                    payload = build_data_payload(
+                        candidates.unsqueeze(1),
+                        self.inputs,
+                        self.objectives,
+                        is_opt=True,
+                        is_init=False,
+                    )
+
+                    self.new_candidates.emit(payload)
+        except Exception as e:
+            log.error(f"Error: {e}")
+
     
     
     def build_model(self, context: OptimizationContext) -> None:
@@ -184,7 +226,9 @@ class Optimizer(QObject):
         self.build_model(self.context)
         self.build_acquisition(self.context)
 
-        return self.optimize()  # optimize the model
+        candidates = self.optimize()  # optimize the model
+        self.suggestion_history.append(candidates.detach().clone())
+        return candidates
 
 
     def update_opt(self, data: dict) -> None:
@@ -207,6 +251,7 @@ class Optimizer(QObject):
             return           # end here
 
         candidates = self.suggest_candidates() # else suggest candidates
+        self.model_saver.save(self.context, self.opt_form, self.suggestion_history, self.model)
 
         # make the payload for the server
         payload = build_data_payload(
