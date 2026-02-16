@@ -20,6 +20,15 @@ class StrategyStructure(ABC):
             "description": "Indicate how many shots should be made for each sample"
         },
 
+        "save_period": {
+            "type": int,
+            "default": 5,
+            "min": 0,
+            "max": 100,
+            "label": "Saving period",
+            "description": "Indicate the number of step before saving the observations and model"
+        },
+
         "seed": {
             "type": int,
             "default": 0,
