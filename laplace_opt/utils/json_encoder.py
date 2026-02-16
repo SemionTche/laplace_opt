@@ -4,6 +4,8 @@ import inspect
 import importlib
 import torch
 
+from laplace_log import log
+
 
 def print_batch(X: torch.Tensor, inputs: dict) -> str:
     '''
@@ -100,11 +102,12 @@ def print_evaluations(data: list[dict], inputs: dict,) -> str:
 
 
 
-def json_style(d: dict) -> str:
-    '''Return a JSON string of a dictionary for logging.'''
+def json_style(d: dict, json_cls=None) -> str:
+    '''Return a JSON string of a dictionary.'''
     try:
-        return json.dumps(d, indent=4, sort_keys=True, default=str)
+        return json.dumps(d, indent=4, sort_keys=True, default=str, cls=json_cls)
     except Exception as e:
+        log.error(f"Error: {e}\nGoing back for string config.")
         return str(d)  # fallback if object is not JSON serializable
 
 

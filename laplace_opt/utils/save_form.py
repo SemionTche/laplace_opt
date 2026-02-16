@@ -3,6 +3,7 @@ import pathlib
 import json
 import re
 from datetime import date
+import importlib
 
 from laplace_log import log
 
@@ -42,7 +43,7 @@ def save_opt_form(opt_form: dict) -> bool:
     if not json_folder.exists():
         json_folder.mkdir(exist_ok=True)
 
-    index = get_next_optimization_index(json_folder)  # get the index optimization form
+    index = get_next_optimization_index("optimization_form_", json_folder, "json")  # get the index optimization form
 
     filename = f"optimization_form_{index:06d}.json"  # json file name
     output_file = json_folder / filename
@@ -54,15 +55,15 @@ def save_opt_form(opt_form: dict) -> bool:
     return True  # the file was saved
 
 
-def get_next_optimization_index(folder: pathlib.Path) -> int:
+def get_next_optimization_index(file_name_: str, folder: pathlib.Path, ext: str) -> int:
     '''
     Given a folder path, return the index of the next
-    'optimization_form_******.json'.
+    'file_name_******.json'.
     '''
-    pattern = re.compile(r"optimization_form_(\d+)\.json") # load the patern
+    pattern = re.compile(fr"{file_name_}(\d+)\.{ext}") # load the patern
 
     indices = []
-    for file in folder.glob("optimization_form_*.json"): # for each file
+    for file in folder.glob(f"{file_name_}*.{ext}"): # for each file
         match = pattern.fullmatch(file.name)             # make the match
         if match:                                        # if match
             indices.append(int(match.group(1)))          # increment the index (last element)

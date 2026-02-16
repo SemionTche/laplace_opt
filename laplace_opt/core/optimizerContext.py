@@ -46,10 +46,13 @@ class OptimizationContext:
         self._observations: list[Observation] = []
         log.debug("Context created.")
 
+    @property
+    def Y_opt_space(self):
+        return torch.stack([obs.y for obs in self._observations])
 
     @property
     def Y_physical(self):
-        Y = torch.stack([obs.y for obs in self._observations])
+        Y = self.Y_opt_space
         Y_physical = self._to_physical(Y)
         return Y_physical
     
@@ -60,6 +63,15 @@ class OptimizationContext:
                 Y_phys[:, i] *= -1
         return Y_phys
 
+    @property
+    def X_physical(self) -> torch.Tensor:
+        X = torch.stack([obs.x for obs in self._observations])
+        return X
+    
+    @property
+    def X_normalized(self) -> torch.Tensor:
+        return normalize(self.X_physical, self.bounds)
+    
 
     def add_observation(self, x: torch.Tensor, y: torch.Tensor) -> None:
         '''
