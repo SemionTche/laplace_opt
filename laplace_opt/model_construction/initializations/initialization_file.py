@@ -1,7 +1,10 @@
-import torch
-import json
+# libraries
 from pathlib import Path
 
+from laplace_log import log
+import torch
+
+# project
 from laplace_opt.model_construction.initializations.initialization_structure import InitializationStructure
 
 
@@ -20,5 +23,11 @@ class FileInitialization(InitializationStructure):
     }
 
     def generate(self, bounds, path: str):
-        data = json.loads(Path(path).read_text())
-        return torch.tensor(data["X"], dtype=torch.float)
+        checkpoint = torch.load(Path(path))
+        try:
+            X: torch.Tensor = checkpoint["observations"]["X_physical"]
+            Y: torch.Tensor = checkpoint["observations"]["Y_physical"]
+            return X.double(), Y.double()
+        except Exception as e:
+            log.error(f"Error: {e}\nCould not read X or Y from the given file.")
+            return None, None
