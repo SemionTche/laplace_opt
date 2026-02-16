@@ -38,10 +38,14 @@ def save_opt_form(opt_form: dict) -> bool:
         date_folder = base_path / date.today().isoformat() # add today in path name
         date_folder.mkdir(exist_ok=True)                   # create the today folder
 
-    index = get_next_optimization_index(date_folder)  # get the index optimization form
+    json_folder = date_folder / "save_config_json" 
+    if not json_folder.exists():
+        json_folder.mkdir(exist_ok=True)
+
+    index = get_next_optimization_index(json_folder)  # get the index optimization form
 
     filename = f"optimization_form_{index:06d}.json"  # json file name
-    output_file = date_folder / filename
+    output_file = json_folder / filename
 
     with output_file.open("w", encoding="utf-8") as f:  # write the file
         json.dump(opt_form, f, indent=4, cls=OptimizationJSONEncoder) # using 'OptimizationJSONEncoder' for classes
