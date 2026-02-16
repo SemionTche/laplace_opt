@@ -4,11 +4,11 @@ from datetime import datetime, date
 import pathlib
 
 # project
-from model_construction.inputs.input_structure import InputStructure
-from model_construction.objectives.objective_structure import ObjectiveStructure
-from model_construction.initializations.initialization_structure import InitializationStructure
-from model_construction.strategies.strategy_structure import StrategyStructure
-from model_construction.acquisitions.acquisition_structure import AcquisitionStructure
+from ..model_construction.inputs.input_structure import InputStructure
+from ..model_construction.objectives.objective_structure import ObjectiveStructure
+from ..model_construction.initializations.initialization_structure import InitializationStructure
+from ..model_construction.strategies.strategy_structure import StrategyStructure
+from ..model_construction.acquisitions.acquisition_structure import AcquisitionStructure
 
 StratOrAcq = StrategyStructure | AcquisitionStructure
 

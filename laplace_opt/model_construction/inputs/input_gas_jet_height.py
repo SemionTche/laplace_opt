@@ -1,11 +1,6 @@
 from typing import Sequence
 
-try:
-    from model_construction.inputs.input_structure import InputStructure
-except ModuleNotFoundError:
-    # allow running the module directly (in __main__)
-    from input_structure import InputStructure
-
+from laplace_opt.model_construction.inputs.input_structure import InputStructure
 
 class GasJetHeight(InputStructure):
     

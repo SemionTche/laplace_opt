@@ -11,8 +11,8 @@ from gpytorch.kernels.rbf_kernel import RBFKernel
 from gpytorch.kernels.matern_kernel import MaternKernel
 
 # project
-from core.optimizerContext import OptimizationContext
-from model_construction.strategies.strategy_structure import StrategyStructure
+from laplace_opt.core.optimizerContext import OptimizationContext
+from laplace_opt.model_construction.strategies.strategy_structure import StrategyStructure
 
 
 class TestStrast(StrategyStructure):

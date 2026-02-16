@@ -2,7 +2,7 @@ import torch
 import json
 from pathlib import Path
 
-from model_construction.initializations.initialization_structure import InitializationStructure
+from laplace_opt.model_construction.initializations.initialization_structure import InitializationStructure
 
 
 class FileInitialization(InitializationStructure):

@@ -1,28 +1,20 @@
 import torch
-from botorch.acquisition.multi_objective.logei import (
-    qLogNoisyExpectedHypervolumeImprovement,
-)
+from botorch.acquisition.logei import qLogNoisyExpectedImprovement
 from botorch.sampling import SobolQMCNormalSampler
 
 from laplace_opt.core.optimizerContext import OptimizationContext
 from laplace_opt.model_construction.acquisitions.acquisition_structure import AcquisitionStructure
 
 
-class qLogNEHVI(AcquisitionStructure):
-    display_name = "qLogNEHVI"
+class qLogNEI(AcquisitionStructure):
+    display_name = "qLogNEI"
 
     parameters = {
         "mc_samples": {
             "type": int, 
             "default": 128,
-            "description": "",
+            "description": "Monte Carlo sample size",
             "label": "mc_samples"
-        },
-        "alpha": {
-            "type": float, 
-            "default": 0.0,
-            "min": 0.0,
-            "max": 1.0
         },
     }
 
@@ -31,27 +23,15 @@ class qLogNEHVI(AcquisitionStructure):
         model,
         context: OptimizationContext,
         mc_samples: int,
-        alpha: float,
         **kwargs,
     ):
         sampler = SobolQMCNormalSampler(
             sample_shape=torch.Size([mc_samples])
         )
 
-        return qLogNoisyExpectedHypervolumeImprovement(
+        return qLogNoisyExpectedImprovement(
             model=model,
-            ref_point=context.get_ref_point(),
             X_baseline=context.get_X_baseline_normalized(),
             sampler=sampler,
-            alpha=alpha,
             **kwargs
         )
-
-
-    # def get_sampler(self, mc_samples: int):
-    #     """
-    #     Return a sampler compatible with ModelListGP.
-    #     """
-    #     return SobolQMCNormalSampler(
-    #         sample_shape=torch.Size([mc_samples])
-    #     )

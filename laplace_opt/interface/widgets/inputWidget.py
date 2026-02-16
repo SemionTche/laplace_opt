@@ -10,7 +10,7 @@ import pathlib
 from laplace_log import log
 
 # project
-from model_construction.inputs.input_structure import InputStructure
+from ...model_construction.inputs.input_structure import InputStructure
 
 
 class InputWidget(QWidget):

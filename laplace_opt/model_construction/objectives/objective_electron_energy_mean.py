@@ -1,15 +1,11 @@
-try:
-    from model_construction.objectives.objective_structure import ObjectiveStructure
-except ModuleNotFoundError:
-    # allow running the module directly (in __main__)
-    from objective_structure import ObjectiveStructure
+from laplace_opt.model_construction.objectives.objective_structure import ObjectiveStructure
+
 
 class ElectronEnergyMean(ObjectiveStructure):
 
-    def __init__(self):
+    def __init__(self, minimize: bool = False):
         name = "electron_energy_mean"
         unit = "MeV"
-        minimize = False
 
         description = "The spectrum mean energy"
         symbol = r"$E_0$"

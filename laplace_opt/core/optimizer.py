@@ -8,9 +8,11 @@ from botorch.utils.transforms import normalize, unnormalize
 from laplace_log import log
 
 # project
-from core.optimizerContext import OptimizationContext, Observation
-from utils.json_encoder import json_style, print_evaluations, format_candidate_batch
-from utils.build_payload import (
+from ..core.optimizerContext import OptimizationContext, Observation
+from ..utils.json_encoder import (
+    json_style, print_evaluations, format_candidate_batch
+)
+from ..utils.build_payload import (
     get_inputs, get_objectives, build_data_payload
 )
 
@@ -90,7 +92,11 @@ class Optimizer(QObject):
             )
 
             log.info(f"Init suggestion:\n{format_candidate_batch(self.init_x, self.inputs)}") # print the sample candidates
-
+            
+            if self.is_opt:
+                params = self.strat.get("params", {})
+                torch.manual_seed(params.get("seed", 0))
+            
             self.new_candidates.emit(data)  # emit the new candidates to sample
     
     

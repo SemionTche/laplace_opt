@@ -3,7 +3,8 @@ from botorch.utils.sampling import draw_sobol_samples
 import torch
 
 # project
-from model_construction.initializations.initialization_structure import InitializationStructure
+from laplace_opt.model_construction.initializations.initialization_structure import InitializationStructure
+
 
 
 class SobolInitialization(InitializationStructure):

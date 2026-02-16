@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from laplace_log import log
 
 # project
-from utils.config_helper import get_from_config, set_in_config
+from ...utils.config_helper import get_from_config, set_in_config
 
 
 class ExecutionPanel(QGroupBox):

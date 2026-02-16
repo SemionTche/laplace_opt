@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 
 # project
-from core.optimizerContext import OptimizationContext
+from laplace_opt.core.optimizerContext import OptimizationContext
 
 class StrategyStructure(ABC):
     display_name: str
@@ -18,6 +18,24 @@ class StrategyStructure(ABC):
             "max": 1000,
             "label": "Number of shots per sample",
             "description": "Indicate how many shots should be made for each sample"
+        },
+
+        "save_period": {
+            "type": int,
+            "default": 5,
+            "min": 0,
+            "max": 100,
+            "label": "Saving period",
+            "description": "Indicate the number of step before saving the observations and model"
+        },
+
+        "seed": {
+            "type": int,
+            "default": 0,
+            "min": 0,
+            "max": 999_999,
+            "label": "Seed",
+            "description": "Seed for random generation"
         },
 
         "q_candidates": {

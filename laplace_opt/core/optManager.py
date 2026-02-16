@@ -8,9 +8,9 @@ from laplace_server.server_controller import ServerController
 from laplace_log import log
 
 # project
-from core.optimizer import Optimizer
+from ..core.optimizer import Optimizer
 
-from utils.save_form import save_opt_form
+from ..utils.save_form import save_opt_form
 
 
 class OptManager(QObject):

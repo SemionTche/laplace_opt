@@ -7,12 +7,12 @@ from PyQt6.QtWidgets import (
 from laplace_log import log
 
 # project
-from utils.getter import get_classes
-from utils.standard_widgets import load_standard_widgets
-from utils.config_helper import get_from_config, set_in_config
-from utils.path_standard_widget import PathStandardWidget
+from ...utils.getter import get_classes
+from ...utils.standard_widgets import load_standard_widgets
+from ...utils.config_helper import get_from_config, set_in_config
+from ...utils.path_standard_widget import PathStandardWidget
 
-from model_construction.initializations.initialization_structure import InitializationStructure
+from ...model_construction.initializations.initialization_structure import InitializationStructure
 
 
 class InitializationPanel(QGroupBox):

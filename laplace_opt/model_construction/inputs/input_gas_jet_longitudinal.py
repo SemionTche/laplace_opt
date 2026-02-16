@@ -1,10 +1,6 @@
 from typing import Sequence
 
-try:
-    from model_construction.inputs.input_structure import InputStructure
-except ModuleNotFoundError:
-    # allow running the module directly (in __main__)
-    from input_structure import InputStructure
+from laplace_opt.model_construction.inputs.input_structure import InputStructure
 
 class GasJetLongitudinal(InputStructure):
 
@@ -43,11 +39,3 @@ class GasJetLongitudinal(InputStructure):
 
     def set_position(self, position: float) -> None:
         pass
-
-if __name__ == "__main__":
-    gas_jet_longitudinal = GasJetLongitudinal(bounds=(0, 4))
-    print(gas_jet_longitudinal)
-    print("Position: ", gas_jet_longitudinal.get_position())
-
-    gas_jet_longitudinal.set_bounds((1, 3))
-    print(gas_jet_longitudinal)
