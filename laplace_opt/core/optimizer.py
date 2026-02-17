@@ -122,8 +122,6 @@ class Optimizer(QObject):
                         x.double(),
                         y.double()
                     )
-                # init_obs = Observation(self.init_x, self.init_y)
-                # self.context.add_observations([init_obs])
 
                 if self.is_opt:
                     candidates = self.suggest_candidates()

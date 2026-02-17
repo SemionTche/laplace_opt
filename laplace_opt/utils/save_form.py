@@ -1,9 +1,8 @@
 # libraries
+from datetime import date
 import pathlib
 import json
 import re
-from datetime import date
-import importlib
 
 from laplace_log import log
 
@@ -21,9 +20,10 @@ def save_opt_form(opt_form: dict) -> bool:
     Return a boolean indicating if the configuration was saved.
     '''
     execution = opt_form.get("exec", {})
-    saving_path_str = execution.get("saving_path")  # get the saving path from the execution dictionary
+    saving_path_str = execution.get("saving_path", "")  # get the saving path from the execution dictionary
     
     if not saving_path_str: # if there is no saving_path
+        log.info("Configuration not saved (no saving path)")
         return False        # do not save
     
     # make an absolute user path
@@ -39,31 +39,34 @@ def save_opt_form(opt_form: dict) -> bool:
         date_folder = base_path / date.today().isoformat() # add today in path name
         date_folder.mkdir(exist_ok=True)                   # create the today folder
 
-    json_folder = date_folder / "save_config_json" 
-    if not json_folder.exists():
-        json_folder.mkdir(exist_ok=True)
+    json_folder = date_folder / "save_config_json"         # folder where to save the json config
+    if not json_folder.exists():                           # if it does not exist
+        json_folder.mkdir(exist_ok=True)                   # create it
 
     index = get_next_optimization_index("optimization_form_", json_folder, "json")  # get the index optimization form
 
     filename = f"optimization_form_{index:06d}.json"  # json file name
     output_file = json_folder / filename
 
-    with output_file.open("w", encoding="utf-8") as f:  # write the file
+    with output_file.open("w", encoding="utf-8") as f:                # write the file
         json.dump(opt_form, f, indent=4, cls=OptimizationJSONEncoder) # using 'OptimizationJSONEncoder' for classes
     
     log.info(f"Configuration saved to: '{output_file}'")
     return True  # the file was saved
 
 
-def get_next_optimization_index(file_name_: str, folder: pathlib.Path, ext: str) -> int:
+def get_next_optimization_index(file_name_: str, 
+                                folder: pathlib.Path, 
+                                ext: str) -> int:
     '''
-    Given a folder path, return the index of the next
-    'file_name_******.json'.
+    Given a file name, a folder path, and an extension, 
+    return the index of the next 'file_name_******.ext'
+    in the folder.
     '''
-    pattern = re.compile(fr"{file_name_}(\d+)\.{ext}") # load the patern
+    pattern = re.compile(fr"{file_name_}(\d+)\.{ext}")   # load the patern
 
     indices = []
-    for file in folder.glob(f"{file_name_}*.{ext}"): # for each file
+    for file in folder.glob(f"{file_name_}*.{ext}"):     # for each file
         match = pattern.fullmatch(file.name)             # make the match
         if match:                                        # if match
             indices.append(int(match.group(1)))          # increment the index (last element)
