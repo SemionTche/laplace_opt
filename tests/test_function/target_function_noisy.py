@@ -1,6 +1,8 @@
 import torch
 
-def target_function(x1, x2):
+noise_factor = 0.1
+
+def target_function_noisy(x1, x2):
     '''
     Objective that we want to optimize.
     
@@ -28,7 +30,7 @@ def target_function(x1, x2):
     
     # Maintenant on les empile et on transpose pour obtenir [N, 2]
     stacked = torch.stack([result_1, result_2], dim=-1)  # shape [N, 2]
-    epsilon = 0.1 * stacked.max() * torch.rand(stacked.shape[0], dtype=stacked.dtype)
+    epsilon = noise_factor * stacked.max() * torch.rand(stacked.shape[0], dtype=stacked.dtype)
     stacked = stacked + epsilon
 
     return stacked

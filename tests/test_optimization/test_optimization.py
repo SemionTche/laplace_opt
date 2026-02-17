@@ -8,20 +8,23 @@ from laplace_opt.core.optimizer import Optimizer
 
 # tests
 from .dummy_server_response import dummy_server_results
-from .plot_results import plot_single_objective_summary, plot_multi_objective_summary
+from .plot_results import (
+    plot_single_objective_summary, plot_multi_objective_summary
+)
 
 
-def run_test_optimization(optimizer: Optimizer, 
-                        target_function: Callable, 
-                        n_iterations: int,
-                        mode: str) -> None:
+def test_optimization(optimizer: Optimizer, 
+                      target_function: Callable, 
+                      n_iterations: int, 
+                      mode: str) -> None:
     '''
     Run a synchronous multi-objective optimization loop for testing.
 
     At each iteration, candidates proposed by the optimizer are evaluated
     using a dummy server and fed back to the optimizer.
     '''
-    log.info("Multi objective test...")
+    log.info("Testing optimization...")
+    log.info(f"Test mode: {mode}")
     last_payload = None                     # holder to get the candidates
 
     def capture(payload):                   # function made to catch the signal of new candidates
@@ -51,5 +54,3 @@ def run_test_optimization(optimizer: Optimizer,
         plot_single_objective_summary(optimizer, target_function, n_init)
     elif mode == "multi":
         plot_multi_objective_summary(optimizer, target_function, n_init)
-
-

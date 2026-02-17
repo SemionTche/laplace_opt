@@ -8,8 +8,8 @@ from laplace_opt.utils.json_encoder import json_style
 
 # tests
 from tests.convert_opt_form import convert_opt_form
-from tests.test_optimization.test_optimization import run_test_optimization
-from tests.test_function.target_function import target_function
+from tests.test_optimization.test_optimization import test_optimization
+from tests.test_function import target_function_noisy, target_function
 from tests.form_to_test import OPT_FORM_MULTI, OPT_FORM_SINGLE, OPT_FORM_INIT
 
 
@@ -24,6 +24,7 @@ log.info("Starting Opt Tests...")
 # ==========================
 n_iterations = 30        # number of candidate generation (number of optimization steps)
 OPT_FORM = OPT_FORM_MULTI
+target_f = target_function
 
 
 if __name__ == "__main__":
@@ -36,7 +37,7 @@ if __name__ == "__main__":
 
     if len(OPT_FORM["obj"]) > 1:                     # define the test mode (single of multi - objective)
         TEST_MODE = "multi"
-    elif 1 >= len(OPT_FORM["obj"]) > 0:
+    elif len(OPT_FORM["obj"]) == 1:
         TEST_MODE = "single"
     else:
         TEST_MODE = "Unknown"
@@ -44,9 +45,9 @@ if __name__ == "__main__":
     if not OPT_FORM["opt"]["enabled"]:
         n_iterations = 1
 
-    run_test_optimization(
+    test_optimization(
             optimizer,
-            target_function=target_function,
+            target_function=target_f,
             n_iterations=n_iterations,
             mode=TEST_MODE
     )

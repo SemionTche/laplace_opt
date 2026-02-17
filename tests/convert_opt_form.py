@@ -10,6 +10,11 @@ def convert_opt_form(opt_form: dict) -> dict:
     new_opt_form = {}
 
     # ------------------
+    # Execution panel
+    # ------------------
+    new_opt_form["exec"] = opt_form["exec"]
+
+    # ------------------
     # Initialization
     # ------------------
     init_classes = get_classes("initializations")
@@ -18,7 +23,7 @@ def convert_opt_form(opt_form: dict) -> dict:
         raise ImportError(f"Cannot find initialization class {init_name}")
     new_opt_form["init"] = {
         "cls": init_classes[init_name],
-        "params": {**init_params, "seed": 0},
+        "params": {**init_params, "seed": 0}, # fix the seed for test repetability
     }
 
     # ------------------
@@ -36,7 +41,6 @@ def convert_opt_form(opt_form: dict) -> dict:
     # ------------------
     obj_classes = get_classes("objectives")
     new_opt_form["obj"] = {}
-    print(f"opt_form['obj'] = {opt_form['obj']}")
     for name in opt_form["obj"]:
         if name not in obj_classes:
             raise ImportError(f"Cannot find objective class {name}")

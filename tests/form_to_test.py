@@ -1,5 +1,14 @@
 OPT_FORM_MULTI = {
     
+    ### execution panel
+    "exec": {
+        "is_online": False,
+        "is_reading_file": False,
+        "reading_path": "",
+        "saving_path": "",
+        "server_address": ""
+    },
+
     ### initialization
     "init": {
         "SobolInitialization": {
@@ -60,6 +69,15 @@ OPT_FORM_MULTI = {
 
 
 OPT_FORM_SINGLE = {
+
+    ### execution panel
+    "exec": {
+        "is_online": False,
+        "is_reading_file": False,
+        "reading_path": "",
+        "saving_path": "",
+        "server_address": ""
+    },
     
     ### initialization
     "init": {
@@ -117,6 +135,15 @@ OPT_FORM_SINGLE = {
 
 
 OPT_FORM_INIT = {
+
+    ### execution panel
+    "exec": {
+        "is_online": False,
+        "is_reading_file": False,
+        "reading_path": "",
+        "saving_path": "",
+        "server_address": ""
+    },
     
     ### initialization
     "init": {
