@@ -73,6 +73,9 @@ class InitializationPanel(QGroupBox):
             for i, cls_name in enumerate(self.init_cls.keys()):  # for every init structure
                 if cls_name == default_init:                     # if it's the default one
                     self.selector.setCurrentIndex(i)             # set the selector
+                    self.selector.setToolTip(                    # set the tool tip
+                        self.init_cls[cls_name].description
+                    )
                     self.update_parameters(i)                    # create the widgets
         else:
             self.update_parameters(0)                   # else the default is position 0
@@ -84,6 +87,11 @@ class InitializationPanel(QGroupBox):
         '''
         # when a new initialization is selected, update the parameter widgets
         self.selector.currentIndexChanged.connect(self.update_parameters)
+
+        # update the tool tip
+        self.selector.currentIndexChanged.connect(
+            lambda index: self.selector.setToolTip(list(self.init_cls.values())[index].description)
+        )
 
         # when the new initialization is selected, update the config.ini default init
         self.selector.currentIndexChanged.connect(
