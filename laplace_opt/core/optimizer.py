@@ -139,7 +139,6 @@ class Optimizer(QObject):
             log.error(f"Error: {e}")
 
     
-    
     def build_model(self, context: OptimizationContext) -> None:
         log.debug(
             f"Building model using strategy "
@@ -191,10 +190,11 @@ class Optimizer(QObject):
         )
         
         # value of the candidates for debuging
+        candidates_physical = unnormalize(candidate_norm, self.bounds)
         log.debug(f"Candidate (normalized): {candidate_norm}")
-        log.debug(f"Candidate (physical): {unnormalize(candidate_norm, self.bounds)}")
+        log.debug(f"Candidate (physical): {candidates_physical}")
 
-        return unnormalize(candidate_norm, self.bounds) # return the candidates in physical space
+        return candidates_physical # return the candidates in physical space
 
 
     def suggest_candidates(self) -> torch.Tensor:
