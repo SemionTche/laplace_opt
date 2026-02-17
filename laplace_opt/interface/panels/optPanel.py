@@ -7,8 +7,9 @@ from PyQt6.QtWidgets import (
 from .pipelinePanel import PipelinePanel
 from .hyperparameterPanel import HyperparameterPanel
 
-from ...model_construction.strategies.strategy_structure import StrategyStructure
-from ...model_construction.acquisitions.acquisition_structure import AcquisitionStructure
+from ...model_construction import (
+    AcquisitionStructure, StrategyStructure
+)
 
 StratOrAcq = StrategyStructure | AcquisitionStructure
 

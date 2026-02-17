@@ -4,14 +4,11 @@ import importlib.util
 import inspect
 
 # project
-    # in / out
-from ..model_construction.inputs.input_structure import InputStructure
-from ..model_construction.objectives.objective_structure import ObjectiveStructure
-    # init
-from ..model_construction.initializations.initialization_structure import InitializationStructure
-    # pipeline
-from ..model_construction.strategies.strategy_structure import StrategyStructure
-from ..model_construction.acquisitions.acquisition_structure import AcquisitionStructure
+from ..model_construction import (
+    InitializationStructure, ObjectiveStructure,
+    AcquisitionStructure, StrategyStructure,
+    InitializationStructure,
+)
 
 
 def get_classes(category: str) -> dict[str, type]:

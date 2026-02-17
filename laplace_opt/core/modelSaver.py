@@ -5,6 +5,7 @@ import pathlib
 import json
 
 from laplace_log import log
+from torch.nn import Module
 import torch
 
 # project
@@ -75,7 +76,7 @@ class ModelSaver:
              context: OptimizationContext, 
              opt_form: dict, 
              suggestion_history: list, 
-             model) -> None:
+             model: Module) -> None:
         '''
         Save a checkpoint of the current optimization state.
 
@@ -143,5 +144,6 @@ class ModelSaver:
             tmp_filename.replace(filename)                 # use the 'pt' extension
 
             log.info(f"model_observations_{self.base_index:06d} file saved.")
+        
         except Exception as e:
-            log.error(f"Error: {e}")
+            log.error(f"Error: could not save the model_observations_{self.base_index:06d} because: {e}")

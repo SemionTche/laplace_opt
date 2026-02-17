@@ -1,7 +1,8 @@
 # libraries
 from PyQt6.QtWidgets import (
     QGroupBox, QGridLayout, QRadioButton,
-    QCheckBox, QLineEdit, QPushButton, QLabel, QFileDialog
+    QCheckBox, QLineEdit, QPushButton, 
+    QLabel, QFileDialog
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 
@@ -144,7 +145,7 @@ class ExecutionPanel(QGroupBox):
         set_in_config(
             module="interface",
             item="default_reading_path",
-            val=path
+            val=path,
         )
         log.debug(f"Reading folder modified, new reading folder: {path}")
 
@@ -310,11 +311,15 @@ class ExecutionPanel(QGroupBox):
         if not self.is_locked():
             log.info(f"Reading path setted: '{path}'")
             self.read_entry.setText(path)
+        else:
+            log.info(f"Configuration locked, reading path unchanged.")
     
     def set_path_saving(self, path: str) -> None:
         if not self.is_locked():
             log.info(f"Saving path setted: '{path}'")
             self.saving_entry.setText(path)
+        else:
+            log.info(f"Configuration locked, saving path unchanged.")
     
     def set_server_address(self, address: str) -> None:
         return self.server_entry.setText(address)

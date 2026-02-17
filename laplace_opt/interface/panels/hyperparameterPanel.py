@@ -9,8 +9,9 @@ from laplace_log import log
 # project
 from ...utils.standard_widgets import load_standard_widgets
 
-from ...model_construction.strategies.strategy_structure import StrategyStructure
-from ...model_construction.acquisitions.acquisition_structure import AcquisitionStructure
+from ...model_construction import (
+    AcquisitionStructure, StrategyStructure
+)
 
 StratOrAcq = StrategyStructure | AcquisitionStructure
 

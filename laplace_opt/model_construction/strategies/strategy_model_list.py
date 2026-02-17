@@ -1,5 +1,6 @@
 # libraries
 from botorch.models import SingleTaskGP, ModelListGP
+from torch.nn import Module
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from botorch import fit_gpytorch_mll
@@ -50,7 +51,7 @@ class ModelList(StrategyStructure):
         # }
     }
 
-    def build_model(self, context: OptimizationContext, **params):
+    def build_model(self, context: OptimizationContext, **params) -> Module:
         models = []
         
         train_X_list = context.X_by_objective()

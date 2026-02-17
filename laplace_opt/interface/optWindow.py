@@ -1,23 +1,20 @@
 # libraries
+import pathlib
+
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, 
     QHBoxLayout, QPushButton, QMessageBox, QLabel
 )
 from PyQt6.QtGui import QIcon
-
 import qdarkstyle
-import pathlib
-
 from laplace_log import log
 
 # project
-from .panels.executionPanel import ExecutionPanel
-from .panels.inOutPanel import InOutPanel
-from .panels.initializationPanel import InitializationPanel
-from .panels.optPanel import OptPanel
-
+from .panels import (
+    ExecutionPanel, InOutPanel,
+    InitializationPanel, OptPanel
+)
 from ..core.optManager import OptManager
-
 from ..utils.model_form import make_form, ValidationLevel
 from ..utils.json_encoder import json_style
 

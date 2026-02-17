@@ -10,7 +10,7 @@ import pathlib
 from laplace_log import log
 
 # project
-from ...model_construction.objectives.objective_structure import ObjectiveStructure
+from ...model_construction import ObjectiveStructure
 
 
 class ObjectiveWidget(QWidget):

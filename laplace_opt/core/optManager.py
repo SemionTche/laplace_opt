@@ -9,8 +9,8 @@ from laplace_log import log
 
 # project
 from ..core.optimizer import Optimizer
-
 from ..utils.save_form import save_opt_form
+from ..utils.config_helper import get_from_config
 
 
 class OptManager(QObject):
@@ -60,7 +60,7 @@ class OptManager(QObject):
 
         self.optimizer = Optimizer(self.opt_form)  # make an optimizer drived by this form
 
-        self.is_online = self.opt_form["exec"]["is_online"]  # is it an online init + optimization
+        self.is_online = self.opt_form["exec"]["is_online"]  # is it an online process
         self.is_opt = self.opt_form["opt"]["enabled"]        # is there an optimization
         
 
@@ -100,14 +100,23 @@ class OptManager(QObject):
         Start or stop the optimization server.
         
             Args:
-                server_state (bool): True to start the server, False to stop it.
+                server_state: (bool) 
+                    True to start the server, False to stop it.
         '''
         if server_state: # if on
+            
+            # get the server port
+            port = get_from_config(
+                module="server", 
+                item="port", 
+                default_value="7531", 
+                type=str
+            )
             
             # create the server
             self.serv = ServerLHC(
                 name="Optimization", 
-                address="tcp://*:1254", 
+                address=f"tcp://*:{port}", 
                 freedom=0, 
                 device=DEVICE_OPT,
                 data={},
@@ -138,5 +147,5 @@ class OptManager(QObject):
     ### helpers
     def set_form(self, opt_form: dict) -> None:
         '''Helper setting and saving the 'opt_form' dictionary.'''
-        self._opt_form = opt_form               # set the attribute
+        self._opt_form = opt_form                 # set the attribute
         self.is_saving = save_opt_form(opt_form)  # save the configuration
