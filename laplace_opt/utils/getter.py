@@ -5,7 +5,7 @@ import inspect
 
 # project
 from ..model_construction import (
-    InitializationStructure, ObjectiveStructure,
+    InputStructure, ObjectiveStructure,
     AcquisitionStructure, StrategyStructure,
     InitializationStructure,
 )

@@ -6,7 +6,6 @@ from PyQt6.QtWidgets import (
 # project
 from .pipelinePanel import PipelinePanel
 from .hyperparameterPanel import HyperparameterPanel
-
 from ...model_construction import (
     AcquisitionStructure, StrategyStructure
 )

@@ -3,7 +3,6 @@ import sys
 import logging
 
 from PyQt6.QtWidgets import QApplication
-
 from laplace_log import LoggerLHC, log
 from laplace_server.protocol import LOGGER_NAME
 
@@ -14,7 +13,7 @@ log.info("Starting OptWindow...")
 logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)
 
 # project
-from .interface.optWindow import OptWindow
+from .interface import OptWindow
 
 
 if __name__ == "__main__":

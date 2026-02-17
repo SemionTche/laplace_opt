@@ -3,14 +3,12 @@ from PyQt6.QtWidgets import (
     QGroupBox, QGridLayout, QComboBox,
 )
 from PyQt6.QtCore import pyqtSignal
-
 from laplace_log import log
 
 # project
 from ...utils.getter import get_classes
 from ...utils.standard_widgets import place_labeled_widgets
 from ...utils.config_helper import get_from_config, set_in_config
-
 from ...model_construction import (
     AcquisitionStructure, StrategyStructure
 )

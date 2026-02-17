@@ -8,7 +8,6 @@ from laplace_log import log
 
 # project
 from ...utils.standard_widgets import load_standard_widgets
-
 from ...model_construction import (
     AcquisitionStructure, StrategyStructure
 )

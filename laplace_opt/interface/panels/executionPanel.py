@@ -5,7 +5,6 @@ from PyQt6.QtWidgets import (
     QLabel, QFileDialog
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-
 from laplace_log import log
 
 # project

@@ -1,6 +1,7 @@
 # libraries
 import torch
 
+
 def dummy_server_results(payload, target_function):
     '''
     Class made to sample the candidates from 'payload' dictionary,

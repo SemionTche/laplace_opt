@@ -1,12 +1,11 @@
 # libraries
+import pathlib
+
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, QCheckBox, QLabel, QComboBox
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-
-import pathlib
-
 from laplace_log import log
 
 # project

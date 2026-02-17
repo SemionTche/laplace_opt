@@ -52,5 +52,6 @@ def test_optimization(optimizer: Optimizer,
     # at the end, plot the optimization result
     if mode == "single":
         plot_single_objective_summary(optimizer, target_function, n_init)
+    
     elif mode == "multi":
         plot_multi_objective_summary(optimizer, target_function, n_init)
