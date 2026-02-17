@@ -10,7 +10,7 @@ class InitializationStructure(ABC):
     Base class for all initializations.
     '''
     display_name: str = "Initialization Structure"
-    description: str = "Structure description"
+    description: str = "Initialization Structure description"
     
     parameters: dict[str, dict] = {
         "example_int": {

@@ -60,6 +60,7 @@ class PipelinePanel(QGroupBox):
                         combo.setCurrentIndex(index)  # set the current selection
                     else:
                         log.info(f"New {title} selected: '{cls_name}'") # else print the selection in logs
+                    combo.setToolTip(self.classes[stage][cls_name].description)
 
 
     def set_up(self) -> None:
@@ -125,6 +126,8 @@ class PipelinePanel(QGroupBox):
             item=default_in_config,
             val=val
         )
+
+        self.combos[stage].setToolTip(self.classes[stage][val].description)
 
         log.info(f"New {title} selected: '{val}'")
 
