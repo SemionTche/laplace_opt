@@ -99,6 +99,7 @@ class InputStructure(ABC):
 
 
     def set_bounds(self, new_bounds: Sequence[float]) -> None:
+        '''Update optimization bounds.'''
         check_bounds_format(new_bounds)
         self._bounds = new_bounds
 

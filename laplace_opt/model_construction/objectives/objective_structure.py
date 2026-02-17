@@ -1,10 +1,62 @@
-from abc import ABC, abstractmethod
+# libraries
+from abc import ABC
+
 
 class ObjectiveStructure(ABC):
-    
-    def __init__(self, name: str, unit: str, minimize: bool, description: str, symbol:str, ip: str, port: str, position_index: int, output_key:str):
+    '''
+    Base abstract structure describing an optimization objective.
 
-        self._name = name
+    This class stores all metadata required to:
+    - identify the objective,
+    - connect to its data source,
+    - define its optimization direction,
+    - map the received measurement to a specific output key.
+    '''
+    
+    def __init__(self,
+                 name: str,
+                 unit: str,
+                 minimize: bool,
+                 description: str,
+                 symbol:str,
+                 ip: str,
+                 port: str,
+                 position_index: int,
+                 output_key:str):
+        '''
+        Initialize an objective definition.
+
+        Args:
+            
+            name : str
+                Internal identifier of the objective.
+            
+            unit : str
+                Physical unit of the objective value.
+            
+            minimize : bool
+                True if the objective must be minimized, False if maximized.
+            
+            description : str
+                Human-readable description of the objective.
+            
+            symbol : str
+                Symbol used in UI or scientific representation.
+            
+            ip : str
+                IP address of the measurement source.
+            
+            port : str
+                Port of the measurement source.
+            
+            position_index : int
+                Position of the objective in ordered structures (UI / vector).
+            
+            output_key : str
+                Key expected in the received payload for this objective.
+        '''
+
+        self.name = name
         self._unit = unit
         self._minimize = minimize
 
@@ -13,14 +65,10 @@ class ObjectiveStructure(ABC):
 
         self.ip = ip
         self.port = port
-        # self.address = address
+
         self.position_index = position_index
 
         self.output_key = output_key
-    
-    @property
-    def name(self) -> str:
-        return self._name
     
     @property
     def minimize(self) -> bool:
@@ -32,22 +80,25 @@ class ObjectiveStructure(ABC):
 
     @property
     def address(self) -> str:
-        return f"tcp://{self.ip}:{self.port}"
+        return self.ip_port
     
     @property
     def unit(self) -> str:
         return self._unit
     
+
     def set_minimize(self, minimize: bool) -> None:
+        '''Update the optimization direction.'''
         self._minimize = minimize
 
-    @abstractmethod
-    def get_value(self) -> None:
-        """
-        return the current value of the input.
-        Must be implemented by subclasses.
-        """
-        pass
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}(name='{self.name}', minimize='{self.minimize}', unit='{self.unit}')>"
+        '''Compact representation.'''
+        return (
+            f"<{self.__class__.__name__}"
+            f"(name='{self.name}', "
+            f"minimize='{self.minimize}', "
+            f"unit='{self.unit}'), "
+            f"address={self.address}), "
+            f"position index={self.position_index}>"
+        )
