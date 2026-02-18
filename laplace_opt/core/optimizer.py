@@ -17,6 +17,10 @@ from ..utils.json_encoder import (
 from ..utils.build_payload import (
     get_inputs, get_objectives, build_data_payload
 )
+from model_construction import (
+    StrategyStructure, AcquisitionStructure
+)
+
 
 class Optimizer(QObject):
     '''
@@ -90,7 +94,10 @@ class Optimizer(QObject):
         init_params = self.init["params"]  # load the initialization parameters
         
         try:
-            self.init_x, self.init_y = init_cls.generate(bounds=self.bounds, **init_params)  # generate the first candidates
+            self.init_x, self.init_y = init_cls.generate(  # generate the first candidates
+                bounds=self.bounds, 
+                **init_params
+            )
 
             # if there is no y-elements
             if self.init_y is None:
@@ -144,7 +151,7 @@ class Optimizer(QObject):
             f"Building model using strategy "
             f"{self.strat['cls'].__name__}"
         )
-        self.strategy_cls = self.strat["cls"]()
+        self.strategy_cls: StrategyStructure = self.strat["cls"]()
         strategy_params = self.strat.get("params", {})
 
         self.model = self.strategy_cls.build_model(
@@ -159,7 +166,7 @@ class Optimizer(QObject):
             f"Building acquisition using "
             f"{self.acq['cls'].__name__}"
         )
-        acq_cls = self.acq["cls"]()
+        acq_cls: AcquisitionStructure = self.acq["cls"]()
         acq_params = self.acq.get("params", {})
 
         self.acquisition = acq_cls.build_acq(
@@ -225,7 +232,16 @@ class Optimizer(QObject):
         self.build_acquisition(self.context)
 
         candidates = self.optimize()  # optimize the model
+        
+        # repeat samples
+        n_repeats = self.strat.get("params", {}).get("n_repeats", 1)
+
+        if n_repeats > 1:
+            candidates = candidates.repeat_interleave(n_repeats, dim=0)
+            log.debug("Repetition made.")
+        
         self.suggestion_history.append(candidates.detach().clone())
+
         return candidates
 
 
