@@ -80,7 +80,7 @@ class HyperparameterPanel(QGroupBox):
         Get a dictionary of the current hyperparameter widget values
         ordered as {class: {param_name: value}}.
         '''
-        result: dict[type, dict[str, int | float | bool | str]] = {}
+        result: dict[StratOrAcq, dict[str, int | float | bool | str]] = {}
 
         for (cls, name), widget in self.widgets.items(): # for every param widget
 
