@@ -93,13 +93,18 @@ def create_standard_widget(name: str, meta: dict) -> QWidget:
 
     elif ptype is bool:
         w = QComboBox()
-        w.addItems(["True", "False"])
+        w.addItem("True", True)
+        w.addItem("False", False)
         default = meta.get("default", False)
         w.setCurrentIndex(0 if default else 1)
     
     elif ptype is dict:
         w = QComboBox()
-        w.addItems(meta.get("combo", {}))
+        combo_dict = meta.get("combo", {})
+
+        for text, data in combo_dict.items():
+            w.addItem(text, data)
+
         w.setCurrentIndex(meta.get("default", 0))
 
     elif ptype is str and name == "path":   # if making a path widget
