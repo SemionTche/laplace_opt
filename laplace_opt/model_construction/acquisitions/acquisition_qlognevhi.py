@@ -4,6 +4,7 @@ from botorch.acquisition.multi_objective.logei import (
     qLogNoisyExpectedHypervolumeImprovement
 )
 from botorch.sampling import SobolQMCNormalSampler
+from botorch.models.model import Model
 
 # project
 from laplace_opt.core.optimizerContext import OptimizationContext
@@ -40,6 +41,7 @@ class qLogNEHVI(AcquisitionStructure):
             "type": float, 
             "default": 0.0,
             "step": 0.01,
+            "decimals": 2,
             "min": 0.0,
             "max": 1.0,
             "label": "alpha",
@@ -50,12 +52,11 @@ class qLogNEHVI(AcquisitionStructure):
         },
     }
 
-    def build(self, 
-              model,
-              context: OptimizationContext,
-              mc_samples: int,
-              alpha: float,
-              **kwargs) -> qLogNoisyExpectedHypervolumeImprovement:
+
+    def build_acq(self,
+                  model: Model,
+                  context: OptimizationContext,
+                  **kwargs) -> qLogNoisyExpectedHypervolumeImprovement:
         '''
         Construct the qLogNEHVI acquisition function.
 
@@ -67,22 +68,16 @@ class qLogNEHVI(AcquisitionStructure):
                 Optimization context providing access to baseline data,
                 reference points, and normalized design points.
 
-            mc_samples: (int)
-                Number of Monte Carlo samples used to estimate the acquisition function.
-
-            alpha: (float)
-                Trade-off parameter controlling the influence of uncertain points
-                in the hypervolume improvement calculation.
-
             **kwargs:
-                Additional keyword arguments forwarded to
-                qLogNoisyExpectedHypervolumeImprovement.
+                Additional keyword arguments.
 
         Returns:
             qLogNoisyExpectedHypervolumeImprovement:
                 Configured multi-objective acquisition function ready for optimization.
         '''
-        
+        mc_samples = kwargs.get("mc_samples", 128)
+        alpha = kwargs.get("alpha", 0.0)
+
         sampler = SobolQMCNormalSampler(
             sample_shape=torch.Size([mc_samples])
         )
@@ -95,6 +90,5 @@ class qLogNEHVI(AcquisitionStructure):
             ref_point=ref_point,
             X_baseline=X_baseline_normalized,
             sampler=sampler,
-            alpha=alpha,
-            **kwargs
+            alpha=alpha
         )

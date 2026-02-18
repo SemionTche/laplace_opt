@@ -162,7 +162,7 @@ class Optimizer(QObject):
         acq_cls = self.acq["cls"]()
         acq_params = self.acq.get("params", {})
 
-        self.acquisition = acq_cls.build(
+        self.acquisition = acq_cls.build_acq(
             model=self.model,
             context=context,
             **acq_params,

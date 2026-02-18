@@ -36,11 +36,11 @@ class qLogNEI(AcquisitionStructure):
         },
     }
 
-    def build(self, 
-              model: Model,
-              context: OptimizationContext,
-              mc_samples: int,
-              **kwargs) -> qLogNoisyExpectedImprovement:
+
+    def build_acq(self, 
+                  model: Model,
+                  context: OptimizationContext,
+                  **kwargs) -> qLogNoisyExpectedImprovement:
         '''
         Construct the qLogNEI acquisition function.
 
@@ -52,18 +52,15 @@ class qLogNEI(AcquisitionStructure):
                 Optimization context providing access to baseline data
                 and normalized design points.
             
-            mc_samples: (int)
-                Number of Monte Carlo samples used to estimate the
-                acquisition function.
-            
             **kwargs:
-                Additional keyword arguments forwarded to
-                qLogNoisyExpectedImprovement.
+                Additional keyword arguments.
 
         Returns:
             qLogNoisyExpectedImprovement:
                 Configured acquisition function ready for optimization.
         '''
+        mc_samples = kwargs.get("mc_samples", 128)
+        
         sampler = SobolQMCNormalSampler(
             sample_shape=torch.Size([mc_samples])
         )
@@ -74,5 +71,4 @@ class qLogNEI(AcquisitionStructure):
             model=model,
             X_baseline=X_baseline_normalized,
             sampler=sampler,
-            **kwargs
         )

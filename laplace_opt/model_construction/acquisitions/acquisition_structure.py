@@ -2,16 +2,18 @@
 from abc import ABC, abstractmethod
 
 from botorch.acquisition import AcquisitionFunction
+from botorch.models.model import Model
 
 # project
 from laplace_opt.core.optimizerContext import OptimizationContext
+
 
 class AcquisitionStructure(ABC):
     '''
     Base class for acquisition function structures.
 
     This class defines a common interface for building acquisition functions
-    used in Bayesian optimization. Subclasses should implement the `build`
+    used in Bayesian optimization. Subclasses should implement the `build_acq`
     method to return a configured acquisition function.
     '''
     
@@ -47,11 +49,12 @@ class AcquisitionStructure(ABC):
         }
     }
 
+
     @abstractmethod
-    def build(self, 
-              model, 
-              context: OptimizationContext, 
-              **params) -> AcquisitionFunction:
+    def build_acq(self,
+                  model: Model, 
+                  context: OptimizationContext, 
+                  **params) -> AcquisitionFunction:
         '''
         Construct the acquisition function.
 
@@ -64,7 +67,7 @@ class AcquisitionStructure(ABC):
                 and other relevant information.
             
             **params:
-                Additional keyword arguments forwarded to the acquisition function.
+                Additional keyword arguments.
 
         Returns:
             Configured acquisition function ready for optimization.

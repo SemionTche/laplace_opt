@@ -88,9 +88,8 @@ class HyperparameterPanel(QGroupBox):
                 value = widget.value()    # get the value
             
             elif isinstance(widget, QComboBox):  # if it is a QComboBox
-                if widget.currentText() in ["True", "False"]:  # checking for "True" or "False"
-                    value = (widget.currentIndex() == 0)   # the value is "True" if "True is selected" else otherwise
-            
+                value = widget.currentData()
+
             elif hasattr(widget, "text"):
                 value = widget.text()
 
