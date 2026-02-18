@@ -22,13 +22,13 @@ class StrategyStructure(ABC):
 
     # parameters required for every strategy
     core_parameters = {
-        "num_shot": {
+        "n_repeats": {
             "type": int,
             "default": 1,
             "min": 1,
             "max": 1000,
-            "label": "Number of shots per sample",
-            "description": "Number of evaluations (shots) performed for each proposed sample."
+            "label": "Number sample repeats",
+            "description": "Number of repeated evaluations per candidate."
         },
 
         "save_period": {

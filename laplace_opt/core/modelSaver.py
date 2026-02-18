@@ -5,7 +5,7 @@ import pathlib
 import json
 
 from laplace_log import log
-from torch.nn import Module
+from botorch.models.model import Model
 import torch
 
 # project
@@ -76,7 +76,7 @@ class ModelSaver:
              context: OptimizationContext, 
              opt_form: dict, 
              suggestion_history: list, 
-             model: Module) -> None:
+             model: Model) -> None:
         '''
         Save a checkpoint of the current optimization state.
 
@@ -117,16 +117,19 @@ class ModelSaver:
                 "n_observations": len(context._observations),
                 "optimization_step": self.counter
             },
+            
             "problem": {
                 "bounds": context.bounds,
                 "opt_form": json.dumps(opt_form, cls=OptimizationJSONEncoder),
             },
+            
             "observations": {
                 "X_physical": context.X_physical,
                 "X_normalized": context.X_normalized,
                 "Y_opt_space": context.Y_opt_space,
                 "Y_physical": context.Y_physical,
             },
+            
             "suggestions": suggestion_history,
             "model_state_dict": model.state_dict(),
             "rng_state": torch.get_rng_state()
