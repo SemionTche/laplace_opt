@@ -90,6 +90,7 @@ class ExecutionPanel(QGroupBox):
             default_value="",
             type=str
         )
+        self.save_path_tmp = default_saving_path   # path update when the panel is unlocked
         self.set_path_saving(default_saving_path)
         
             # get and set default reading path
@@ -99,6 +100,7 @@ class ExecutionPanel(QGroupBox):
             default_value="",
             type=str
         )
+        self.read_path_tmp = default_reading_path
         self.set_path_reading(default_reading_path)
 
 
@@ -241,6 +243,13 @@ class ExecutionPanel(QGroupBox):
         )
         log.debug("Configuration locked." if locked else "Configuration unlocked.")
 
+        if not locked:  # if unlocking
+            if self.get_path_reading() != self.read_path_tmp:  # if the current reading path != the one registered during locked
+                self.read_entry.setText(self.read_path_tmp)    # set the reading path
+            
+            if self.get_path_saving() != self.save_path_tmp:   # if the current saving path != the one registered during locked
+                self.saving_entry.setText(self.save_path_tmp)  # set the saving path 
+
 
     def browse_folder(self, is_read: bool=True) -> None:
         '''
@@ -311,14 +320,16 @@ class ExecutionPanel(QGroupBox):
             log.info(f"Reading path setted: '{path}'")
             self.read_entry.setText(path)
         else:
-            log.info(f"Configuration locked, reading path unchanged.")
+            log.info(f"Configuration locked, reading path unchanged before unlocking.")
+        self.read_path_tmp = path
     
     def set_path_saving(self, path: str) -> None:
         if not self.is_locked():
             log.info(f"Saving path setted: '{path}'")
             self.saving_entry.setText(path)
         else:
-            log.info(f"Configuration locked, saving path unchanged.")
+            log.info(f"Configuration locked, saving path unchanged before unlocking.")
+        self.save_path_tmp = path
     
     def set_server_address(self, address: str) -> None:
         return self.server_entry.setText(address)
