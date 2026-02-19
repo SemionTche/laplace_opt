@@ -17,7 +17,7 @@ from ..utils.json_encoder import (
 from ..utils.build_payload import (
     get_inputs, get_objectives, build_data_payload
 )
-from model_construction import (
+from ..model_construction import (
     StrategyStructure, AcquisitionStructure
 )
 
@@ -323,3 +323,18 @@ class Optimizer(QObject):
         )
 
         return observations
+
+
+    def save_end(self) -> None:
+        '''
+        Save the last observations and model without 
+        incrementing the step.
+        '''
+        self.model_saver.save(
+            context=self.context,
+            opt_form=self.opt_form,
+            suggestion_history=self.suggestion_history,
+            model=self.model,
+            is_stop=True
+        )
+        log.info("Final model saved.")

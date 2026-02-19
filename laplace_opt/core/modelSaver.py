@@ -76,7 +76,8 @@ class ModelSaver:
              context: OptimizationContext, 
              opt_form: dict, 
              suggestion_history: list, 
-             model: Model) -> None:
+             model: Model,
+             is_stop: bool=False) -> None:
         '''
         Save a checkpoint of the current optimization state.
 
@@ -97,15 +98,19 @@ class ModelSaver:
             suggestion_history (list):
                 Previously suggested candidate tensors.
 
-            model:
+            model: (Model)
                 Trained model instance (must implement state_dict()).
+            
+            is_stop: (bool)
+                is the current call made by the stop action of the interface.
         '''
         if not self.is_saving:
             return
 
-        self.counter += 1
+        if not is_stop:         # do not increment the step
+            self.counter += 1   # if the call comes from the user
 
-        if self.counter % self.save_period != 0:
+        if self.counter % self.save_period != 0 and not is_stop:
             return
 
         # make the checkpoit to save
@@ -146,7 +151,9 @@ class ModelSaver:
             torch.save(checkpoint, tmp_filename)           # save the file
             tmp_filename.replace(filename)                 # use the 'pt' extension
 
-            log.info(f"model_observations_{self.base_index:06d} file saved.")
+            log.info(f"model_observations_{self.base_index:06d} file saved. (step={self.counter})")
         
         except Exception as e:
-            log.error(f"Error: could not save the model_observations_{self.base_index:06d} because: {e}")
+            log.error(f"Error: could not save the model_observations_{self.base_index:06d},\n"
+                      f"(step={self.counter}),\n"
+                      f"because: {e}")

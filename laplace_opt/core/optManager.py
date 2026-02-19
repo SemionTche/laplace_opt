@@ -88,6 +88,8 @@ class OptManager(QObject):
             self.server_controller.opt_received.disconnect()
             self.optimizer.new_candidates.disconnect()
 
+        self.optimizer.save_end()
+
         # reset the checkers
         self.is_online = False
         self.is_opt = False
