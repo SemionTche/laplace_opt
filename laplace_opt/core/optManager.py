@@ -139,7 +139,7 @@ class OptManager(QObject):
             self.serv.start() # start the server
 
             # emit a signal to transmit the server address to the ExecutionPanel
-            self.on_server_address.emit(self.serv.address_for_client)
+            self.on_server_address.emit(f"{self.serv.server_ip}:{self.serv.server_port}")
         
         else:                # else means server off
             self.serv.stop() # stop the server

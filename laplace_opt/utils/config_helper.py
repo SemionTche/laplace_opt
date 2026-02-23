@@ -1,7 +1,7 @@
 # libraries
-from PyQt6.QtCore import QSettings
-
 import pathlib
+
+from PyQt6.QtCore import QSettings
 
 CONFIG_PATH = pathlib.Path(__file__).parent.parent / "config.ini"
 
