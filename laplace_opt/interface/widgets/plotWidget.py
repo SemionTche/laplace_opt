@@ -1,4 +1,5 @@
 # libraries
+import copy
 from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
@@ -58,12 +59,14 @@ class PlotWidget(QWidget):
         self.log_Y.stateChanged.connect(self._redraw)
         self.log_X.stateChanged.connect(self._redraw)
 
-        self._data = []
+        self._data: dict[str, list] = {}
+        self._data_old: dict[str, list] = {}
 
     # -------------------------
 
     def update_plot_dict(self, data_dict: dict[str, list]):
-        self._data = data_dict
+        self._data_old = copy.deepcopy(self._data)
+        self._data = copy.deepcopy(data_dict)
         self._redraw()
 
 
@@ -89,8 +92,26 @@ class PlotWidget(QWidget):
         ax.set_xlabel(x_key)
         ax.set_ylabel(y_key)
 
-        if x and y:
-            ax.scatter(x, y, marker="o")
+        if not x or not y:
+            self.canvas.draw()
+            return
+        
+
+        old_len = len(self._data_old.get(x_key, []))
+        new_len = len(x)
+        old_len = min(old_len, new_len)
+        
+        x_old = x[:old_len]
+        y_old = y[:old_len]
+
+        x_new = x[old_len:]
+        y_new = y[old_len:]
+
+        if x_old and y_old:
+            ax.scatter(x_old, y_old, marker="o", color="tab:blue")
+        
+        if x_new and y_new:
+            ax.scatter(x_new, y_new, marker="o", color="red")
 
         if self.log_X.isChecked():
             ax.set_xscale("log")
