@@ -10,6 +10,7 @@ import qdarkstyle
 from laplace_log import log
 
 # project
+from .plotWindow import PlotWindow
 from .panels import (
     ExecutionPanel, InOutPanel,
     InitializationPanel, OptPanel
@@ -26,7 +27,8 @@ class OptWindow(QMainWindow):
         super().__init__() # heritage from QMainWindow
 
         self.opt_manager = OptManager()  # class managing the optimization
-        
+        self.plot_window = PlotWindow()
+
         self.set_up()  # build the window panels and buttons
 
         self.actions() # defines the actions of the window
@@ -79,6 +81,9 @@ class OptWindow(QMainWindow):
 
         # Block 5: Start and Stop buttons
         bottom_layout = QHBoxLayout()
+        self.plot_button = QPushButton("Plot Optimization")
+        bottom_layout.addWidget(self.plot_button)
+
         bottom_layout.addStretch()
             # state label
         self.status_label = QLabel("🟢 Ready")
@@ -127,6 +132,16 @@ class OptWindow(QMainWindow):
         # transmit the server address from the server to the ExecutionPanel
         self.opt_manager.on_server_address.connect(
             self.execution_panel.set_server_address
+        )
+
+        # plotting actions
+            # button to display the window
+        self.plot_button.clicked.connect(
+            self.on_plot_window
+        )
+            # data to plot
+        self.opt_manager.data_for_plot.connect(
+            self.plot_window.add_result
         )
     
 
@@ -182,10 +197,11 @@ class OptWindow(QMainWindow):
 
         log.info("Starting optimization with form:\n" + json_style(form))
         self.set_opt_state(True)
+        self.plot_window.configure_from_form(form=form)
         self.opt_manager.init_process(form)    # send the config dictionary to the optimization manager
 
 
-    def on_stop(self):
+    def on_stop(self) -> None:
         '''
         Function used when 'stop_button' is pressed.
         '''
@@ -194,9 +210,13 @@ class OptWindow(QMainWindow):
         self.opt_manager.stop_opt()
 
         self.set_opt_state(False)
-        pass
 
     
+    def on_plot_window(self) -> None:
+        log.debug("Plot window clicked.")
+        self.plot_window.setVisible(not self.plot_window.isVisible())
+
+
     def set_opt_state(self, optimizing: bool):
         if optimizing:
             self.status_label.setText("🟡 Optimizing...")
@@ -218,4 +238,7 @@ class OptWindow(QMainWindow):
         '''
         if self.execution_panel.is_online_enabled():
             self.opt_manager.server_launch(server_state=False)
+        
+        self.plot_window.close()
+        
         event.accept()

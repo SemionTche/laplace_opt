@@ -12,6 +12,8 @@ log.info("Starting OptWindow...")
 
 logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)
 
+from .utils import uncaught_exception
+
 # project
 from .interface import OptWindow
 

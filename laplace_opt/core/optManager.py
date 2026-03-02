@@ -21,6 +21,7 @@ class OptManager(QObject):
     '''
 
     on_server_address = pyqtSignal(str)  # transmit the optimizer server address
+    data_for_plot = pyqtSignal(list)
 
     def __init__(self):
         '''
@@ -63,12 +64,16 @@ class OptManager(QObject):
         self.is_online = self.opt_form["exec"]["is_online"]  # is it an online process
         self.is_opt = self.opt_form["opt"]["enabled"]        # is there an optimization
         
-
         if self.is_online: # if dealing with a server
 
             # when the server receives a CMD_OPT, update the optimizer
             self.server_controller.opt_received.connect(
                 self.optimizer.update_opt
+            )
+
+            # when the server receives a CMD_OPT, transmit it to the plot window
+            self.server_controller.opt_received.connect(
+                self._handle_new_result
             )
 
             # when new candidates are provided by optimizer, update the server payload
@@ -77,6 +82,11 @@ class OptManager(QObject):
             )
 
         self.optimizer.init_opt()   # get the first candidates
+
+
+    def _handle_new_result(self, data) -> None:
+        results = data.get("results", [])
+        self.data_for_plot.emit(results)
 
 
     def stop_opt(self) -> None:
