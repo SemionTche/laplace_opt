@@ -42,7 +42,7 @@ class Optimizer(QObject):
                 and optimization pipeline parameters.
         '''
         super().__init__()         # heritage QObject
-        
+        save_period = 1
         self.opt_form = opt_form   # the optimization form
 
         self.is_opt: bool = opt_form["opt"]["enabled"]  # whether to make an optimization or not
@@ -77,7 +77,7 @@ class Optimizer(QObject):
 
         self.model_saver = ModelSaver(
             pathlib.Path(opt_form["exec"]["saving_path"]), 
-            save_period or 1,
+            save_period,
             bool(opt_form["exec"]["saving_path"])
         )
 
@@ -120,7 +120,6 @@ class Optimizer(QObject):
                 self.new_candidates.emit(data)  # emit the new candidates to sample
             
             elif self.init_y is not None and len(self.init_y) > 0:
-                print("here")
             
                 log.info(f"Loaded {len(self.init_x)} previous observations from file.")
                 
