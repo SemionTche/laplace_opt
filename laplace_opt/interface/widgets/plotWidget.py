@@ -30,14 +30,15 @@ class PlotWidget(QWidget):
         self.y_selector = QComboBox()
         self.y_selector.addItems(self.available_keys)
 
-        self.log_checkbox = QCheckBox("Log Y")
+        self.log_X = QCheckBox("Log X")
+        self.log_Y = QCheckBox("Log Y")
 
-        self.delete_button = QPushButton("✕")
-        self.delete_button.setFixedWidth(30)
+        self.delete_button = QPushButton("Delete plot")
 
         controls.addWidget(self.x_selector)
         controls.addWidget(self.y_selector)
-        controls.addWidget(self.log_checkbox)
+        controls.addWidget(self.log_X)
+        controls.addWidget(self.log_Y)
         controls.addWidget(self.delete_button)
 
         main_layout.addLayout(controls)
@@ -54,7 +55,8 @@ class PlotWidget(QWidget):
 
         self.x_selector.currentTextChanged.connect(self._redraw)
         self.y_selector.currentTextChanged.connect(self._redraw)
-        self.log_checkbox.stateChanged.connect(self._redraw)
+        self.log_Y.stateChanged.connect(self._redraw)
+        self.log_X.stateChanged.connect(self._redraw)
 
         self._data = []
 
@@ -87,7 +89,9 @@ class PlotWidget(QWidget):
 
         ax.scatter(x, y, marker="o")
 
-        if self.log_checkbox.isChecked():
+        if self.log_X.isChecked():
+            ax.set_xscale("log")
+        if self.log_Y.isChecked():
             ax.set_yscale("log")
 
         ax.set_xlabel(x_key)
