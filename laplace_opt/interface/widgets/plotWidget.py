@@ -69,33 +69,33 @@ class PlotWidget(QWidget):
 
     def _redraw(self):
 
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+
         if not self._data:
+            self.canvas.draw()
             return
 
         x_key = self.x_selector.currentText()
         y_key = self.y_selector.currentText()
 
         if x_key not in self._data or y_key not in self._data:
+            self.canvas.draw()
             return
 
         x = self._data[x_key]
         y = self._data[y_key]
 
-        if not x or not y:
-            return
+        ax.set_xlabel(x_key)
+        ax.set_ylabel(y_key)
 
-        self.figure.clear()
-        ax = self.figure.add_subplot(111)
-
-        ax.scatter(x, y, marker="o")
+        if x and y:
+            ax.scatter(x, y, marker="o")
 
         if self.log_X.isChecked():
             ax.set_xscale("log")
         if self.log_Y.isChecked():
             ax.set_yscale("log")
-
-        ax.set_xlabel(x_key)
-        ax.set_ylabel(y_key)
 
         self.canvas.draw()
     

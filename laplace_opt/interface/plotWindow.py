@@ -62,7 +62,7 @@ class PlotWindow(QWidget):
 
         plot = PlotWidget(self.available_keys)
         plot.delete_requested.connect(self.remove_plot)
-
+        plot.update_plot_dict(self.data)
         self.plots.append(plot)
         self._refresh_grid()
 
@@ -88,9 +88,9 @@ class PlotWindow(QWidget):
 
 
     def add_result(self, result_list: list[dict]):
-        """
+        '''
         Receive raw optimizer results and normalize them.
-        """
+        '''
 
         for result in result_list:
 
@@ -135,9 +135,9 @@ class PlotWindow(QWidget):
 
         
     def configure_from_form(self, form: dict):
-        """
+        '''
         Reset plotting window and extract structured metadata.
-        """
+        '''
 
         # Clear data
         self.data = {}
