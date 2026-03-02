@@ -85,7 +85,7 @@ class PlotWidget(QWidget):
         self.figure.clear()
         ax = self.figure.add_subplot(111)
 
-        ax.plot(x, y, marker="o")
+        ax.scatter(x, y, marker="o")
 
         if self.log_checkbox.isChecked():
             ax.set_yscale("log")
