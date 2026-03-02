@@ -108,10 +108,10 @@ class PlotWidget(QWidget):
         y_new = y[old_len:]
 
         if x_old and y_old:
-            ax.scatter(x_old, y_old, marker="o", color="tab:blue")
+            ax.scatter(x_old, y_old, s=80, marker="o", ec="black", color="tab:blue")
         
         if x_new and y_new:
-            ax.scatter(x_new, y_new, marker="o", color="red")
+            ax.scatter(x_new, y_new, s=80, marker="o", ec="black", color="red")
 
         if self.log_X.isChecked():
             ax.set_xscale("log")
