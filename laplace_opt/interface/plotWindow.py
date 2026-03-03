@@ -91,10 +91,12 @@ class PlotWindow(QWidget):
         the grid layout. Does nothing if the maximum number of plots is reached.
         '''
         if len(self.plots) >= self.MAX_ROWS * self.MAX_COLS:  # if there are more plots than expected
+            msg = "Maximum number of plots reached."
+            log.warning(msg)
             QMessageBox.warning(                              # show a warning box
                 self, 
                 "Limit reached",
-                "Maximum number of plots reached."
+                msg
             )
             return                                            # ignore the action
 
