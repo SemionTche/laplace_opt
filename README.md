@@ -26,6 +26,16 @@ pip install PyQt6 qdarkstyle botorch laplace-server laplace-log
 
 ---
 
+## Run the code
+
+To run the code use:
+
+```bash
+python -m laplace_opt.main
+```
+
+---
+
 ## Project Structure
 
 ```
