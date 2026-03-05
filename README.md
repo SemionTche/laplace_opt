@@ -28,6 +28,7 @@ pip install PyQt6 qdarkstyle botorch laplace-server laplace-log
 
 ## Project Structure
 
+```
 laplace_opt/
 ├── laplace_opt/
 │   ├── main.py                 # Entry point launching the GUI
@@ -39,6 +40,7 @@ laplace_opt/
 ├── tests/                      # Test scripts
 ├── LICENSE                     # GPL-3.0 License
 └── README.md                   # Project README
+```
 
 ---
 
