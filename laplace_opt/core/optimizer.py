@@ -264,7 +264,7 @@ class Optimizer(QObject):
             return           # end here
 
         candidates = self.suggest_candidates() # else suggest candidates
-        self.model_saver.save(self.context, self.opt_form, self.suggestion_history, self.model)
+        self.model_saver.save(self.context, self.opt_form, self.suggestion_history, self.model, self.acquisition)
 
         # make the payload for the server
         payload = build_data_payload(
@@ -334,6 +334,7 @@ class Optimizer(QObject):
             opt_form=self.opt_form,
             suggestion_history=self.suggestion_history,
             model=self.model,
+            acq_func=self.acquisition,
             is_stop=True
         )
         log.info("Final model saved.")

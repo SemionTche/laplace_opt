@@ -6,6 +6,7 @@ import json
 
 from laplace_log import log
 from botorch.models.model import Model
+from botorch.acquisition import AcquisitionFunction
 import torch
 
 # project
@@ -77,6 +78,7 @@ class ModelSaver:
              opt_form: dict, 
              suggestion_history: list, 
              model: Model,
+             acq_func: AcquisitionFunction,
              is_stop: bool=False) -> None:
         '''
         Save a checkpoint of the current optimization state.
@@ -100,6 +102,9 @@ class ModelSaver:
 
             model: (Model)
                 Trained model instance (must implement state_dict()).
+            
+            acq_func: (AcquisitionFunction)
+                The acquisition function of the optimization
             
             is_stop: (bool)
                 is the current call made by the stop action of the interface.
@@ -137,6 +142,7 @@ class ModelSaver:
             
             "suggestions": suggestion_history,
             "model_state_dict": model.state_dict(),
+            "acquisition_state_dict": acq_func.state_dict(),
             "rng_state": torch.get_rng_state()
         }
 
