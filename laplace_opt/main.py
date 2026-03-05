@@ -11,6 +11,9 @@ LoggerLHC("laplace.opt", file_level="debug", console_level="info")
 log.info("Starting OptWindow...")
 
 logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+
+# from .utils import uncaught_exception
 
 # project
 from .interface import OptWindow
