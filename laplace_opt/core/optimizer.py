@@ -111,7 +111,8 @@ class Optimizer(QObject):
                     is_opt=False,
                 )
 
-                log.info(f"Init suggestion:\n{format_candidate_batch(self.init_x, self.inputs)}") # print the sample candidates
+                log.info(f"Init suggestion:\n"
+                            f"{format_candidate_batch(self.init_x, self.inputs)}") # print the sample candidates
                 
                 if self.is_opt:
                     params: dict = self.strat.get("params", {})
