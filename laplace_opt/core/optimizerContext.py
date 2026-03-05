@@ -42,7 +42,8 @@ class OptimizationContext:
         self.bounds = bounds
         self.objectives = objectives
         self.n_obj = len(self.objectives)
-
+        self.n_init = -1
+        
         self._observations: list[Observation] = []
         log.debug("Context created.")
 

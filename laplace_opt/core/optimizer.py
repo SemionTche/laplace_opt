@@ -101,7 +101,7 @@ class Optimizer(QObject):
 
             # if there is no y-elements
             if self.init_y is None:
-                
+
                 # make the payload for the server
                 data = build_data_payload(
                     self.init_x,
@@ -255,6 +255,10 @@ class Optimizer(QObject):
         )
         
         observations = self._parse_results(data)   # make the tensor observations
+
+        if self.context.n_init == -1:                   # if the number of initial points was not set
+            self.context.n_init = len(observations)     # this is the initial size
+            log.info(f"Initial batch size received: {self.context.n_init}")
 
         for obs in observations:
             self.context.add_observation(obs.x, obs.y)  # add the observations to the context

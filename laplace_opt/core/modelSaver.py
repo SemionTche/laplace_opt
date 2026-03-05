@@ -125,6 +125,7 @@ class ModelSaver:
                 "start_time": self.start_time,
                 "saving_time": time.time(),
                 "n_observations": len(context._observations),
+                "n_init": context.n_init,
                 "optimization_step": self.counter
             },
             
