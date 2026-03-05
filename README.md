@@ -10,7 +10,7 @@ This package provides a desktop application with a structured logging system and
 
 - PyQt6 graphical user interface
 - Structured logging via `laplace_log`
-- Optional integration with `laplace_server` protocol
+- Using `laplace_server` protocol
 - Entry point via `main.py`
 - Modular design separating GUI, logging, and server logic
 
