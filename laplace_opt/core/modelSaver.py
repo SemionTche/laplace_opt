@@ -139,6 +139,7 @@ class ModelSaver:
                 "X_normalized": context.X_normalized,
                 "Y_opt_space": context.Y_opt_space,
                 "Y_physical": context.Y_physical,
+                "shot_numbers": context.shot_number_list
             },
             
             "suggestions": suggestion_history,

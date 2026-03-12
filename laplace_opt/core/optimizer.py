@@ -127,7 +127,8 @@ class Optimizer(QObject):
                 for x, y in zip(self.init_x, self.init_y):
                     self.context.add_observation(
                         x.double(),
-                        y.double()
+                        y.double(),
+                        -1
                     )
 
                 if self.is_opt:
@@ -261,7 +262,7 @@ class Optimizer(QObject):
             log.info(f"Initial batch size received: {self.context.n_init}")
 
         for obs in observations:
-            self.context.add_observation(obs.x, obs.y)  # add the observations to the context
+            self.context.add_observation(obs.x, obs.y, obs.shot_number)  # add the observations to the context
         log.info(f"Context updated: total_observations={len(self.context._observations)}")
 
         if not self.is_opt:  # if there is no optimization
@@ -317,8 +318,10 @@ class Optimizer(QObject):
 
                 if addr in outputs and key in outputs[addr]:
                     y_vals[i] = outputs[addr][key][0]       # fill the torch tensor
+            
+            shot_number = r["shot_number"]
 
-            observations.append(Observation(x=x, y=y_vals))  # add the observations
+            observations.append(Observation(x=x, y=y_vals, shot_number=shot_number))  # add the observations
         
         log.debug(
             f"Parsed {len(observations)} observations "

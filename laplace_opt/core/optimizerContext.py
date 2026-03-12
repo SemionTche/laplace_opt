@@ -16,9 +16,12 @@ class Observation:
             Input vector for the evaluation.
         y: (torch.Tensor)
             Corresponding objective values.
+        shot_number: (list[int])
+            Corresponding shot.
     '''
     x: torch.Tensor    # shape [d]
     y: torch.Tensor    # shape [n_obj]
+    shot_number: int
 
 
 class OptimizationContext:
@@ -65,6 +68,11 @@ class OptimizationContext:
         return Y_phys
 
     @property
+    def shot_number_list(self) -> list[int]:
+        shot_list = [obs.shot_number for obs in self._observations]
+        return shot_list
+
+    @property
     def X_physical(self) -> torch.Tensor:
         X = torch.stack([obs.x for obs in self._observations])
         return X
@@ -74,7 +82,7 @@ class OptimizationContext:
         return normalize(self.X_physical, self.bounds)
     
 
-    def add_observation(self, x: torch.Tensor, y: torch.Tensor) -> None:
+    def add_observation(self, x: torch.Tensor, y: torch.Tensor, shot_number: int) -> None:
         '''
         Add a single observation to the context.
 
@@ -90,11 +98,11 @@ class OptimizationContext:
             if obj.minimize:
                 y_corrected[i] = -y_corrected[i]
         
-        self._observations.append(Observation(x=x, y=y_corrected))
-        log.debug(f"Observation added: x={x.tolist()}, y={y_corrected.tolist()}")
+        self._observations.append(Observation(x=x, y=y_corrected, shot_number=shot_number))
+        log.debug(f"Observation added: x={x.tolist()}, y={y_corrected.tolist()}, shot_number={shot_number}")
 
 
-    def add_observations(self, observations: list[Observation]) -> None:
+    def add_observations(self, observations: list[Observation], shot_list: list[int]) -> None:
         '''
         Add multiple observations at once.
 
@@ -103,8 +111,8 @@ class OptimizationContext:
                 List of Observation instances.
         '''
         log.debug(f"Observation size: {len(self._observations)}")
-        for obs in observations:
-            self.add_observation(obs.x, obs.y)
+        for (obs, shot) in zip(observations, shot_list):
+            self.add_observation(obs.x, obs.y, shot)
         log.debug(f"{len(observations)} observations added. Total now: {len(self._observations)}")
 
 

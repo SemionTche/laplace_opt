@@ -59,7 +59,6 @@ def print_evaluations(data: list[dict], inputs: dict,) -> str:
     '''
     Pretty-print evaluated inputs and objectives from server OPT messages.
     '''
-
     # Map position_index to input name
     index_to_name = {
         v["position_index"]: name
@@ -69,19 +68,20 @@ def print_evaluations(data: list[dict], inputs: dict,) -> str:
     lines = []     # list of lines to print
 
     # Sort for deterministic output
-    data = sorted(data, key=lambda d: (d["batch"], d["candidate"]))
+    data = sorted(data, key=lambda d: (d["batch"], d["candidate"], d["shot_number"]))
 
     current_batch = None
 
     for item in data:                                           # for element in the data
         batch = item["batch"]                                   # get the batch
         candidate = item["candidate"]                           # get the candidate
-
+        shot_number = item["shot_number"]                       # get the shot number
+        
         if batch != current_batch:                              # if it is not the current batch
             lines.append(f"batch {batch + 1}:")                 # print the batch number
             current_batch = batch                               # set the current batch
 
-        lines.append(f"  Candidate {candidate + 1}:")           # print the candidate
+        lines.append(f"  Candidate {candidate + 1} (shot_number {shot_number}):")           # print the candidate
 
         # Inputs
         lines.append("    Inputs:")
