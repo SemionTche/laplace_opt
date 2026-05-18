@@ -21,7 +21,7 @@ def dummy_server_results(payload, target_function):
 
         outputs = {
             obj_addr: {
-                key: [y[0, i].item()]
+                key: y[0, i].item()
                 for i, key in enumerate(obj_keys)
             }
         }
@@ -32,6 +32,7 @@ def dummy_server_results(payload, target_function):
             "candidate": sample["candidate"],
             "inputs": sample["inputs"],
             "outputs": outputs,
+            "shot_number_from_master": -1
         })
 
     return {"results": results}
