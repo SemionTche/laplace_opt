@@ -22,6 +22,15 @@ class StrategyStructure(ABC):
 
     # parameters required for every strategy
     core_parameters = {
+        "max_iterations": {
+            "type": int,
+            "default": 100,
+            "min": 0,
+            "max": 10000,
+            "label": "Max iterations",
+            "description": "Maximum number of model iterations."
+        },
+
         "n_repeats": {
             "type": int,
             "default": 5,
@@ -39,7 +48,7 @@ class StrategyStructure(ABC):
             "label": "Saving period",
             "description": (
                 "Number of optimization steps between automatic saves of observations and model state.\n"
-                "Set to 0 to disable periodic saving."
+                "Set to '0' to disable periodic saving."
             )
         },
 

@@ -43,6 +43,7 @@ class Optimizer(QObject):
         '''
         super().__init__()         # heritage QObject
         save_period = 1
+        self.max_it = 100
         self.opt_form = opt_form   # the optimization form
 
         self.is_opt: bool = opt_form["opt"]["enabled"]  # whether to make an optimization or not
@@ -61,6 +62,7 @@ class Optimizer(QObject):
             self.acq: dict = opt_form["opt"]["pipeline"]["acquisition"]
             params: dict = self.strat.get("params", {})
             save_period = params.get("save_period", 1)
+            self.max_it = params.get("max_iterations", 100)
         
         self.inputs, self.bounds = get_inputs(self.inputs_opt) # get the boundaries from the input dictionary
         log.info("Optimization inputs:\n" + json_style(self.inputs))
@@ -268,6 +270,11 @@ class Optimizer(QObject):
         if not self.is_opt:  # if there is no optimization
             log.debug("Optimization disabled: no suggestion available.")
             return           # end here
+
+        log.debug(f"model_saver.counter = {self.model_saver.counter}, max_it = {self.max_it}")
+        if self.max_it < self.model_saver.counter:
+            log.info("Optimization reached the maximum number of optimization.")
+            return
 
         candidates = self.suggest_candidates() # else suggest candidates
         self.model_saver.save(self.context, self.opt_form, self.suggestion_history, self.model, self.acquisition)
