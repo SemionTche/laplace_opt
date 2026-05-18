@@ -101,7 +101,7 @@ class InOutPanel(QGroupBox):
                 widget.enable_ip_port(enable)                     # enable / disable the ip:port and position index
 
 
-        ### getters
+    ### getters
     def get_rows(self) -> dict[str, InputWidget | ObjectiveWidget]:
         '''Return the widgets stored in the panel.'''
         return self.rows

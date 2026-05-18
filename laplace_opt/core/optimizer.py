@@ -291,7 +291,8 @@ class Optimizer(QObject):
         the observation tensors.
         '''
         observations = []
-
+        print(f"in parse, data = {data}")
+        print(f"and results = {data['results']}")
         for r in data["results"]:  # for every results
             
             # build x (the input position)
@@ -312,14 +313,15 @@ class Optimizer(QObject):
             )
 
             outputs = r["outputs"]
+            print(f"outputs = {outputs} for results = {r}")
             for i, obj in enumerate(self.objective_list):   # for every objective
                 addr = obj.address
                 key = obj.output_key
 
                 if addr in outputs and key in outputs[addr]:
-                    y_vals[i] = outputs[addr][key][0]       # fill the torch tensor
+                    y_vals[i] = outputs[addr][key]#[0]       # fill the torch tensor
             
-            shot_number = r["shot_number"]
+            shot_number = r["shot_number_from_master"]
 
             observations.append(Observation(x=x, y=y_vals, shot_number=shot_number))  # add the observations
         

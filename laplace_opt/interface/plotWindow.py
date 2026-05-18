@@ -184,7 +184,7 @@ class PlotWindow(QWidget):
                     payload = outputs[address]  # get the values
 
                     if key in payload:            # if the key is in the values
-                        value = payload[key][0]
+                        value = payload[key]#[0]
                         self.data[display_name].append(value)   # add the value in the corresponding list
 
         self.data["iteration"] = range(len(self.data[display_name]))    # make an iteration list

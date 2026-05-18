@@ -59,6 +59,7 @@ def print_evaluations(data: list[dict], inputs: dict,) -> str:
     '''
     Pretty-print evaluated inputs and objectives from server OPT messages.
     '''
+    print(f"we want to print data = {data}, inputs = {inputs}")
     # Map position_index to input name
     index_to_name = {
         v["position_index"]: name
@@ -68,14 +69,14 @@ def print_evaluations(data: list[dict], inputs: dict,) -> str:
     lines = []     # list of lines to print
 
     # Sort for deterministic output
-    data = sorted(data, key=lambda d: (d["batch"], d["candidate"], d["shot_number"]))
+    data = sorted(data, key=lambda d: (d["batch"], d["candidate"], d["shot_number_from_master"]))
 
     current_batch = None
 
     for item in data:                                           # for element in the data
         batch = item["batch"]                                   # get the batch
         candidate = item["candidate"]                           # get the candidate
-        shot_number = item["shot_number"]                       # get the shot number
+        shot_number = item["shot_number_from_master"]                       # get the shot number
         
         if batch != current_batch:                              # if it is not the current batch
             lines.append(f"batch {batch + 1}:")                 # print the batch number
@@ -86,16 +87,22 @@ def print_evaluations(data: list[dict], inputs: dict,) -> str:
         # Inputs
         lines.append("    Inputs:")
         for addr, values in item["inputs"].items():             # for each input
-            for i, value in enumerate(values):                  # for each value
+            # print(f"values are = {values}, type = {type(values)}")
+            for i, value in enumerate(values):    
+                # print(f"value is = {value}, type = {type(value)}, i = {i}")              # for each value
+                if value is None:
+                    continue
                 name = index_to_name.get(i, f"input_{i}")       # get the input name
                 lines.append(f"      {name} = {value:.6g}")     # print name = value
 
         # Outputs
         lines.append("    Objectives:")
         for _, obj_dict in item["outputs"].items():             # for each objective
-            for obj_name, values in obj_dict.items():           # for each value
+            for obj_name, value in obj_dict.items():           # for each value
                 # usually one value per evaluation
-                val = values[0] if values else None
+                print(f"values obj = {value}, type = {type(value)}, obj name = {obj_name}")
+                print(f"obj dict = {obj_dict}")
+                val = value if value else None
                 lines.append(f"      {obj_name} = {val:.6g}")   # print name = value
 
     return "\n".join(lines)                                     # return the lines to print
