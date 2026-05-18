@@ -317,3 +317,4 @@ pyrightconfig.json
 .history
 .ionide
 *.ini
+/laplace_opt/model_construction/inputs
