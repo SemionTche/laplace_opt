@@ -24,7 +24,7 @@ class StrategyStructure(ABC):
     core_parameters = {
         "n_repeats": {
             "type": int,
-            "default": 1,
+            "default": 5,
             "min": 1,
             "max": 1000,
             "label": "Number sample repeats",
@@ -33,7 +33,7 @@ class StrategyStructure(ABC):
 
         "save_period": {
             "type": int,
-            "default": 5,
+            "default": 1,
             "min": 0,
             "max": 100,
             "label": "Saving period",

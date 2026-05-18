@@ -9,7 +9,7 @@ def check_bounds_format(bounds: Sequence[float]):
         length = 2 and minimum in first position.
     '''
     if len(bounds) != 2 or bounds[0] > bounds[1]:
-        raise ValueError("bounds must have exactly 2 elements: (min, max)")
+        raise ValueError(f"bounds must have exactly 2 elements: (min, max), not {bounds}")
 
 
 class InputStructure(ABC):
@@ -73,6 +73,7 @@ class InputStructure(ABC):
         self._unit = unit
 
         self.position_index = position_index
+        self.motor_number = position_index + 1  # motor number start at 1 rather than 0
 
         self.description = description
         self.symbol = symbol
