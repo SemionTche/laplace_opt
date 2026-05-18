@@ -43,7 +43,7 @@ class OptWindow(QMainWindow):
         # set title, geometry and style
         self.setWindowTitle("Optimization Window")
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
-        self.setGeometry(100, 30, 1200, 700)
+        self.setGeometry(100, 30, 1250, 900)
 
         # icon
         icon_path = p.parent / 'icons' # path to the icon folder
@@ -67,7 +67,7 @@ class OptWindow(QMainWindow):
 
             # input / obj layout
         in_out_layout = QHBoxLayout()
-        in_out_layout.addWidget(self.input_panel, stretch=1)
+        in_out_layout.addWidget(self.input_panel, stretch=2)
         in_out_layout.addWidget(self.objective_panel, stretch=1)
         main_layout.addLayout(in_out_layout)
 
