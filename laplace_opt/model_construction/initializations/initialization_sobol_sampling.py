@@ -22,7 +22,7 @@ class SobolInitialization(InitializationStructure):
     parameters = {
         "n_samples": {
             "type": int,
-            "default": 10,
+            "default": 3,
             "min": 1,
             "max": 1024,
             "label": "Number of samples",
