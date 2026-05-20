@@ -226,6 +226,12 @@ class OptWindow(QMainWindow):
         self.opt_manager.stop_opt()
         self.set_opt_state(False)
 
+        QMessageBox.warning(
+            self,
+            "End criterium",
+            "Maximum iteration reached."
+        )
+
     
     def on_plot_window(self) -> None:
         log.debug("Plot window clicked.")

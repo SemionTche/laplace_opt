@@ -34,7 +34,7 @@ class StrategyStructure(ABC):
 
         "n_repeats": {
             "type": int,
-            "default": 5,
+            "default": 2,
             "min": 1,
             "max": 1000,
             "label": "Number sample repeats",
