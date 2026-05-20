@@ -24,11 +24,12 @@ class StrategyStructure(ABC):
     core_parameters = {
         "max_iterations": {
             "type": int,
-            "default": 100,
+            "default": 2,
             "min": 0,
             "max": 10000,
             "label": "Max iterations",
-            "description": "Maximum number of model iterations."
+            "description": "Maximum number of model iterations (init + opt).\n"
+            "'0' meaning endless."
         },
 
         "n_repeats": {

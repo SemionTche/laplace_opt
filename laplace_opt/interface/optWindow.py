@@ -134,6 +134,11 @@ class OptWindow(QMainWindow):
             self.execution_panel.set_server_address
         )
 
+        # stop the optimizer if the maximun iteration is reached
+        self.opt_manager.on_max_it_reached.connect(
+            self.on_max_iteration_reached
+        )
+
         # plotting actions
             # button to display the window
         self.plot_button.clicked.connect(
@@ -209,6 +214,16 @@ class OptWindow(QMainWindow):
 
         self.opt_manager.stop_opt()
 
+        self.set_opt_state(False)
+    
+
+    def on_max_iteration_reached(self) -> None:
+        '''
+        Maximum iteration set a initialization is reached.
+        '''
+        log.debug("The maximum number of iterations has been reached. Stopping the process...")
+
+        self.opt_manager.stop_opt()
         self.set_opt_state(False)
 
     

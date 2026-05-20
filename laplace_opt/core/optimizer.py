@@ -31,6 +31,7 @@ class Optimizer(QObject):
     '''
     
     new_candidates = pyqtSignal(dict)
+    max_it_reached = pyqtSignal()
 
     def __init__(self, opt_form: dict):
         '''
@@ -272,9 +273,11 @@ class Optimizer(QObject):
             return           # end here
 
         log.debug(f"model_saver.counter = {self.model_saver.counter}, max_it = {self.max_it}")
-        if self.max_it < self.model_saver.counter:
-            log.info("Optimization reached the maximum number of optimization.")
-            return
+        if self.max_it > 0:
+            if self.max_it <= self.model_saver.counter + 1:
+                log.info("Optimization reached the maximum number of (init + optimization) step.")
+                self.max_it_reached.emit()
+                return
 
         candidates = self.suggest_candidates() # else suggest candidates
         self.model_saver.save(self.context, self.opt_form, self.suggestion_history, self.model, self.acquisition)

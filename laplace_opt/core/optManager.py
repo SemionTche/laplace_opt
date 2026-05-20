@@ -22,6 +22,7 @@ class OptManager(QObject):
 
     on_server_address = pyqtSignal(str)  # transmit the optimizer server address
     data_for_plot = pyqtSignal(list)
+    on_max_it_reached = pyqtSignal()
 
     def __init__(self):
         '''
@@ -60,6 +61,9 @@ class OptManager(QObject):
         self.set_form(opt_form)  # set and save the opt_form
 
         self.optimizer = Optimizer(self.opt_form)  # make an optimizer drived by this form
+        self.optimizer.max_it_reached.connect(
+            self._handle_max_it
+        )
 
         self.is_online = self.opt_form["exec"]["is_online"]  # is it an online process
         self.is_opt = self.opt_form["opt"]["enabled"]        # is there an optimization
@@ -82,6 +86,10 @@ class OptManager(QObject):
             )
 
         self.optimizer.init_opt()   # get the first candidates
+
+
+    def _handle_max_it(self) -> None:
+        self.on_max_it_reached.emit()
 
 
     def _handle_new_result(self, data) -> None:
