@@ -1,6 +1,5 @@
 # libraries
-from datetime import date
-import time
+from datetime import date, datetime
 import pathlib
 import json
 
@@ -50,7 +49,9 @@ class ModelSaver:
         self.is_saving = is_saving          # whether to save or not
         self.save_period = save_period      # the period at which the checkpoint should be saved
         self.counter = 0                    # the current step of the optimization
-        self.start_time = time.time()       # the time at which the saver started
+        now = datetime.now()
+        self.start_day = now.date().isoformat()                        # the date at which the saver started
+        self.start_time = now.time().isoformat(timespec="seconds")     # the time at which the saver started
 
         if not self.is_saving:  # if not saving
             return              # end the initialization
@@ -118,19 +119,24 @@ class ModelSaver:
         if self.counter % self.save_period != 0 and not is_stop:
             return
 
+        now = datetime.now()
         # make the checkpoit to save
         checkpoint = {
             "metadata": {
-                "saving_date": date.today().isoformat(),
+                "saving_date": now.date().isoformat(),
+                "saving_time": now.time().isoformat(timespec="seconds"),
+                "start_day": self.start_day,
                 "start_time": self.start_time,
-                "saving_time": time.time(),
                 "n_observations": len(context._observations),
+                "n_inputs": context.n_inputs,
                 "n_init": context.n_init,
                 "optimization_step": self.counter
             },
             
             "problem": {
                 "bounds": context.bounds,
+                "inputs": context.get_input_state_dict(),
+                "objectives": context.get_obj_state_dict(),
                 "opt_form": json.dumps(opt_form, cls=OptimizationJSONEncoder),
             },
             

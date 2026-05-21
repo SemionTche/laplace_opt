@@ -1,5 +1,6 @@
 # libraries
 from dataclasses import dataclass
+from typing import Sequence
 
 import torch
 from botorch.utils.transforms import normalize
@@ -31,7 +32,7 @@ class OptimizationContext:
     Provides methods to access baseline points and compute reference points
     for acquisition functions.
     '''
-    def __init__(self, bounds, objectives):
+    def __init__(self, bounds, objectives: dict, inputs: dict):
         '''
         Initialize the optimization context with problem definition.
 
@@ -41,10 +42,15 @@ class OptimizationContext:
 
             objectives: (dict)
                 Dictionary of objectives to optimize.
+            
+            inputs: (dict)
+                Dictionary of inputs to optimize
         '''
         self.bounds = bounds
         self.objectives = objectives
+        self.inputs = inputs
         self.n_obj = len(self.objectives)
+        self.n_inputs = len(self.inputs)
         self.n_init = -1
         
         self._observations: list[Observation] = []
@@ -80,7 +86,18 @@ class OptimizationContext:
     @property
     def X_normalized(self) -> torch.Tensor:
         return normalize(self.X_physical, self.bounds)
+
+    def get_obj_state_dict(self) -> dict[str, dict[str, str | int | bool]]:
+        obj_state_dict = {}
+        for key, obj in self.objectives.items():
+            obj_state_dict[key] = obj.to_dict()
+        return obj_state_dict
     
+    def get_input_state_dict(self) -> dict[str, dict[str, str | int | Sequence[float]]]:
+        input_state_dict = {}
+        for key, input in self.inputs.items():
+            input_state_dict[key] = input.to_dict()
+        return input_state_dict
 
     def add_observation(self, x: torch.Tensor, y: torch.Tensor, shot_number: int) -> None:
         '''

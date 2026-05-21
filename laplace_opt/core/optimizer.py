@@ -76,6 +76,7 @@ class Optimizer(QObject):
         self.context = OptimizationContext(
             bounds=self.bounds,
             objectives=self.objectives_opt,
+            inputs=self.inputs_opt
         )
 
         self.model_saver = ModelSaver(
@@ -272,10 +273,13 @@ class Optimizer(QObject):
             log.debug("Optimization disabled: no suggestion available.")
             return           # end here
 
-        log.debug(f"model_saver.counter = {self.model_saver.counter}, max_it = {self.max_it}")
+        log.debug(f"model_saver.counter = {self.model_saver.counter} + 1 (for init), max_it = {self.max_it}")
         if self.max_it > 0:
             if self.max_it <= self.model_saver.counter + 1:
                 log.info("Optimization reached the maximum number of (init + optimization) step.")
+                strategy_params = self.strat.get("params", {})
+                best_results = self.strategy_cls.get_best_results(context=self.context, **strategy_params)
+                print(f"[best results] best_results = {json_style(best_results)}")
                 self.max_it_reached.emit()
                 return
 
