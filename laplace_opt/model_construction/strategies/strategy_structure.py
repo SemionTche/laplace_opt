@@ -119,3 +119,25 @@ class StrategyStructure(ABC):
                 ready to be used by an acquisition function.
         '''
 
+
+    @abstractmethod
+    def get_best_results(self,
+                         context: OptimizationContext,
+                         **params) -> dict:
+        '''
+        Return best sampled point for each objective of the model.
+
+        Args:
+            context: (OptimizationContext)
+                Optimization context providing observations, bounds, 
+                and objective structure required to build the model.
+
+            **params:
+                Additional keyword arguments defining model-specific
+                hyperparameters (e.g., kernel type, output transforms).
+
+        Returns:
+             list[dict]:
+                A dictionary per objective, gathering its best value,
+                the uncertainty and the position when sampling.
+        '''    

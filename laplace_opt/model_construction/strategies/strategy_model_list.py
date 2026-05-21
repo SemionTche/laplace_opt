@@ -1,6 +1,6 @@
 # libraries
+import torch
 from botorch.models import SingleTaskGP, ModelListGP
-from botorch.models.model import Model
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from botorch import fit_gpytorch_mll
@@ -60,7 +60,7 @@ class ModelList(StrategyStructure):
 
     def build_model(self,
                     context: OptimizationContext,
-                    **params) -> Model:
+                    **params) -> ModelListGP:
         '''
         Construct independent GPs for each output dimension and combine into a ModelListGP.
 
@@ -106,3 +106,69 @@ class ModelList(StrategyStructure):
             models.append(gp)
 
         return ModelListGP(*models)
+
+
+    def get_best_results(self,
+                         context: OptimizationContext,
+                         **params):
+        '''
+        Return best sampled point for each objective using GP posterior mean.
+
+        Args:
+            context:
+                Optimization context.
+
+        Returns:
+            list[dict]:
+                A dictionary per objective, gathering its best value,
+                the uncertainty and the position when sampling.
+        '''
+        model = self.build_model(context=context, **params)
+
+        train_X_list = context.X_by_objective()
+        bounds = context.bounds
+
+        n_obj = len(model.models)
+        maximize = [True] * n_obj
+        names = [obj.name for obj in context.objectives.values()]
+
+        for i, obj in enumerate(context.objectives.values()):
+            if obj.minimize:
+                maximize[i] = False
+
+        best_results = []
+
+        for i, (gp, X) in enumerate(zip(model.models, train_X_list)):
+
+            # normalize like during training
+            X_norm = normalize(X, bounds)
+
+            # GP posterior at sampled points
+            posterior = gp.posterior(X_norm)
+
+            mean = posterior.mean.squeeze(-1)
+            std = posterior.variance.sqrt().squeeze(-1)
+
+            # choose best according to optimization direction
+            if maximize[i]:
+                best_idx = torch.argmax(mean)
+            else:
+                best_idx = torch.argmin(mean)
+
+            best_x = X[best_idx]
+            best_y = mean[best_idx]
+            best_std = std[best_idx]
+
+            best_results.append(
+                {
+                    "objective": i,
+                    "name": names[i],
+                    "maximize": maximize[i],
+                    "best_x": best_x.tolist(),
+                    "best_y": best_y.tolist(),
+                    "uncertainty": best_std.tolist(),
+                }
+            )
+
+        return best_results
+            
