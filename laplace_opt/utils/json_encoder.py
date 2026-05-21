@@ -128,12 +128,13 @@ class OptimizationJSONEncoder(json.JSONEncoder):
                 "name": obj.__qualname__,
             }
 
-        # Class instances
-        if hasattr(obj, "__class__"):
+        # Class instances - assumes the classes have a to_dict method (objectives and inputs)
+        if hasattr(obj, "to_dict"):  # "__class__"
             return {
                 "__type__": "instance",
                 "class": f"{obj.__class__.__module__}.{obj.__class__.__qualname__}",
                 "repr": repr(obj),
+                "state_dict": obj.to_dict()
             }
 
         return super().default(obj)
