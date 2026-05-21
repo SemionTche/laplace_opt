@@ -92,6 +92,21 @@ class ObjectiveStructure(ABC):
         self._minimize = minimize
 
 
+    def to_dict(self) -> dict[str, str | int | bool]:
+        '''State of the objective'''
+        return {
+            "name": self.name,
+            "unit": self.unit,
+            "minimize": self.minimize,
+            "ip": self.ip,
+            "port": self.port,
+            "address": self.address,            
+            "symbol": self.symbol,
+            "description": self.description,
+            "position_index": self.position_index,
+        }
+
+
     def __repr__(self):
         '''Compact representation.'''
         return (
@@ -99,6 +114,6 @@ class ObjectiveStructure(ABC):
             f"(name='{self.name}', "
             f"minimize='{self.minimize}', "
             f"unit='{self.unit}'), "
-            f"address={self.address}), "
+            f"address={self.address}, "
             f"position index={self.position_index}>"
         )

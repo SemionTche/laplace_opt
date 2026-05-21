@@ -105,6 +105,23 @@ class InputStructure(ABC):
         self._bounds = new_bounds
 
 
+    def to_dict(self) -> dict[str, str | Sequence[float] | int]:
+        '''State of the input'''
+        return {
+            "name": self.name,
+            "unit": self.unit,
+            "bounds": self.bounds,
+            "safe_bounds": self.safe_bounds,
+            "ip": self.ip,
+            "port": self.port,
+            "address": self.address,
+            "symbol": self.symbol,
+            "description": self.description,
+            "position_index": self.position_index,
+            "motor_number": self.motor_number
+        }
+
+
     def __repr__(self):
         '''Compact representation.'''
         return (
@@ -113,6 +130,6 @@ class InputStructure(ABC):
             f"bounds={self.bounds}, "
             f"unit='{self.unit}', "
             f"safe_bounds={self.safe_bounds}, "
-            f"address={self.address}), "
+            f"address={self.address}, "
             f"position index={self.position_index}>"
         )
