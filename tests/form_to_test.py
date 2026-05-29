@@ -34,7 +34,7 @@ OPT_FORM_MULTI = {
             "minimize": False
         },
         "ElectronEnergyMean": {
-            "minimize": False
+            "minimize": True
         },
     },
     
@@ -54,6 +54,7 @@ OPT_FORM_MULTI = {
             ### strategy
             "strategy": {
                 "ModelList": {
+                    # "n_repeats":5,
                     "num_restarts": 5,
                     "seed": 0,
                     "number_shot": 1,

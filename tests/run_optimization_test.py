@@ -24,7 +24,7 @@ log.info("Starting Opt Tests...")
 # ==========================
 n_iterations = 30        # number of candidate generation (number of optimization steps)
 OPT_FORM = OPT_FORM_MULTI
-target_f = target_function
+target_f = target_function_noisy
 
 
 if __name__ == "__main__":
