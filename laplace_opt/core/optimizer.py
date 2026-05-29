@@ -106,6 +106,11 @@ class Optimizer(QObject):
             # if there is no y-elements
             if self.init_y is None:
 
+                # repeat suggestions
+                if self.n_repeats > 1:
+                    self.init_x = self.init_x.repeat_interleave(self.n_repeats, dim=0)
+                    log.debug("Repetition made on inputs.")
+
                 # make the payload for the server
                 data = build_data_payload(
                     self.init_x,
