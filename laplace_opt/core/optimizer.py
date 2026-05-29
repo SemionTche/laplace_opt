@@ -244,6 +244,12 @@ class Optimizer(QObject):
         if n_repeats > 1:
             candidates = candidates.repeat_interleave(n_repeats, dim=0)
             log.debug("Repetition made.")
+
+        for i, gp in enumerate(self.model.models):
+            print(f"\nHyperparameters")
+            print(f"Objective {i}")
+            print("lengthscale:", gp.covar_module.lengthscale.detach())
+            print("noise:", gp.likelihood.noise.detach())
         
         self.suggestion_history.append(candidates.detach().clone())
 
@@ -277,14 +283,21 @@ class Optimizer(QObject):
         if self.max_it > 0:
             if self.max_it <= self.model_saver.counter + 1:
                 log.info("Optimization reached the maximum number of (init + optimization) step.")
-                strategy_params = self.strat.get("params", {})
-                best_results = self.strategy_cls.get_best_results(context=self.context, **strategy_params)
-                print(f"[best results] best_results = {json_style(best_results)}")
                 self.max_it_reached.emit()
                 return
 
         candidates = self.suggest_candidates() # else suggest candidates
-        self.model_saver.save(self.context, self.opt_form, self.suggestion_history, self.model, self.acquisition)
+
+        best_results = self.compute_best_results()  # compute best results so far
+
+        self.model_saver.save(
+            self.context, 
+            self.opt_form, 
+            self.suggestion_history, 
+            self.model, 
+            self.acquisition, 
+            best_results
+        )
 
         # make the payload for the server
         payload = build_data_payload(
@@ -297,6 +310,16 @@ class Optimizer(QObject):
 
         log.info("Emitting new candidates to server...")
         self.new_candidates.emit(payload)  # look for new candidates
+
+
+    def compute_best_results(self):
+        strategy_params = self.strat.get("params", {})
+        best_results = self.strategy_cls.get_best_results(
+            context=self.context, model=self.model, **strategy_params
+        )
+        print(f"[best results] best_results = {json_style(best_results)}")
+        
+        return best_results
 
 
     def _parse_results(self, data: dict) -> list[Observation]:
@@ -359,6 +382,7 @@ class Optimizer(QObject):
             suggestion_history=self.suggestion_history,
             model=self.model,
             acq_func=self.acquisition,
+            best_results= self.compute_best_results(),
             is_stop=True
         )
         log.info("Final model saved.")

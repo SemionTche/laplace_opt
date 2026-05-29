@@ -80,6 +80,7 @@ class ModelSaver:
              suggestion_history: list, 
              model: Model,
              acq_func: AcquisitionFunction,
+             best_results,
              is_stop: bool=False) -> None:
         '''
         Save a checkpoint of the current optimization state.
@@ -120,6 +121,7 @@ class ModelSaver:
             return
 
         now = datetime.now()
+
         # make the checkpoit to save
         checkpoint = {
             "metadata": {
@@ -130,13 +132,42 @@ class ModelSaver:
                 "n_observations": len(context._observations),
                 "n_inputs": context.n_inputs,
                 "n_init": context.n_init,
-                "optimization_step": self.counter
+                "optimization_step": self.counter,
+                "init_and_opt_step": self.counter + 1,
+                "tensor_info": {
+                    "dtype": str(context.X_physical.dtype),
+                    "device": str(context.X_physical.device),
+                }
             },
             
             "problem": {
                 "bounds": context.bounds,
                 "inputs": context.get_input_state_dict(),
                 "objectives": context.get_obj_state_dict(),
+                "init": {
+                    "class": (
+                        opt_form["init"]["cls"].__module__
+                        + "."
+                        + opt_form["init"]["cls"].__qualname__
+                    ),
+                    "params": opt_form["init"]["params"],
+                },
+                "strategy": {
+                    "class": (
+                        opt_form["opt"]["pipeline"]["strategy"]["cls"].__module__
+                        + "."
+                        + opt_form["opt"]["pipeline"]["strategy"]["cls"].__qualname__
+                    ),
+                    "params": opt_form["opt"]["pipeline"]["strategy"]["params"],
+                },
+                "acquisition": {
+                    "class": (
+                        opt_form["opt"]["pipeline"]["acquisition"]["cls"].__module__
+                        + "."
+                        + opt_form["opt"]["pipeline"]["acquisition"]["cls"].__qualname__
+                    ),
+                    "params": opt_form["opt"]["pipeline"]["acquisition"]["params"],                    
+                },
                 "opt_form": json.dumps(opt_form, cls=OptimizationJSONEncoder),
             },
             
@@ -147,10 +178,21 @@ class ModelSaver:
                 "Y_physical": context.Y_physical,
                 "shot_numbers": context.shot_number_list
             },
+
+            "model":{
+                "model_class": model.__class__.__module__ + "." + model.__class__.__qualname__,
+                "model_state_dict": model.state_dict(),
+            },
             
+            "acquisition": {
+                "acquisition_class": acq_func.__class__.__module__ + "." + acq_func.__class__.__qualname__,
+                "acquisition_state_dict": acq_func.state_dict(),
+            },
+
+            "best_results": best_results,
+
             "suggestions": suggestion_history,
-            "model_state_dict": model.state_dict(),
-            "acquisition_state_dict": acq_func.state_dict(),
+            
             "rng_state": torch.get_rng_state()
         }
 
