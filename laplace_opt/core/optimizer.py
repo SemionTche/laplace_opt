@@ -43,8 +43,6 @@ class Optimizer(QObject):
                 and optimization pipeline parameters.
         '''
         super().__init__()         # heritage QObject
-        save_period = 1
-        self.max_it = 100
         self.opt_form = opt_form   # the optimization form
 
         self.is_opt: bool = opt_form["opt"]["enabled"]  # whether to make an optimization or not
@@ -54,6 +52,11 @@ class Optimizer(QObject):
         self.objectives_opt: dict = opt_form["obj"]
         self.objective_list = list(self.objectives_opt.values())
         
+        self.criterium: dict = opt_form["criterium"]
+        self.save_period = self.criterium.get("save_period", 1)
+        self.max_it = self.criterium.get("max_iterations", 100)
+        self.n_repeats = self.criterium.get("n_repeats", 1)
+
         # the initialization process
         self.init: dict = opt_form["init"]
 
@@ -61,9 +64,6 @@ class Optimizer(QObject):
             # strategy and acquisition function
             self.strat: dict = opt_form["opt"]["pipeline"]["strategy"]
             self.acq: dict = opt_form["opt"]["pipeline"]["acquisition"]
-            params: dict = self.strat.get("params", {})
-            save_period = params.get("save_period", 1)
-            self.max_it = params.get("max_iterations", 100)
         
         self.inputs, self.bounds = get_inputs(self.inputs_opt) # get the boundaries from the input dictionary
         log.info("Optimization inputs:\n" + json_style(self.inputs))
@@ -81,7 +81,7 @@ class Optimizer(QObject):
 
         self.model_saver = ModelSaver(
             pathlib.Path(opt_form["exec"]["saving_path"]), 
-            save_period,
+            self.save_period,
             bool(opt_form["exec"]["saving_path"])
         )
 
@@ -239,10 +239,8 @@ class Optimizer(QObject):
         candidates = self.optimize()  # optimize the model
         
         # repeat samples
-        n_repeats = self.strat.get("params", {}).get("n_repeats", 1)
-
-        if n_repeats > 1:
-            candidates = candidates.repeat_interleave(n_repeats, dim=0)
+        if self.n_repeats > 1:
+            candidates = candidates.repeat_interleave(self.n_repeats, dim=0)
             log.debug("Repetition made.")
 
         for i, gp in enumerate(self.model.models):

@@ -35,6 +35,7 @@ def is_date_folder(path: pathlib.Path) -> bool:
 def make_form(exec: dict[str, bool | str], 
               inputs: dict[str, InputStructure], 
               obj: dict[str, ObjectiveStructure], 
+              crit,
               init: dict[str, InitializationStructure | dict[str, int | float | bool | str]], 
               opt: dict[str, bool | dict[str, dict[str, StratOrAcq | dict[str, int | float | bool | str]]]]
             ) -> tuple[dict, tuple[ValidationLevel, str]]:
@@ -52,6 +53,7 @@ def make_form(exec: dict[str, bool | str],
         "exec": exec,
         "inputs": inputs,
         "obj": obj,
+        "criterium": crit,
         "init": init,
         "opt": opt
     }

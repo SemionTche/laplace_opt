@@ -4,6 +4,7 @@ from .initializationPanel import InitializationPanel
 from .inOutPanel import InOutPanel
 from .optPanel import OptPanel
 from .pipelinePanel import PipelinePanel
+from .criteriumPanel import CriteriumPanel
 
 __all__ = [
     "ExecutionPanel",
@@ -11,5 +12,6 @@ __all__ = [
     "InitializationPanel",
     "InOutPanel",
     "OptPanel",
-    "PipelinePanel"
+    "PipelinePanel",
+    "CriteriumPanel"
 ]

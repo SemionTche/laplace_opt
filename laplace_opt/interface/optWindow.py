@@ -13,7 +13,8 @@ from laplace_log import log
 from .plotWindow import PlotWindow
 from .panels import (
     ExecutionPanel, InOutPanel,
-    InitializationPanel, OptPanel
+    InitializationPanel, OptPanel, 
+    CriteriumPanel
 )
 from ..core.optManager import OptManager
 from ..utils.model_form import make_form, ValidationLevel
@@ -71,9 +72,16 @@ class OptWindow(QMainWindow):
         in_out_layout.addWidget(self.objective_panel, stretch=1)
         main_layout.addLayout(in_out_layout)
 
-        # Block 3: Init
+        # Block 3: criterium and init
+            # criterium
+        crit_init_layout = QHBoxLayout()
+        self.criterium_panel = CriteriumPanel()
+        crit_init_layout.addWidget(self.criterium_panel, stretch=1)
+            
+            # init
         self.init_panel = InitializationPanel()
-        main_layout.addWidget(self.init_panel, stretch=1)
+        crit_init_layout.addWidget(self.init_panel, stretch=1)
+        main_layout.addLayout(crit_init_layout)
 
         # Block 4: Pipeline
         self.opt_panel = OptPanel()
@@ -165,6 +173,7 @@ class OptWindow(QMainWindow):
         execution = self.execution_panel.get_execution()
         inputs = self.input_panel.get_enabled_rows()
         objectives = self.objective_panel.get_enabled_rows()
+        criterium = self.criterium_panel.get_criterium()
         init = self.init_panel.get_initialization()
         opt = self.opt_panel.get_opt()
 
@@ -173,6 +182,7 @@ class OptWindow(QMainWindow):
             exec=execution,
             inputs=inputs,
             obj=objectives,
+            crit=criterium,
             init=init,
             opt=opt
         )
