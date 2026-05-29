@@ -123,6 +123,7 @@ class StrategyStructure(ABC):
     @abstractmethod
     def get_best_results(self,
                          context: OptimizationContext,
+                         model: Model | None,
                          **params) -> dict:
         '''
         Return best sampled point for each objective of the model.
@@ -131,6 +132,9 @@ class StrategyStructure(ABC):
             context: (OptimizationContext)
                 Optimization context providing observations, bounds, 
                 and objective structure required to build the model.
+            
+            model:
+                
 
             **params:
                 Additional keyword arguments defining model-specific

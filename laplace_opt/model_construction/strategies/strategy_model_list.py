@@ -110,6 +110,7 @@ class ModelList(StrategyStructure):
 
     def get_best_results(self,
                          context: OptimizationContext,
+                         model: ModelListGP | None,
                          **params):
         '''
         Return best sampled point for each objective using GP posterior mean.
@@ -123,16 +124,18 @@ class ModelList(StrategyStructure):
                 A dictionary per objective, gathering its best value,
                 the uncertainty and the position when sampling.
         '''
-        model = self.build_model(context=context, **params)
-
+        if not model:
+            model = self.build_model(context=context, **params)
         train_X_list = context.X_by_objective()
         bounds = context.bounds
 
-        n_obj = len(model.models)
+        n_obj = context.n_obj
         maximize = [True] * n_obj
-        names = [obj.name for obj in context.objectives.values()]
+        names = [""] * n_obj
+        # names = [obj.name for obj in context.objectives.values()]
 
         for i, obj in enumerate(context.objectives.values()):
+            names[i] = obj.name
             if obj.minimize:
                 maximize[i] = False
 
