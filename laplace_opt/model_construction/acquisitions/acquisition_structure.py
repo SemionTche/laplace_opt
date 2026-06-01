@@ -19,6 +19,8 @@ class AcquisitionStructure(ABC):
     
     display_name: str = "Acquisition Structure"
     description: str = "Acquisition Structure description"
+    nb_min_obj_required: int
+    nb_max_obj_required: int
     
     parameters: dict[str, dict] = {
         "example_int": {
