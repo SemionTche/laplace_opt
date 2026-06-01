@@ -23,6 +23,7 @@ class OptManager(QObject):
     on_server_address = pyqtSignal(str)  # transmit the optimizer server address
     data_for_plot = pyqtSignal(list)
     on_max_it_reached = pyqtSignal()
+    step_counter = pyqtSignal(int)
 
     def __init__(self):
         '''
@@ -39,6 +40,8 @@ class OptManager(QObject):
         self.is_online: bool = False
         self.is_opt: bool = False
         self._opt_form = {}
+        
+        self.step = 0
 
     @property
     def opt_form(self) -> dict:
@@ -85,7 +88,17 @@ class OptManager(QObject):
                 self.serv.set_data
             )
 
+            # when new candidates are probided by optimizer, update the step counter
+            self.optimizer.new_candidates.connect(
+                self._handle_step
+            )
+
         self.optimizer.init_opt()   # get the first candidates
+
+
+    def _handle_step(self) -> None:
+        self.step += 1
+        self.step_counter.emit(self.step)
 
 
     def _handle_max_it(self) -> None:
@@ -99,7 +112,7 @@ class OptManager(QObject):
 
     def stop_opt(self) -> None:
         '''Stop the optimization process.'''
-        
+
         if self.is_online:  # if the server is involved
 
             # disconnect the relevant features
@@ -112,6 +125,7 @@ class OptManager(QObject):
         self.is_online = False
         self.is_opt = False
         self.is_saving = False
+        self.step = 0
         log.info("Optimization stopped.")
 
 
