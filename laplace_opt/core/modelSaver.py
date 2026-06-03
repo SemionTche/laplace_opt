@@ -137,7 +137,8 @@ class ModelSaver:
                 "tensor_info": {
                     "dtype": str(context.X_physical.dtype),
                     "device": str(context.X_physical.device),
-                }
+                },
+                "criterium": opt_form["criterium"]
             },
             
             "problem": {
