@@ -30,7 +30,7 @@ def target_function_noisy(x1, x2):
     
     # Maintenant on les empile et on transpose pour obtenir [N, 2]
     stacked = torch.stack([result_1, result_2], dim=-1)  # shape [N, 2]
-    epsilon = noise_factor * stacked.max() * torch.rand(stacked.shape[0], dtype=stacked.dtype)
+    epsilon = noise_factor * torch.abs(stacked) * (2 * torch.rand_like(stacked) - 1)
     stacked = stacked + epsilon
 
     return stacked
