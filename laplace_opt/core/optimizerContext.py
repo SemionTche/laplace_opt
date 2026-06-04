@@ -65,6 +65,11 @@ class OptimizationContext:
         Y = self.Y_opt_space
         Y_physical = self._to_physical(Y)
         return Y_physical
+
+    @property
+    def Y_obs(self):
+        '''Return the objectives in the physical space made during the optimization phase'''
+        return self.Y_physical[self.n_init:]
     
     def _to_physical(self, Y_opt: torch.Tensor) -> torch.Tensor:
         Y_phys = Y_opt.clone()
@@ -86,6 +91,11 @@ class OptimizationContext:
     @property
     def X_normalized(self) -> torch.Tensor:
         return normalize(self.X_physical, self.bounds)
+    
+    @property
+    def X_obs(self):
+        '''Return the inputs in the physical space made during the optimization phase'''
+        return self.X_physical[self.n_init:]
 
     def get_obj_state_dict(self) -> dict[str, dict[str, str | int | bool]]:
         obj_state_dict = {}
