@@ -1,7 +1,7 @@
 # test saves
 laplace_opt/tests/bo/save/
 laplace_opt/tests/saving/
-laplace_opt/post_analysis/tests
+laplace_opt/post_analysis/tests/
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
