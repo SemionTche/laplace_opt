@@ -131,6 +131,7 @@ class ModelSaver:
                 "start_time": self.start_time,
                 "n_observations": len(context._observations),
                 "n_inputs": context.n_inputs,
+                "n_obj": context.n_obj,
                 "n_init": context.n_init,
                 "optimization_step": self.counter,
                 "init_and_opt_step": self.counter + 1,
