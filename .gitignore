@@ -1,6 +1,7 @@
 # test saves
-opt_lhc/tests/bo/save/
-opt_lhc/tests/saving/
+laplace_opt/tests/bo/save/
+laplace_opt/tests/saving/
+laplace_opt/post_analysis/tests
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
