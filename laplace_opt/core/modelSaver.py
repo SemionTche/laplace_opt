@@ -1,5 +1,6 @@
 # libraries
 from datetime import date, datetime
+from typing import Any
 import pathlib
 import json
 
@@ -73,6 +74,9 @@ class ModelSaver:
         )
         self.base_index = idx
 
+        self.model_state_history: dict[int, dict[str, Any]] = {}
+        self.acq_state_history: dict[int, dict[str, Any]] = {}
+
 
     def save(self, 
              context: OptimizationContext, 
@@ -121,6 +125,10 @@ class ModelSaver:
             return
 
         now = datetime.now()
+        model_state = model.state_dict()
+        acq_state = acq_func.state_dict()
+        self.model_state_history[self.counter + 1] = model_state
+        self.acq_state_history[self.counter + 1] = acq_state
 
         # make the checkpoit to save
         checkpoint = {
@@ -183,12 +191,14 @@ class ModelSaver:
 
             "model":{
                 "model_class": model.__class__.__module__ + "." + model.__class__.__qualname__,
-                "model_state_dict": model.state_dict(),
+                "model_state_dict": model_state,
+                "model_state_history": self.model_state_history
             },
             
             "acquisition": {
                 "acquisition_class": acq_func.__class__.__module__ + "." + acq_func.__class__.__qualname__,
-                "acquisition_state_dict": acq_func.state_dict(),
+                "acquisition_state_dict": acq_state,
+                "acq_state_history": self.acq_state_history
             },
 
             "best_results": best_results,
