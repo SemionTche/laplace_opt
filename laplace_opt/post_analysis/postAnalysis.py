@@ -2,9 +2,11 @@
 from dataclasses import dataclass
 
 import torch
+from botorch.utils.transforms import normalize
 
 # project
-from laplace_opt.core.optimizerContext import OptimizationContext
+from ..core.optimizerContext import OptimizationContext
+from ..utils.getter import get_classes
 
 
 @dataclass
@@ -21,6 +23,9 @@ class RunMetadata:
 
     optimization_step: int
     init_and_opt_step: int
+
+    description: str
+
 
 @dataclass
 class Objective:
@@ -54,6 +59,10 @@ class PostAnalysis:
     def _extract_metadata(self):
 
         meta = self.metadata
+        
+        description = ""
+        if "description" in meta.keys():
+            description = meta["description"]
 
         self.info = RunMetadata(
             saving_date=meta["saving_date"],
@@ -65,6 +74,7 @@ class PostAnalysis:
             n_repeats=meta["criterium"]["n_repeats"],
             optimization_step=meta["optimization_step"],
             init_and_opt_step=meta["init_and_opt_step"],
+            description=description
         )
         self.summary()
 
@@ -103,6 +113,7 @@ class PostAnalysis:
             Initial observations: {self.info.n_init}
             Repeats: {self.info.n_repeats}
             Steps: {self.info.init_and_opt_step}
+            Description: {self.info.description}
             """
         )
 
@@ -165,3 +176,57 @@ class PostAnalysis:
 
     def get_final_context(self) -> OptimizationContext:
         return self.get_context_at_step()
+
+
+    def rebuild_model(self, ctx):
+        strategies = get_classes("strategies")
+
+        strategy_cfg = self.data["problem"]["strategy"]
+        strategy_cfg_cls = self.data["problem"]["strategy"]["class"]
+
+        strategy = None
+
+        for name, cls in strategies.items():        # loop among the strategies
+
+            # match by class name OR full path
+            if strategy_cfg_cls.endswith(name) or strategy_cfg_cls == name:
+                strategy = cls()
+                break
+
+        if strategy is None:
+            raise ValueError(
+                f"Unknown strategy: {strategy_cfg}. "
+                f"Available: {list(strategies.keys())}"
+            )
+
+        model = strategy.build_model(ctx, **strategy_cfg["params"])
+
+        return model, strategy
+
+
+    def get_posterior(self, 
+                      ctx: OptimizationContext, 
+                      x_physical: torch.Tensor) -> dict[str, list]:
+
+        model, strategy = self.rebuild_model(ctx)
+
+        # model = strategy.load_model(
+        #     model,
+        #     self.data["model"]["model_state_dict"]
+        # )
+
+        X_norm = normalize(x_physical, ctx.bounds)
+
+        print(f"X_norm = {X_norm}")
+        print("X min/max:", X_norm.min(), X_norm.max())
+        print("bounds:", ctx.bounds)
+        print("bounds shape:", ctx.bounds.shape)
+
+        post, mean, std = strategy.posterior(model, X_norm)
+
+        return {
+            "posterior": post,
+            "mean": mean,
+            "std": std,
+        }
+    

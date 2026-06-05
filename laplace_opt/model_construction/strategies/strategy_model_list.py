@@ -1,4 +1,5 @@
 # libraries
+from botorch.models.model import Model
 import torch
 from botorch.models import SingleTaskGP, ModelListGP
 from botorch.models.transforms.outcome import Standardize
@@ -175,3 +176,22 @@ class ModelList(StrategyStructure):
 
         return best_results
             
+
+    # def load_model(self, model, state_dict) -> Model:
+    #     model.load_state_dict(state_dict)
+    #     model.eval()
+    #     return model
+
+
+    def posterior(self, model, X_norm: torch.Tensor) -> tuple[list, list, list]:
+        posteriors, means, stds = [], [], []
+
+        with torch.no_grad():
+            for gp in model.models:
+                post = gp.posterior(X_norm)
+
+                posteriors.append(post)
+                means.append(post.mean.squeeze(-1))
+                stds.append(post.variance.sqrt().squeeze(-1))
+
+        return posteriors, means, stds

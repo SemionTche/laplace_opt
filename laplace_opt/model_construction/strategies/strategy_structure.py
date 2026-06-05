@@ -1,6 +1,7 @@
 # libraries
 from abc import ABC, abstractmethod
 
+import torch
 from botorch.models.model import Model
 
 # project
@@ -113,4 +114,17 @@ class StrategyStructure(ABC):
              list[dict]:
                 A dictionary per objective, gathering its best value,
                 the uncertainty and the position when sampling.
-        '''    
+        '''
+
+
+    # @abstractmethod
+    # def load_model(self, model, state_dict) -> Model:
+    #     '''
+        
+    #     '''
+
+    @abstractmethod
+    def posterior(self, model, X_norm: torch.Tensor) -> tuple[list, list, list]:
+        '''
+        
+        '''
