@@ -74,6 +74,7 @@ class ModelSaver:
         )
         self.base_index = idx
 
+        # store the model and acquisition hyperparameters
         self.model_state_history: dict[int, dict[str, Any]] = {}
         self.acq_state_history: dict[int, dict[str, Any]] = {}
 
