@@ -206,7 +206,7 @@ class PostAnalysis:
 
     def get_posterior(self, 
                       ctx: OptimizationContext, 
-                      x_physical: torch.Tensor) -> dict[str, list]:
+                      x_physical: torch.Tensor) -> tuple[dict, dict, dict]:
 
         model, strategy = self.rebuild_model(ctx)
 
@@ -217,16 +217,14 @@ class PostAnalysis:
 
         X_norm = normalize(x_physical, ctx.bounds)
 
-        print(f"X_norm = {X_norm}")
-        print("X min/max:", X_norm.min(), X_norm.max())
-        print("bounds:", ctx.bounds)
-        print("bounds shape:", ctx.bounds.shape)
+        # gathering the objectives names
+        names = [obj.name for obj in ctx.objectives.values()]
+        
+        post, mean, std = strategy.posterior(
+            names=names, 
+            model=model, 
+            X_norm=X_norm
+        )
 
-        post, mean, std = strategy.posterior(model, X_norm)
-
-        return {
-            "posterior": post,
-            "mean": mean,
-            "std": std,
-        }
+        return post, mean, std
     

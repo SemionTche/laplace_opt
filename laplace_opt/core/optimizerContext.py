@@ -67,7 +67,7 @@ class OptimizationContext:
         return Y_physical
 
     @property
-    def Y_obs(self):
+    def Y_opt(self):
         '''Return the objectives in the physical space made during the optimization phase'''
         return self.Y_physical[self.n_init:]
     
@@ -93,7 +93,7 @@ class OptimizationContext:
         return normalize(self.X_physical, self.bounds)
     
     @property
-    def X_obs(self):
+    def X_opt(self):
         '''Return the inputs in the physical space made during the optimization phase'''
         return self.X_physical[self.n_init:]
 

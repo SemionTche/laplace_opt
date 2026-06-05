@@ -104,6 +104,7 @@ class ObjectiveStructure(ABC):
             "symbol": self.symbol,
             "description": self.description,
             "position_index": self.position_index,
+            "output_key": self.output_key
         }
 
 

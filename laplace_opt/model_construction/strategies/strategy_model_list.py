@@ -183,15 +183,15 @@ class ModelList(StrategyStructure):
     #     return model
 
 
-    def posterior(self, model, X_norm: torch.Tensor) -> tuple[list, list, list]:
-        posteriors, means, stds = [], [], []
+    def posterior(self, names: list[str], model: ModelListGP, X_norm: torch.Tensor) -> tuple[dict, dict, dict]:
+        posteriors, means, stds = {}, {}, {}
 
         with torch.no_grad():
-            for gp in model.models:
+            for gp, name in zip(model.models, names):
                 post = gp.posterior(X_norm)
 
-                posteriors.append(post)
-                means.append(post.mean.squeeze(-1))
-                stds.append(post.variance.sqrt().squeeze(-1))
+                posteriors[name] = post
+                means[name] = post.mean.squeeze(-1)
+                stds[name] = post.variance.sqrt().squeeze(-1)
 
         return posteriors, means, stds
