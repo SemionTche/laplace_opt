@@ -294,12 +294,13 @@ class Optimizer(QObject):
         best_results = self.compute_best_results()  # compute best results so far
 
         self.model_saver.save(
-            self.context, 
-            self.opt_form, 
-            self.suggestion_history, 
-            self.model, 
-            self.acquisition, 
-            best_results
+            context=self.context, 
+            opt_form=self.opt_form, 
+            suggestion_history=self.suggestion_history, 
+            model=self.model, 
+            acq_func=self.acquisition, 
+            best_results=best_results,
+            is_stop=False
         )
 
         # make the payload for the server
