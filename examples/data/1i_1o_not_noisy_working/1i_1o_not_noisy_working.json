@@ -1,11 +1,11 @@
 {
-    "saved_date": "2026-06-04",
-    "saved_time": "16:32:32",
+    "saved_date": "2026-06-03",
+    "saved_time": "17:55:23",
     "exec": {
         "is_online": true,
         "is_reading_file": false,
         "reading_path": "",
-        "saving_path": "C:/Users/APPLI/Documents/GitHub/laplace_opt/post_analysis/examples/data",
+        "saving_path": "C:/Users/APPLI/Documents/GitHub/laplace_master/tests/saving",
         "server_address": "147.250.140.65:1254"
     },
     "inputs": {
@@ -59,25 +59,25 @@
         }
     },
     "obj": {
-        "ElectronEnergyMean": {
+        "ElectronCharge": {
             "__type__": "instance",
-            "class": "objectives.objective_electron_energy_mean.ElectronEnergyMean",
-            "repr": "<ElectronEnergyMean(name='electron_energy_mean', minimize='False', unit='MeV'), address=147.250.140.65:5556, position index=0>",
+            "class": "objectives.objective_electron_charge.ElectronCharge",
+            "repr": "<ElectronCharge(name='electron_charge', minimize='False', unit='pC'), address=147.250.140.65:5556, position index=0>",
             "state_dict": {
-                "name": "electron_energy_mean",
-                "unit": "MeV",
+                "name": "electron_charge",
+                "unit": "pC",
                 "minimize": false,
                 "ip": "147.250.140.65",
                 "port": "5556",
                 "address": "147.250.140.65:5556",
-                "symbol": "$E_0$",
-                "description": "The spectrum mean energy",
+                "symbol": "$Q$",
+                "description": "The electron charge",
                 "position_index": 0
             }
         }
     },
     "criterium": {
-        "max_iterations": 20,
+        "max_iterations": 30,
         "n_repeats": 1,
         "save_period": 1,
         "is_optimization_criterium": false
@@ -89,7 +89,7 @@
             "name": "SobolInitialization"
         },
         "params": {
-            "n_samples": 4,
+            "n_samples": 8,
             "q_candidates": 1,
             "seed": 0
         }
