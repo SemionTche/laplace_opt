@@ -183,7 +183,12 @@ class ModelList(StrategyStructure):
     #     return model
 
 
-    def posterior(self, names: list[str], model: ModelListGP, X_norm: torch.Tensor) -> tuple[dict, dict, dict]:
+    def posterior(self, 
+                  names: list[str], 
+                  model: ModelListGP, 
+                  X_norm: torch.Tensor) -> tuple[dict, dict, dict]:
+        '''
+        '''
         posteriors, means, stds = {}, {}, {}
 
         with torch.no_grad():
