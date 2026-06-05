@@ -4,7 +4,8 @@ from copy import deepcopy
 from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QComboBox, QPushButton, QCheckBox
+    QComboBox, QPushButton, QCheckBox,
+    QMessageBox
 )
 from PyQt6.QtCore import pyqtSignal
 
@@ -73,6 +74,10 @@ class PlotWidget(QWidget):
         self.log_X = QCheckBox("Log X")
         self.log_Y = QCheckBox("Log Y")
 
+        # posterior checkox
+        self.posterior = QCheckBox("Model")
+        self.posterior.setEnabled(False)
+
         # delete button
         self.delete_button = QPushButton("Delete plot")
 
@@ -81,6 +86,7 @@ class PlotWidget(QWidget):
         controls.addWidget(self.y_selector)
         controls.addWidget(self.log_X)
         controls.addWidget(self.log_Y)
+        controls.addWidget(self.posterior)
         controls.addWidget(self.delete_button)
 
         main_layout.addLayout(controls)
@@ -107,6 +113,8 @@ class PlotWidget(QWidget):
         self.y_selector.currentTextChanged.connect(self._redraw)
         self.log_Y.stateChanged.connect(self._redraw)
         self.log_X.stateChanged.connect(self._redraw)
+
+        self.posterior.stateChanged.connect(self._redraw_posterior)
 
 
     def update_plot_dict(self, data_dict: dict[str, list]) -> None:
@@ -146,6 +154,9 @@ class PlotWidget(QWidget):
         if x_key not in self._data or y_key not in self._data:     # if the keys are not in the data dict
             self.canvas.draw()                                     # keep it white
             return
+        
+        if self.posterior.isChecked():
+            self._redraw_posterior()
 
         x = self._data[x_key]      # get the data associated to the key
         y = self._data[y_key]
@@ -181,7 +192,50 @@ class PlotWidget(QWidget):
             ax.set_yscale("log")
 
         self.canvas.draw()
-    
+
+
+    def _redraw_posterior(self) -> None:
+        print("print redraw_posterior used")
+        if not self.posterior.isChecked():
+            self._redraw()
+        else:
+            x_key = self.x_selector.currentText()   # get the current keys
+            y_key = self.y_selector.currentText()
+            means_keys = self.means.keys()
+            
+            if x_key in means_keys or y_key not in means_keys and x_key != "iterations":
+                self.posterior.setChecked(False)
+                QMessageBox.warning(
+                    self, 
+                    "Posterior Warning", 
+                    "Warning: the configuration is invalid to display a posterior.\n"
+                    "Verify that the x_axis is an input and the y_axis an objective."
+                )
+                return
+            
+            mean = self.means[y_key]
+            std = self.stds[y_key]
+            input_idx = self.input_col.index(x_key)
+            x = self.x_grid[:, input_idx]
+            upper_confidence = mean + 1.96 * std
+            lower_confidence = mean - 1.96 * std
+            print(f"plot post input_idx = {input_idx}")
+            print(f"post x shape = {x.shape}")
+            print(f"post x = {x}")
+            print(f"plot post mean shape = {mean.shape}")
+            print(f"plot post mean {mean}")
+            self.figure.axes[0].plot(x, mean, label=r"Mean")
+            self.figure.axes[0].fill_between(
+                x,
+                upper_confidence,
+                lower_confidence,
+                color="gray",
+                alpha=0.3,
+                label=r"95% confidence"
+            )
+
+            self.canvas.draw()
+
 
     def set_available_keys(self, keys: list[str]) -> None:
         '''
@@ -205,3 +259,14 @@ class PlotWidget(QWidget):
 
         self.x_selector.blockSignals(False)  # unblock the signals
         self.y_selector.blockSignals(False)
+
+
+    def set_posterior(self, means: dict, stds: dict, input_col: list[str], x_grid) -> None:
+        self.means = means
+        self.stds = stds
+        self.input_col = input_col
+        self.x_grid = x_grid
+        self.posterior.setEnabled(True)
+
+        if self.posterior.isChecked():
+            self._redraw_posterior()

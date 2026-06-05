@@ -107,6 +107,14 @@ class PlotWindow(QWidget):
         self.plots.append(plot)            # add the plot widget in the list
         self._refresh_grid()               # refresh the display
         log.debug("Plot widget added.")
+        
+        if self.means is not None:
+            plot.set_posterior(
+                means=self.means,
+                stds=self.stds,
+                input_col=self.input_col,
+                x_grid=self.x_grid
+            )
 
 
     def remove_plot(self, plot_widget: PlotWidget) -> None:
@@ -247,3 +255,18 @@ class PlotWindow(QWidget):
         
         self.available_keys = list(self.data.keys())    # define the available keys for the plot widgets
         log.debug(f"PlotWindow configured with keys: {self.available_keys}")
+
+
+    def set_posterior(self, posterior: dict) -> None:
+        self.means = posterior["means"]
+        self.stds = posterior["stds"]
+        self.input_col = posterior["input_col"]
+        self.x_grid = posterior["x_grid"]
+        for plot in self.plots:
+            plot.set_posterior(
+                means=self.means, 
+                stds=self.stds, 
+                input_col=self.input_col, 
+                x_grid=self.x_grid
+            )
+        log.debug(f"Posterior setted in PlotWindow.")

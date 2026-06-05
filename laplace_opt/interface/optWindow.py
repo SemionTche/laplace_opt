@@ -164,6 +164,10 @@ class OptWindow(QMainWindow):
         self.opt_manager.data_for_plot.connect(
             self.plot_window.add_result
         )
+            # posterior to plot
+        self.opt_manager.on_posterior.connect(
+            self.plot_window.set_posterior
+        )
     
 
     def on_start(self) -> None:

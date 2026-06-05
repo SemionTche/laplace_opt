@@ -11,6 +11,7 @@ from laplace_log import log
 # project
 from .optimizerContext import OptimizationContext, Observation
 from .modelSaver import ModelSaver
+from ..utils.make_grid import make_grid
 from ..utils.json_encoder import (
     json_style, print_evaluations, format_candidate_batch
 )
@@ -32,6 +33,7 @@ class Optimizer(QObject):
     
     new_candidates = pyqtSignal(dict)
     max_it_reached = pyqtSignal()
+    new_posterior = pyqtSignal(object)
 
     def __init__(self, opt_form: dict):
         '''
@@ -169,6 +171,32 @@ class Optimizer(QObject):
             **strategy_params,
         )
         log.debug("Model built.")
+        self.build_posterior(self.model, self.strategy_cls)
+
+    
+    def build_posterior(self, model, strategy) -> None:
+        names = [obj.__class__.__qualname__ for obj in self.objective_list]
+        print(f'names in post = {names}')
+
+        X_grid = make_grid(self.bounds, n_per_dim=100)
+        X_norm = normalize(X_grid, self.bounds)
+        
+        posts, means, stds = strategy.posterior(
+            names=names,
+            model=model,
+            X_norm=X_norm
+        )
+        log.debug(f"Posterior built.")
+        i_names = [inp.__class__.__qualname__ for inp in self.inputs_opt.values()]
+        print(f"input names in post = {i_names}")
+        posterior = {
+            "means": means,
+            "stds": stds,
+            "input_col": i_names,
+            "x_grid": X_grid
+        }
+        self.new_posterior.emit(posterior)
+
 
 
     def build_acquisition(self, context: OptimizationContext) -> None:

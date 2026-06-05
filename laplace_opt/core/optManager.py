@@ -24,6 +24,7 @@ class OptManager(QObject):
     data_for_plot = pyqtSignal(list)
     on_max_it_reached = pyqtSignal()
     step_counter = pyqtSignal(int)
+    on_posterior = pyqtSignal(object)
 
     def __init__(self):
         '''
@@ -67,6 +68,9 @@ class OptManager(QObject):
         self.optimizer.max_it_reached.connect(
             self._handle_max_it
         )
+        self.optimizer.new_posterior.connect(
+            self._handle_new_posterior
+        )
 
         self.is_online = self.opt_form["exec"]["is_online"]  # is it an online process
         self.is_opt = self.opt_form["opt"]["enabled"]        # is there an optimization
@@ -108,6 +112,9 @@ class OptManager(QObject):
     def _handle_new_result(self, data) -> None:
         results = data.get("results", [])
         self.data_for_plot.emit(results)
+    
+    def _handle_new_posterior(self, posterior: dict) -> None:
+        self.on_posterior.emit(posterior)
 
 
     def stop_opt(self) -> None:
