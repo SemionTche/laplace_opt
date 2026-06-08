@@ -15,6 +15,11 @@ def convert_opt_form(opt_form: dict) -> dict:
     new_opt_form["exec"] = opt_form["exec"]
 
     # ------------------
+    # Criterium
+    # ------------------
+    new_opt_form["criterium"] = opt_form["criterium"]
+
+    # ------------------
     # Initialization
     # ------------------
     init_classes = get_classes("initializations")

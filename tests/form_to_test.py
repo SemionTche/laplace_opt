@@ -9,6 +9,14 @@ OPT_FORM_MULTI = {
         "server_address": ""
     },
 
+    ### criterium
+    "criterium": {
+        "max_iterations": 80,
+        "n_repeats": 1,
+        "save_period": 0,
+        "is_optimization_criterium": False
+    },
+
     ### initialization
     "init": {
         "SobolInitialization": {
@@ -78,6 +86,14 @@ OPT_FORM_SINGLE = {
         "reading_path": "",
         "saving_path": "",
         "server_address": ""
+    },
+
+    ### criterium
+    "criterium": {
+        "max_iterations": 80,
+        "n_repeats": 1,
+        "save_period": 0,
+        "is_optimization_criterium": False
     },
     
     ### initialization
