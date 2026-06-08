@@ -193,12 +193,12 @@ class Optimizer(QObject):
             X_norm=X_norm
         )
         log.debug(f"Posterior built.")
-        i_names = [inp.__class__.__qualname__ for inp in self.inputs_opt.values()]
-        print(f"input names in post = {i_names}")
+        input_names = [inp.__class__.__qualname__ for inp in self.inputs_opt.values()]
+        print(f"input names in post = {input_names}")
         posterior = {
             "means": means,
             "stds": stds,
-            "input_col": i_names,
+            "input_list": input_names,
             "x_grid": X_grid
         }
         self.new_posterior.emit(posterior)

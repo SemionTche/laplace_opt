@@ -156,7 +156,7 @@ class PlotWindow(QWidget):
             plot.set_posterior(
                 means=self.means,
                 stds=self.stds,
-                input_col=self.input_col,
+                input_list=self.input_list,
                 x_grid=self.x_grid
             )
 
@@ -258,6 +258,9 @@ class PlotWindow(QWidget):
         '''
         # Clear data and plot list
         self.data = {}
+        self.means = None
+        self.stds = None
+        self.input_list = None
         self.plots.clear()
 
         # Clear the grid
@@ -304,13 +307,13 @@ class PlotWindow(QWidget):
     def set_posterior(self, posterior: dict) -> None:
         self.means = posterior["means"]
         self.stds = posterior["stds"]
-        self.input_col = posterior["input_col"]
+        self.input_list = posterior["input_list"]
         self.x_grid = posterior["x_grid"]
         for plot in self.plots:
             plot.set_posterior(
                 means=self.means, 
                 stds=self.stds, 
-                input_col=self.input_col, 
+                input_list=self.input_list, 
                 x_grid=self.x_grid
             )
         log.debug(f"Posterior setted in PlotWindow.")

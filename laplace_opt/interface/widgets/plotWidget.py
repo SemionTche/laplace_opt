@@ -215,7 +215,7 @@ class PlotWidget(QWidget):
             
             mean = self.means[y_key]
             std = self.stds[y_key]
-            input_idx = self.input_col.index(x_key)
+            input_idx = self.input_list.index(x_key)
             x = self.x_grid[:, input_idx]
             upper_confidence = mean + 1.96 * std
             lower_confidence = mean - 1.96 * std
@@ -261,10 +261,10 @@ class PlotWidget(QWidget):
         self.y_selector.blockSignals(False)
 
 
-    def set_posterior(self, means: dict, stds: dict, input_col: list[str], x_grid) -> None:
+    def set_posterior(self, means: dict, stds: dict, input_list: list[str], x_grid) -> None:
         self.means = means
         self.stds = stds
-        self.input_col = input_col
+        self.input_list = input_list
         self.x_grid = x_grid
         self.posterior.setEnabled(True)
 
