@@ -309,11 +309,13 @@ class PlotWindow(QWidget):
         self.stds = posterior["stds"]
         self.input_list = posterior["input_list"]
         self.x_grid = posterior["x_grid"]
+        self.bounds = posterior["bounds"]
         for plot in self.plots:
             plot.set_posterior(
                 means=self.means, 
                 stds=self.stds, 
                 input_list=self.input_list, 
-                x_grid=self.x_grid
+                x_grid=self.x_grid,
+                bounds=self.bounds
             )
         log.debug(f"Posterior setted in PlotWindow.")

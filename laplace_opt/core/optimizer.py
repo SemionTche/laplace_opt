@@ -199,7 +199,8 @@ class Optimizer(QObject):
             "means": means,
             "stds": stds,
             "input_list": input_names,
-            "x_grid": X_grid
+            "x_grid": X_grid,
+            "bounds": self.bounds
         }
         self.new_posterior.emit(posterior)
 

@@ -12,6 +12,9 @@ from PyQt6.QtCore import pyqtSignal
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
+# project
+# from .sliceWidget import SliceWidget
+
 
 class PlotWidget(QWidget):
     '''
@@ -75,8 +78,8 @@ class PlotWidget(QWidget):
         self.log_Y = QCheckBox("Log Y")
 
         # posterior checkox
-        self.posterior = QCheckBox("Model")
-        self.posterior.setEnabled(False)
+        self.posterior_checkbox = QCheckBox("Model")
+        self.posterior_checkbox.setEnabled(False)
 
         # delete button
         self.delete_button = QPushButton("Delete plot")
@@ -86,15 +89,25 @@ class PlotWidget(QWidget):
         controls.addWidget(self.y_selector)
         controls.addWidget(self.log_X)
         controls.addWidget(self.log_Y)
-        controls.addWidget(self.posterior)
+        controls.addWidget(self.posterior_checkbox)
         controls.addWidget(self.delete_button)
 
         main_layout.addLayout(controls)
 
         # Matplotlib Figure
         self.figure = Figure()
+
+        plot_layout = QHBoxLayout()
+
         self.canvas = FigureCanvasQTAgg(self.figure)
-        main_layout.addWidget(self.canvas)
+        plot_layout.addWidget(self.canvas)
+
+        # self.slice_widget = SliceWidget()
+        # self.slice_widget.hide()
+
+        # plot_layout.addWidget(self.slice_widget)
+
+        main_layout.addLayout(plot_layout)
 
 
     def actions(self) -> None:
@@ -114,7 +127,9 @@ class PlotWidget(QWidget):
         self.log_Y.stateChanged.connect(self._redraw)
         self.log_X.stateChanged.connect(self._redraw)
 
-        self.posterior.stateChanged.connect(self._redraw_posterior)
+        self.posterior_checkbox.stateChanged.connect(self._redraw_posterior)
+
+        # self.slice_widget.slice_changed.connect(self._redraw_posterior)
 
 
     def update_plot_dict(self, data_dict: dict[str, list]) -> None:
@@ -155,7 +170,7 @@ class PlotWidget(QWidget):
             self.canvas.draw()                                     # keep it white
             return
         
-        if self.posterior.isChecked():
+        if self.posterior_checkbox.isChecked():
             self._redraw_posterior()
 
         x = self._data[x_key]      # get the data associated to the key
@@ -196,7 +211,8 @@ class PlotWidget(QWidget):
 
     def _redraw_posterior(self) -> None:
         print("print redraw_posterior used")
-        if not self.posterior.isChecked():
+        if not self.posterior_checkbox.isChecked():
+            # self.slice_widget.hide()
             self._redraw()
         else:
             x_key = self.x_selector.currentText()   # get the current keys
@@ -204,7 +220,7 @@ class PlotWidget(QWidget):
             means_keys = self.means.keys()
             
             if x_key in means_keys or y_key not in means_keys and x_key != "iterations":
-                self.posterior.setChecked(False)
+                self.posterior_checkbox.setChecked(False)
                 QMessageBox.warning(
                     self, 
                     "Posterior Warning", 
@@ -212,7 +228,19 @@ class PlotWidget(QWidget):
                     "Verify that the x_axis is an input and the y_axis an objective."
                 )
                 return
-            
+
+           # input slice colon 
+            # if len(self.input_list) > 1:
+            #     self.slice_widget.set_slice(
+            #         self.input_list,
+            #         x_key,
+            #         self.bounds
+            #     )
+            #     self.slice_widget.show()
+            # else:
+            #     self.slice_widget.hide()
+
+
             mean = self.means[y_key]
             std = self.stds[y_key]
             input_idx = self.input_list.index(x_key)
@@ -261,12 +289,13 @@ class PlotWidget(QWidget):
         self.y_selector.blockSignals(False)
 
 
-    def set_posterior(self, means: dict, stds: dict, input_list: list[str], x_grid) -> None:
+    def set_posterior(self, means: dict, stds: dict, input_list: list[str], x_grid, bounds) -> None:
         self.means = means
         self.stds = stds
         self.input_list = input_list
         self.x_grid = x_grid
-        self.posterior.setEnabled(True)
+        self.bounds = bounds
+        self.posterior_checkbox.setEnabled(True)
 
-        if self.posterior.isChecked():
+        if self.posterior_checkbox.isChecked():
             self._redraw_posterior()
