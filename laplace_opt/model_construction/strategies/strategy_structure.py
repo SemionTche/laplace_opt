@@ -123,13 +123,6 @@ class StrategyStructure(ABC):
                 the uncertainty and the position when sampling.
         '''
 
-
-    # @abstractmethod
-    # def load_model(self, model, state_dict) -> Model:
-    #     '''
-        
-    #     '''
-
     @abstractmethod
     def posterior(self, names: list[str], model: Model, X_norm: torch.Tensor) -> tuple[dict, dict, dict]:
         '''        

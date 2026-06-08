@@ -52,6 +52,7 @@ class OptimizationContext:
         self.n_obj = len(self.objectives)
         self.n_inputs = len(self.inputs)
         self.n_init = -1
+        self.step = 0
         
         self._observations: list[Observation] = []
         log.debug("Context created.")
@@ -309,3 +310,7 @@ class OptimizationContext:
             return Y_pareto_opt
 
         return self._to_physical(Y_pareto_opt)
+
+
+    def set_step(self, step: int):
+        self.step = step

@@ -338,6 +338,7 @@ class Optimizer(QObject):
             best_results=best_results,
             is_stop=False
         )
+        self.context.step += 1
 
         # make the payload for the server
         payload = build_data_payload(

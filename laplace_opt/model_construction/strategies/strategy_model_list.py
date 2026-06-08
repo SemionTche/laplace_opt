@@ -74,7 +74,7 @@ class ModelList(StrategyStructure):
 
         Returns:
             ModelListGP:
-                Fitted multi-output GP model with independent SingleTaskGPs per output.
+                multi-output GP model with independent SingleTaskGPs per output.
         '''
         models = []
         
@@ -109,7 +109,7 @@ class ModelList(StrategyStructure):
         return ModelListGP(*models)
 
 
-    def fit_model(self, model:ModelListGP) -> ModelListGP:
+    def fit_model(self, model: ModelListGP) -> ModelListGP:
         
         for gp in model.models:
             mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
@@ -186,12 +186,6 @@ class ModelList(StrategyStructure):
             )
 
         return best_results
-            
-
-    # def load_model(self, model, state_dict) -> Model:
-    #     model.load_state_dict(state_dict)
-    #     model.eval()
-    #     return model
 
 
     def posterior(self, 
