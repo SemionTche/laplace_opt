@@ -176,6 +176,7 @@ class Optimizer(QObject):
             context=context,
             **strategy_params,
         )
+        self.model = self.strategy_cls.fit_model(self.model)
         log.debug("Model built.")
         self.build_posterior(self.model, self.strategy_cls)
 

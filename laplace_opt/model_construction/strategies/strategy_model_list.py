@@ -101,12 +101,21 @@ class ModelList(StrategyStructure):
                 covar_module=covar,
             )
 
-            mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-            fit_gpytorch_mll(mll)
+            # mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+            # fit_gpytorch_mll(mll)
 
             models.append(gp)
 
         return ModelListGP(*models)
+
+
+    def fit_model(self, model:ModelListGP) -> ModelListGP:
+        
+        for gp in model.models:
+            mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+            fit_gpytorch_mll(mll)
+        
+        return model
 
 
     def get_best_results(self,
@@ -127,6 +136,8 @@ class ModelList(StrategyStructure):
         '''
         if not model:
             model = self.build_model(context=context, **params)
+            model = self.fit_model(model=model)
+        
         train_X_list = context.X_by_objective()
         bounds = context.bounds
 

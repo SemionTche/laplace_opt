@@ -7,6 +7,7 @@ from botorch.utils.transforms import normalize
 # project
 from ..core.optimizerContext import OptimizationContext
 from ..utils.getter import get_classes
+from ..model_construction import StrategyStructure
 
 
 @dataclass
@@ -178,7 +179,7 @@ class PostAnalysis:
         return self.get_context_at_step()
 
 
-    def rebuild_model(self, ctx):
+    def reconstruct_model(self, ctx):
         strategies = get_classes("strategies")
 
         strategy_cfg = self.data["problem"]["strategy"]
@@ -204,27 +205,112 @@ class PostAnalysis:
         return model, strategy
 
 
-    def get_posterior(self, 
-                      ctx: OptimizationContext, 
-                      x_physical: torch.Tensor) -> tuple[dict, dict, dict]:
+    def rebuild_model(self, ctx, strategy, strategy_params: dict):
+        model = strategy.build_model(ctx, **strategy_params)
+        print("Model built.")
+        return model
 
-        model, strategy = self.rebuild_model(ctx)
 
-        # model = strategy.load_model(
-        #     model,
-        #     self.data["model"]["model_state_dict"]
-        # )
+    # def get_posterior(self, 
+    #                   ctx: OptimizationContext, 
+    #                   x_physical: torch.Tensor) -> tuple[dict, dict, dict]:
 
+    #     model, strategy = self.rebuild_model(ctx)
+
+    #     # model = strategy.load_model(
+    #     #     model,
+    #     #     self.data["model"]["model_state_dict"]
+    #     # )
+
+    #     X_norm = normalize(x_physical, ctx.bounds)
+
+    #     # gathering the objectives names
+    #     names = [obj.name for obj in ctx.objectives.values()]
+        
+    #     post, mean, std = strategy.posterior(
+    #         names=names, 
+    #         model=model, 
+    #         X_norm=X_norm
+    #     )
+
+    #     return post, mean, std
+
+
+    def get_posterior(self,
+                    x_physical: torch.Tensor,
+                    step: int | None = None):
+        
+        strategy, strategy_params = self.identify_strategy()
+
+        ctx = self.get_context_at_step(step=step)
+        
+        # 1) build structure only
+        model = self.rebuild_model(ctx, strategy, strategy_params)
+
+        # 2) try restore weights
+        model, mode = self._load_model_state(model, step)
+
+        # 3) fallback: fit if nothing saved
+        if mode == "none":
+            print("Model fitted.")
+            model = strategy.fit_model(model)
+
+        # 4) inference input
         X_norm = normalize(x_physical, ctx.bounds)
 
-        # gathering the objectives names
         names = [obj.name for obj in ctx.objectives.values()]
-        
+
         post, mean, std = strategy.posterior(
-            names=names, 
-            model=model, 
+            names=names,
+            model=model,
             X_norm=X_norm
         )
-
         return post, mean, std
-    
+
+
+    def _load_model_state(self, model, step=None):
+        model_data = self.data.get("model", {})
+        restaured = "Model state history restaured."
+        
+        # CASE 1: step-specific history (BEST)
+        if step is not None and "model_state_history" in model_data:
+            history = model_data["model_state_history"]
+
+            if step in history:
+                model.load_state_dict(history[step])
+                model.eval()
+                print(restaured)
+                return model, "history"
+
+        # CASE 2: final state
+        if "model_state_dict" in model_data:
+            model.load_state_dict(model_data["model_state_dict"])
+            model.eval()
+            print(restaured)
+            return model, "final"
+
+        return model, "none"
+
+
+    def identify_strategy(self) -> tuple[StrategyStructure, dict]:
+        strategies = get_classes("strategies")
+
+        strategy_cfg = self.data["problem"]["strategy"]
+        strategy_cfg_cls = self.data["problem"]["strategy"]["class"]
+
+        strategy = None
+
+        for name, cls in strategies.items():        # loop among the strategies
+
+            # match by class name OR full path
+            if strategy_cfg_cls.endswith(name) or strategy_cfg_cls == name:
+                strategy = cls()
+                break
+
+        if strategy is None:
+            raise ValueError(
+                f"Unknown strategy: {strategy_cfg}. "
+                f"Available: {list(strategies.keys())}"
+            )
+        
+        return strategy, strategy_cfg["params"]

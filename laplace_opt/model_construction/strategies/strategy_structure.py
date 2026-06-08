@@ -91,6 +91,13 @@ class StrategyStructure(ABC):
 
 
     @abstractmethod
+    def fit_model(self, model: Model) -> Model:
+        '''
+        Fit the model
+        '''
+
+
+    @abstractmethod
     def get_best_results(self,
                          context: OptimizationContext,
                          model: Model | None,
