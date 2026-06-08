@@ -18,6 +18,7 @@ from ..utils.json_encoder import (
 from ..utils.build_payload import (
     get_inputs, get_objectives, build_data_payload
 )
+from ..utils.config_helper import get_from_config
 from ..model_construction import (
     StrategyStructure, AcquisitionStructure
 )
@@ -45,8 +46,13 @@ class Optimizer(QObject):
                 and optimization pipeline parameters.
         '''
         super().__init__()         # heritage QObject
+        self.model_samples = get_from_config(
+            module="plot", 
+            item="model_sample", 
+            default_value=1000, 
+            type=int
+        )
         self.opt_form = opt_form   # the optimization form
-
         self.is_opt: bool = opt_form["opt"]["enabled"]  # whether to make an optimization or not
 
         # inputs and outputs of the model: {class_name: class()}
@@ -178,7 +184,7 @@ class Optimizer(QObject):
         names = [obj.__class__.__qualname__ for obj in self.objective_list]
         print(f'names in post = {names}')
 
-        X_grid = make_grid(self.bounds, n_per_dim=100)
+        X_grid = make_grid(self.bounds, n_per_dim=self.model_samples)
         X_norm = normalize(X_grid, self.bounds)
         
         posts, means, stds = strategy.posterior(
@@ -418,3 +424,7 @@ class Optimizer(QObject):
             is_stop=True
         )
         log.info("Final model saved.")
+
+
+    def set_model_samples(self, model_samples: int) -> None:
+        self.model_samples = model_samples

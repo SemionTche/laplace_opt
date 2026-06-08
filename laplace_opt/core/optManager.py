@@ -41,6 +41,12 @@ class OptManager(QObject):
         self.is_online: bool = False
         self.is_opt: bool = False
         self._opt_form = {}
+        self.model_samples = get_from_config(
+            module="plot", 
+            item="model_sample", 
+            default_value=1000, 
+            type=int
+        )
         
         self.step = 0
 
@@ -65,6 +71,9 @@ class OptManager(QObject):
         self.set_form(opt_form)  # set and save the opt_form
 
         self.optimizer = Optimizer(self.opt_form)  # make an optimizer drived by this form
+        self.optimizer.set_model_samples(
+            model_samples=self.model_samples
+        )
         self.optimizer.max_it_reached.connect(
             self._handle_max_it
         )
@@ -190,3 +199,12 @@ class OptManager(QObject):
         '''Helper setting and saving the 'opt_form' dictionary.'''
         self._opt_form = opt_form                 # set the attribute
         self.is_saving = save_opt_form(opt_form)  # save the configuration
+
+
+    def set_model_samples(self, model_samples: int) -> None:
+        self.model_samples = model_samples
+
+        if self.optimizer is not None:
+            self.optimizer.set_model_samples(
+                model_samples=model_samples
+            )

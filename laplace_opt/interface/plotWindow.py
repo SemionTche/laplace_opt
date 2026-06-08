@@ -5,12 +5,15 @@ import qdarkstyle
 from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton,
-    QGridLayout, QMessageBox
+    QGridLayout, QMessageBox, QSpinBox,
+    QLabel, QHBoxLayout
 )
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QIcon
 
 # project
 from .widgets import PlotWidget
+from ..utils.config_helper import get_from_config, set_in_config
 
 
 class PlotWindow(QWidget):
@@ -25,6 +28,7 @@ class PlotWindow(QWidget):
     '''
     MAX_ROWS = 3
     MAX_COLS = 4
+    model_sample = pyqtSignal(int)
 
     def __init__(self):
         '''
@@ -63,9 +67,34 @@ class PlotWindow(QWidget):
 
         main_layout = QVBoxLayout(self)
 
+        top_layout = QHBoxLayout()
+
         # "+" button
         self.add_button = QPushButton("+ Add Plot")
-        main_layout.addWidget(self.add_button)
+        top_layout.addWidget(self.add_button, stretch=3)
+        top_layout.addStretch()
+
+        # model sample
+        sample_layout = QHBoxLayout()
+        sample_layout.setSpacing(2)
+        sample = get_from_config(
+            module="plot",
+            item="model_sample",
+            default_value=1000,
+            type=int
+        )
+        sample_label = QLabel("Model samples")
+        sample_label.setToolTip("Define the number of sample to plot the model.")
+        self.model_sample_spin = QSpinBox()
+        self.model_sample_spin.setToolTip("Define the number of sample to plot the model.")
+        self.model_sample_spin.setRange(1, 5000)
+        self.model_sample_spin.setValue(sample)
+
+        sample_layout.addWidget(sample_label, stretch=1)
+        sample_layout.addWidget(self.model_sample_spin, stretch=1)
+        top_layout.addLayout(sample_layout)
+
+        main_layout.addLayout(top_layout)
 
         # Grid for plots
         self.grid = QGridLayout()
@@ -80,6 +109,21 @@ class PlotWindow(QWidget):
         self.add_button.clicked.connect(
             self.add_plot
         )
+
+        self.model_sample_spin.valueChanged.connect(
+            self.on_model_sample
+        )
+
+
+    def on_model_sample(self) -> None:
+        val = self.model_sample_spin.value()
+        set_in_config(
+            module="plot",
+            item="model_sample",
+            val=val,
+        )
+
+        self.model_sample.emit(val)
 
 
     def add_plot(self) -> None:

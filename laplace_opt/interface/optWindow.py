@@ -168,6 +168,10 @@ class OptWindow(QMainWindow):
         self.opt_manager.on_posterior.connect(
             self.plot_window.set_posterior
         )
+            # number of sample for plotting the model
+        self.plot_window.model_sample.connect(
+            self.opt_manager.set_model_samples
+        )
     
 
     def on_start(self) -> None:
