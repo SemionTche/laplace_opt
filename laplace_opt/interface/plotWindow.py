@@ -122,7 +122,7 @@ class PlotWindow(QWidget):
             item="model_sample",
             val=val,
         )
-
+        log.debug("Model sample changed.")
         self.model_sample.emit(val)
 
 
