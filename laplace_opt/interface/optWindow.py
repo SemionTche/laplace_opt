@@ -165,7 +165,7 @@ class OptWindow(QMainWindow):
             self.plot_window.add_result
         )
             # posterior to plot
-        self.opt_manager.on_posterior.connect(
+        self.opt_manager.posterior_to_plot.connect(
             self.plot_window.set_posterior
         )
             # number of sample for plotting the model

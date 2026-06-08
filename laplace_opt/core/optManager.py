@@ -24,7 +24,7 @@ class OptManager(QObject):
     data_for_plot = pyqtSignal(list)
     on_max_it_reached = pyqtSignal()
     step_counter = pyqtSignal(int)
-    on_posterior = pyqtSignal(object)
+    posterior_to_plot = pyqtSignal(object)
 
     def __init__(self):
         '''
@@ -123,7 +123,7 @@ class OptManager(QObject):
         self.data_for_plot.emit(results)
     
     def _handle_new_posterior(self, posterior: dict) -> None:
-        self.on_posterior.emit(posterior)
+        self.posterior_to_plot.emit(posterior)
 
 
     def stop_opt(self) -> None:
