@@ -1,4 +1,4 @@
-/laplace_opt/experiment_analysis/*
+**/experiment_analysis
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
