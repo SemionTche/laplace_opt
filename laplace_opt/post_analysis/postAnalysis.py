@@ -97,6 +97,36 @@ class PostAnalysis:
         if "description" in meta.keys():            # if the description was implemented
             description = meta["description"]       # store it
 
+        # n_inputs = -1
+        # if "n_inputs" in meta.keys():
+        #     n_inputs = meta["n_inputs"]
+        
+        # n_repeats = -1
+        # if "criterium" in meta.keys():
+        #     n_repeats = meta["criterium"]["n_repeats"]
+        # elif "n_repeats" in meta.keys():
+        #     n_repeats = meta["n_repeats"]
+        
+        # init_and_opt_step = -1
+        # if "init_and_opt_step" in meta.keys():
+        #     init_and_opt_step = meta["init_and_opt_step"]
+        # else:
+        #     init_and_opt_step = meta["optimization_step"]
+        #     meta["optimization_step"] = meta["optimization_step"] - 1
+
+
+        # self.info = RunMetadata(
+        #     saving_date=meta["saving_date"],
+        #     saving_time=meta["saving_time"],
+        #     n_inputs=n_inputs,
+        #     n_objs=self.observations["Y_physical"].shape[-1],
+        #     n_observations=meta["n_observations"],
+        #     n_init=meta["n_init"],
+        #     n_repeats=n_repeats,
+        #     optimization_step=meta["optimization_step"],
+        #     init_and_opt_step=init_and_opt_step,
+        #     description=description
+        # )
         self.info = RunMetadata(
             saving_date=meta["saving_date"],
             saving_time=meta["saving_time"],
@@ -144,6 +174,14 @@ class PostAnalysis:
     def Y_opt_space(self):
         return self.observations["Y_opt_space"]
     
+    @property
+    def X_init(self):
+        return self.X_physical[:self.info.n_init]
+    
+    @property
+    def Y_init(self):
+        return self.Y_physical[:self.info.n_init]
+
     @property
     def X_opt(self):
         return self.X_physical[self.info.n_init:]
@@ -324,6 +362,10 @@ class PostAnalysis:
         
         model = self.rebuild_model(ctx=ctx)
 
+        for m in model.models:
+            print("lengthscale =", m.covar_module.lengthscale.detach())
+            print("noise       =", m.likelihood.noise.detach())
+
         # the input to sample should be in normalized space
         X_norm = normalize(x_physical, ctx.bounds)
         names = [obj.name for obj in ctx.objectives.values()]   # the objectives names
@@ -365,8 +407,12 @@ class PostAnalysis:
             history = model_data["model_state_history"]   # get the history dictionary
 
             if step in history:             # if the step is in the history
+                state_dict = self.robust_state_dict(
+                    model=model, 
+                    state_dict=history[step]
+                )
                 model.load_state_dict(      # load the correspondign state dict
-                    history[step], 
+                    state_dict, 
                 )
                 model.eval()
                 print("Model state history restaured.")
@@ -374,8 +420,12 @@ class PostAnalysis:
 
         # using model_state_dict
         elif step==last_step and is_model_state:    # if it's the last step
+            state_dict = self.robust_state_dict(
+                    model=model, 
+                    state_dict=model_data["model_state_dict"]
+                )
             model.load_state_dict(                  # load the corresponding state dict
-                model_data["model_state_dict"], 
+                state_dict, 
             )
             model.eval()
             print("Model state restaured.")
@@ -423,3 +473,43 @@ class PostAnalysis:
             )
         
         return strategy, strat["params"]
+
+
+    def robust_state_dict(self, model, state_dict: dict):
+        state_dict = state_dict.copy()
+
+        model_keys = set(model.state_dict().keys())
+
+        converted = {}
+
+        for key, value in state_dict.items():
+
+            candidate = key
+
+            if candidate not in model_keys:
+                candidate = candidate.replace(
+                    "_buffered_loc",
+                    "_transformed_loc"
+                )
+
+            if candidate not in model_keys:
+                candidate = candidate.replace(
+                    "_buffered_scale",
+                    "_transformed_scale"
+                )
+
+            if candidate not in model_keys:
+                candidate = candidate.replace(
+                    "_transformed_loc",
+                    "_buffered_loc"
+                )
+
+            if candidate not in model_keys:
+                candidate = candidate.replace(
+                    "_transformed_scale",
+                    "_buffered_scale"
+                )
+
+            converted[candidate] = value
+
+        return converted
