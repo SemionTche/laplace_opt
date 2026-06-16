@@ -1,12 +1,12 @@
 # libraries
 import pathlib
+from laplace_log import log
+
 from PyQt6.QtCore import pyqtSignal, QObject
 
 import torch
 from botorch.optim import optimize_acqf
 from botorch.utils.transforms import normalize, unnormalize
-
-from laplace_log import log
 
 # project
 from .optimizerContext import OptimizationContext, Observation
@@ -41,7 +41,7 @@ class Optimizer(QObject):
         Initialize the Optimizer with a given configuration.
 
         Args:
-            opt_form: (dict)
+            opt_form (dict):
                 Dictionary specifying inputs, objectives, initialization, 
                 and optimization pipeline parameters.
         '''
@@ -88,9 +88,9 @@ class Optimizer(QObject):
         )
 
         self.model_saver = ModelSaver(
-            pathlib.Path(opt_form["exec"]["saving_path"]), 
-            self.save_period,
-            bool(opt_form["exec"]["saving_path"])
+            save_folder=pathlib.Path(opt_form["exec"]["saving_path"]), 
+            save_period=self.save_period,
+            is_saving=bool(opt_form["exec"]["saving_path"])
         )
 
 
@@ -102,16 +102,21 @@ class Optimizer(QObject):
         if not self.opt_form:   # if there is no optimization form
             return              # do not continue
         
+        if self.is_opt:                                     # if there is an optimization
+            params: dict = self.strat.get("params", {})     # get the parameters from the strategy
+            torch.manual_seed(params.get("seed", 0))        # fix the torch seed
+
+
         init_cls = self.init["cls"]()      # create an instance of the initialization
         init_params = self.init["params"]  # load the initialization parameters
         
         try:
-            self.init_x, self.init_y = init_cls.generate(  # generate the first candidates
+            self.init_x, self.init_y = init_cls.generate(      # generate the first candidates
                 bounds=self.bounds, 
                 **init_params
             )
 
-            # if there is no y-elements
+            # if there is no y-elements, then suggest positions
             if self.init_y is None:
 
                 # repeat suggestions
@@ -128,28 +133,27 @@ class Optimizer(QObject):
                     is_opt=False,
                 )
 
+                # print the sample candidates
                 log.info(f"Init suggestion:\n"
-                            f"{format_candidate_batch(self.init_x, self.inputs)}") # print the sample candidates
-                
-                if self.is_opt:
-                    params: dict = self.strat.get("params", {})
-                    torch.manual_seed(params.get("seed", 0))
+                        f"{format_candidate_batch(self.init_x, self.inputs)}"
+                )
                 
                 self.new_candidates.emit(data)  # emit the new candidates to sample
-            
-            elif self.init_y is not None and len(self.init_y) > 0:
+
+
+            elif self.init_y is not None and len(self.init_y) > 2:      # else if there are y-elements
             
                 log.info(f"Loaded {len(self.init_x)} previous observations from file.")
                 
-                for x, y in zip(self.init_x, self.init_y):
+                for x, y in zip(self.init_x, self.init_y):      # fulfil the context
                     self.context.add_observation(
                         x.double(),
                         y.double(),
                         -1
                     )
 
-                if self.is_opt:
-                    candidates = self.suggest_candidates()
+                if self.is_opt:                                 # if we want to optimize
+                    candidates = self.suggest_candidates()      # generate new candidates
 
                     payload = build_data_payload(
                         candidates.unsqueeze(1),
@@ -159,7 +163,8 @@ class Optimizer(QObject):
                         is_init=False,
                     )
 
-                    self.new_candidates.emit(payload)
+                    self.new_candidates.emit(payload)           # emit new candidates
+        
         except Exception as e:
             log.error(f"Error: {e}")
 
