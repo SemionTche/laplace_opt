@@ -353,7 +353,7 @@ class Optimizer(QObject):
         self.new_candidates.emit(payload)  # look for new candidates
 
 
-    def compute_best_results(self):
+    def compute_best_results(self) -> list[dict[str, int | str | bool | float | list[float]]]:
         strategy_params = self.strat.get("params", {})
         best_results = self.strategy_cls.get_best_results(
             context=self.context, model=self.model, **strategy_params

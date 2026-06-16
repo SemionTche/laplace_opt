@@ -121,7 +121,7 @@ class ModelList(StrategyStructure):
     def get_best_results(self,
                          context: OptimizationContext,
                          model: ModelListGP | None,
-                         **params):
+                         **params) -> list[dict[str, int | str | bool | float | list[float]]]:
         '''
         Return best sampled point for each objective using GP posterior mean.
 

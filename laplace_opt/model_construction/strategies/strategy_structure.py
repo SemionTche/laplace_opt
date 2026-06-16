@@ -101,7 +101,7 @@ class StrategyStructure(ABC):
     def get_best_results(self,
                          context: OptimizationContext,
                          model: Model | None,
-                         **params) -> dict:
+                         **params) -> list[dict]:
         '''
         Return best sampled point for each objective of the model.
 
