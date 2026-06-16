@@ -166,7 +166,7 @@ class Optimizer(QObject):
                     self.new_candidates.emit(payload)           # emit new candidates
         
         except Exception as e:
-            log.error(f"Error: {e}")
+            log.error(f"Error during 'init_opt': {e}")
 
     
     def build_model(self, context: OptimizationContext) -> None:
