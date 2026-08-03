@@ -1,5 +1,7 @@
 **/experiment_analysis
 
+**/benchmark/results
+
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
