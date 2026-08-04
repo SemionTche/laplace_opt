@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Callable
 import copy
 
+from .functions.base import TestFunction
 
 @dataclass(slots=True)
 class BenchmarkConfig:
@@ -111,7 +112,7 @@ class BenchmarkConfig:
         return names
 
 
-    def build_opt_form(self, seed: int) -> dict:
+    def build_opt_form(self, seed: int, target_function: TestFunction) -> dict:
         """
         Return a deep copy of OPT_FORM with the correct seed inserted.
 
@@ -134,6 +135,24 @@ class BenchmarkConfig:
             )
 
             form["opt"]["pipeline"]["strategy"][strat_name]["seed"] = seed
+
+
+        if hasattr(target_function, "name"):
+            func_name = target_function.name
+        else:
+            func_name = target_function.__name__
+
+        form["target_function"] = {
+            "name": func_name,
+            "bounds": target_function.bounds.tolist()
+        }
+
+        for i, key in enumerate(form["inputs"].keys()):
+            form["inputs"][key]["bounds"] = target_function.bounds[:, i].tolist()
+            # input["bounds"] = target_function.bounds[:, i].tolist()
+        print()
+        print(form["inputs"])
+        print()
 
         return form
 

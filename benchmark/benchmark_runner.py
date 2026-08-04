@@ -105,7 +105,7 @@ class BenchmarkRunner:
         self.dataframe.to_csv(
             csv_path,
             mode="a",
-            # header=not csv_path.exists(),
+            header=not csv_path.exists(),
             index=False,
         )
 

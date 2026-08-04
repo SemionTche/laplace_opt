@@ -38,7 +38,10 @@ class BenchmarkExperiment:
 
     def run(self):
         # prepare the opt form
-        opt_form = self.config.build_opt_form(self.seed)
+        opt_form = self.config.build_opt_form(
+            seed=self.seed, 
+            target_function=self.target_function
+        )
         opt_form = convert_opt_form_bench(opt_form)
 
         # create the optimizer
@@ -158,7 +161,8 @@ class BenchmarkExperiment:
 
         # reproducibility fingerprint
         opt_form = self.config.build_opt_form(
-            self.seed
+            seed=self.seed,
+            target_function=self.target_function
         )
 
         config_hash = hashlib.sha256(
