@@ -19,6 +19,7 @@ class NoisyFunction:
 
         self.mode = function.mode
 
+
     def __call__(self, *x):
 
         y = self.function(*x)
