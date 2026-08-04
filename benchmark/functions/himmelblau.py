@@ -12,8 +12,8 @@ class Himmelblau(TestFunction):
     minimize = True
 
     bounds = torch.Tensor(
-        [[-5., -5.], 
-         [5., 5.]]
+        [[-6., -6.], 
+         [6., 6.]]
     )
 
     global_min = [

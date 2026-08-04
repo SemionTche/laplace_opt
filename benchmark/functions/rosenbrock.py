@@ -13,7 +13,7 @@ class Rosenbrock(TestFunction):
 
     bounds = torch.Tensor(
         [[-2., -1.], 
-         [-2., 3.]]
+         [2., 3.]]
     )
 
     global_min = [1., 1.] # [a, a**2]
@@ -28,7 +28,7 @@ class Rosenbrock(TestFunction):
         b = 100.
         
         y = (
-            ( a - x1**2 )
+            ( a - x1 )**2
             + b * ( x2 - x1**2 )**2
         )
 
