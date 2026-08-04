@@ -16,9 +16,6 @@ class BenchmarkAnalysis:
 
     Input:
         list[BenchmarkResult]
-
-    Output:
-        pandas tables comparing runs.
     """
 
     def __init__(self, results: list[BenchmarkResult]):
@@ -26,11 +23,10 @@ class BenchmarkAnalysis:
         self.results = results
 
 
-    def dataframe(self):
+    def dataframe(self) -> pd.DataFrame:
         """
         One row per optimization run.
         """
-
         rows = []
 
         for result in self.results:
@@ -43,7 +39,6 @@ class BenchmarkAnalysis:
                 analyzer.summary()
             )
 
-
         return pd.DataFrame(rows)
 
 
@@ -53,7 +48,7 @@ class BenchmarkAnalysis:
             "function",
             "strategy",
             "acquisition",
-        ]):
+        ]) -> pd.DataFrame:
         """
         Aggregate repeated seeds.
 
@@ -63,11 +58,8 @@ class BenchmarkAnalysis:
         """
 
         df = self.dataframe()
-        print(df)
-        print(df.columns)
 
         metrics = [
-
             "simple_regret",
 
             "auc_regret",
@@ -75,9 +67,7 @@ class BenchmarkAnalysis:
             "time_to_eps",
 
             "distance_x",
-
         ]
-
 
         grouped = (
             df
@@ -90,7 +80,6 @@ class BenchmarkAnalysis:
             )
         )
 
-
         return grouped
 
 
@@ -98,7 +87,6 @@ class BenchmarkAnalysis:
         """
         Return regret history for every run.
         """
-
         curves = []
 
         for result in self.results:
@@ -123,7 +111,6 @@ class BenchmarkAnalysis:
 
                     "curve":
                         analyzer.regret_curve(),
-
                 }
             )
 
@@ -131,10 +118,7 @@ class BenchmarkAnalysis:
 
 
     def best_objective_curves(self):
-
-
         curves = []
-
 
         for result in self.results:
 
@@ -159,18 +143,13 @@ class BenchmarkAnalysis:
 
                     "curve":
                         analyzer.best_curve(),
-
                 }
-
             )
-
 
         return curves
 
 
-    def save_summary(
-        self,
-        path: Path):
+    def save_summary(self, path: Path):
 
         df = self.dataframe()
 
@@ -180,9 +159,7 @@ class BenchmarkAnalysis:
         )
 
 
-    def save_aggregate(
-        self,
-        path: Path):
+    def save_aggregate(self, path: Path):
 
         df = self.aggregate()
 

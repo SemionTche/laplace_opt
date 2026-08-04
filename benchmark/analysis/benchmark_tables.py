@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from .benchmark_analysis import BenchmarkAnalysis
 
 
 class BenchmarkTables:
@@ -10,48 +11,25 @@ class BenchmarkTables:
     Utilities to generate benchmark tables.
     """
 
-
-
-    def __init__(
-        self,
-        analysis
-    ):
+    def __init__(self, analysis: BenchmarkAnalysis):
 
         self.analysis = analysis
 
 
-
-    # ==================================================
-    # raw table
-    # ==================================================
-
     def runs(self):
-
         """
         One row per optimization run.
         """
-
         return (
-            self.analysis
-            .dataframe()
+            self.analysis.dataframe()
         )
 
 
-
-    # ==================================================
-    # aggregated comparison
-    # ==================================================
-
-    def comparison(
-        self
-    ):
-
+    def comparison(self):
         """
         Mean/std comparison table.
         """
-
         df = self.runs()
-
 
         metrics = [
 
@@ -65,10 +43,8 @@ class BenchmarkTables:
 
         ]
 
-
         table = (
-            df
-            .groupby(
+            df.groupby(
                 [
                     "function",
                     "strategy",
@@ -83,28 +59,16 @@ class BenchmarkTables:
             )
         )
 
-
         return table
 
 
-
-    # ==================================================
-    # ranking
-    # ==================================================
-
-    def ranking(
-        self,
-        metric="simple_regret"
-    ):
-
+    def ranking(self, metric="simple_regret"):
         """
         Rank strategies.
 
         Lower is better.
         """
-
         df = self.runs()
-
 
         ranking = (
             df
@@ -118,23 +82,12 @@ class BenchmarkTables:
             .sort_values()
         )
 
-
         return ranking
 
 
-
-    # ==================================================
-    # formatted paper table
-    # ==================================================
-
-    def formatted(
-        self,
-        metric="simple_regret"
-    ):
-
+    def formatted(self, metric="simple_regret"):
 
         df = self.runs()
-
 
         table = (
             df
@@ -151,7 +104,6 @@ class BenchmarkTables:
                 ]
             )
         )
-
 
         table["result"] = (
             table["mean"]
@@ -169,38 +121,24 @@ class BenchmarkTables:
             )
         )
 
-
         return table[
             ["result"]
         ]
 
 
-
-    # ==================================================
-    # export
-    # ==================================================
-
-    def to_csv(
-        self,
-        path
-    ):
+    def to_csv(self, path):
 
         self.comparison().to_csv(
             path
         )
 
 
-
-    def to_latex(
-        self,
-        path
-    ):
+    def to_latex(self, path):
 
         latex = (
             self.comparison()
             .to_latex()
         )
-
 
         with open(
             path,

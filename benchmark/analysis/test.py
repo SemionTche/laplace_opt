@@ -4,39 +4,55 @@ from .benchmark_loader import BenchmarkLoader
 from .benchmark_analysis import BenchmarkAnalysis
 from .benchmark_tables import BenchmarkTables
 
-root = Path("benchmark/results/bench_test_01")
+
+if __name__ == "__main__":
+
+    root = Path(
+        "benchmark/results/bench_test_01"
+    )
+
+    # load the data
+    loader = BenchmarkLoader(
+        root
+    )
+    results = loader.load()
 
 
-loader = BenchmarkLoader(
-    root
-)
+    # analyse the data
+    analysis = BenchmarkAnalysis(
+        results
+    )
 
-results = loader.load()
+    print()
+    print("=" * 60)
+    print("df:")
+    print(analysis.dataframe())
+    print()
+    print("=" * 60)
+    print("aggregate:")
+    print(analysis.aggregate())
+    print()
+    print("=" * 60)
+    print()
 
+    analysis.save_summary(
+        path=root / "analysis_summary.csv"
+    )
 
-analysis = BenchmarkAnalysis(
-    results
-)
-
-analysis.save_summary(
-    path=root / "analysis_summary.csv"
-)
-
-analysis.save_aggregate(
-    path=root / "analysis_aggregate.csv"
-)
-
-
-tables = BenchmarkTables(
-    analysis
-)
-
-
-print(
-    tables.ranking()
-)
+    analysis.save_aggregate(
+        path=root / "analysis_aggregate.csv"
+    )
 
 
-print(
-    tables.formatted()
-)
+    # make tables
+    # tables = BenchmarkTables(
+    #     analysis
+    # )
+
+    # print(
+    #     tables.ranking()
+    # )
+
+    # print(
+    #     tables.formatted()
+    # )
