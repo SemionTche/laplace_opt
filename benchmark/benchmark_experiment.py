@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Callable
 import time
 import hashlib
 import json
@@ -14,6 +13,7 @@ from .starter.dummy_server_response_bench import dummy_server_response_bench
 
 from .benchmark_result import BenchmarkResult
 from .benchmark_config import BenchmarkConfig
+from .functions.base import TestFunction
 
 
 class BenchmarkExperiment:
@@ -21,7 +21,7 @@ class BenchmarkExperiment:
     def __init__(
             self, 
             config: BenchmarkConfig, 
-            target_function: Callable, 
+            target_function: TestFunction, 
             seed: int):
 
         self.config = config
@@ -146,6 +146,10 @@ class BenchmarkExperiment:
             inputs=context.get_input_state_dict(),
 
             objectives=context.get_obj_state_dict(),
+
+            global_min=self.target_function.global_min,
+
+            global_value=self.target_function.global_value.item()
 
         )
 

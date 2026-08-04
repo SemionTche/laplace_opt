@@ -17,7 +17,7 @@ from .benchmark_config import BenchmarkConfig
 from .starter.opt_form_single import OPT_FORM_SINGLE
 from .starter.opt_form_multi import OPT_FORM_MULTI
 
-from .functions import Ackley, Booth, Rastrigin, ReverseFunction
+from .functions import Ackley, Booth, Sphere
 # ---------------------------------------------------------
 
 
@@ -36,11 +36,11 @@ logging.getLogger("matplotlib").setLevel(logging.WARNING)
 if __name__ == "__main__":
 
     cfg = BenchmarkConfig(
-        name="PhysicsToy",
+        name="bench_test_1",
         optimizer_form=OPT_FORM_SINGLE,
-        target_functions=[Ackley()],
-        iterations=2,
-        seeds=list(range(1)),
+        target_functions=[Ackley(), Booth(), Sphere()],
+        iterations=30,
+        seeds=list(range(5)),
         output_folder=Path("benchmark/results"),
         notes="Test"
     )

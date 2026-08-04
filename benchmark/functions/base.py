@@ -15,9 +15,37 @@ class TestFunction(ABC):
          [5., 5.]]
     )
 
+    global_min = None
+    info = ""
+
     n_inputs = 2
     n_objectives = 1
     mode = "single"
+
+    @property
+    def global_value(self):
+        """
+        Value of the function at the known global minimum.
+
+        Computed automatically from evaluate().
+        """
+
+        if self.global_min is None:
+            raise RuntimeError(
+                f"{self.name} does not define global_min"
+            )
+
+        x = torch.as_tensor(
+            self.global_min,
+            dtype=torch.float32
+        )
+
+        value = self.evaluate(
+            *x.unbind()
+        )
+
+        return torch.as_tensor(value)
+
 
     def __call__(self, *x):
 
