@@ -17,7 +17,7 @@ from .benchmark_config import BenchmarkConfig
 from .starter.opt_form_single import OPT_FORM_SINGLE
 from .starter.opt_form_multi import OPT_FORM_MULTI
 
-from .functions import Ackley, Booth
+from .functions import Ackley, Booth, Rastrigin, ReverseFunction
 # ---------------------------------------------------------
 
 
@@ -27,7 +27,6 @@ LoggerLHC(
     file_level="info",
     console_level="warning",
 )
-log.info("Starting benchmark...")
 
 logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
@@ -39,11 +38,11 @@ if __name__ == "__main__":
     cfg = BenchmarkConfig(
         name="PhysicsToy",
         optimizer_form=OPT_FORM_SINGLE,
-        target_functions=[Booth(), Ackley()],
-        iterations=10,
-        seeds=list(range(5)),
+        target_functions=[Ackley()],
+        iterations=2,
+        seeds=list(range(1)),
         output_folder=Path("benchmark/results"),
-        notes=""
+        notes="Test"
     )
 
     runner = BenchmarkRunner(cfg)

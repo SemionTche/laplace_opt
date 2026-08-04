@@ -136,7 +136,7 @@ class BenchmarkConfig:
 
             form["opt"]["pipeline"]["strategy"][strat_name]["seed"] = seed
 
-
+        # adapt the input to the target function
         if hasattr(target_function, "name"):
             func_name = target_function.name
         else:
@@ -144,15 +144,17 @@ class BenchmarkConfig:
 
         form["target_function"] = {
             "name": func_name,
-            "bounds": target_function.bounds.tolist()
+            "bounds": target_function.bounds.tolist(),
+            "minimize": target_function.minimize
         }
 
         for i, key in enumerate(form["inputs"].keys()):
             form["inputs"][key]["bounds"] = target_function.bounds[:, i].tolist()
-            # input["bounds"] = target_function.bounds[:, i].tolist()
-        print()
-        print(form["inputs"])
-        print()
+
+
+        # adapt the objective to the target function
+        for i, key in enumerate(form["obj"].keys()):
+            form["obj"][key]["minimize"] = target_function.minimize
 
         return form
 
