@@ -25,7 +25,9 @@ class Himmelblau(TestFunction):
 
     local_max = [-0.270845, -0.923039]
 
-    info = "4 global minima, " + \
+    info = "multi-modal, " + \
+           "non-convex, " + \
+           "4 global minima, " + \
            "1 local maximum"
 
     def evaluate(self, x1, x2):
