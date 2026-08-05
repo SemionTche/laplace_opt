@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
 import copy
 
 from .functions.base import TestFunction
@@ -32,8 +31,8 @@ class BenchmarkConfig:
     optimizer_form: (dict)
         Human-readable OPT_FORM dictionary.
 
-    target_functions: (list[callable])
-        List of callables used by the dummy server.
+    target_functions: (list[TestFunction])
+        List of TestFunction used by the dummy server.
 
     iterations: (int)
         Number of BO iterations after initialization.
@@ -52,7 +51,7 @@ class BenchmarkConfig:
 
     optimizer_form: dict
 
-    target_functions: list[Callable]
+    target_functions: list[TestFunction]
 
     iterations: int = 40
 
