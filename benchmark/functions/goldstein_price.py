@@ -18,7 +18,7 @@ class GoldsteinPrice(TestFunction):
 
     global_min = [0., -1.]
 
-    info = "on global min, " + \
+    info = "one global min, " + \
            "several local min, " + \
            "steep walls"
 

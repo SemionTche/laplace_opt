@@ -16,10 +16,17 @@ class BenchmarkRunner:
 
         self.config = config
 
-        self.results = []
+        self.results: list[BenchmarkResult] = []
 
 
     def run(self) -> list[BenchmarkResult]:
+        """
+        Run the benchmark using the config
+        parameters. 
+        
+        For each target function and for each seed, 
+        run an experiment and save the results.
+        """
 
         log.info("")
         log.info("=" * 60)
@@ -68,7 +75,10 @@ class BenchmarkRunner:
 
     @property
     def dataframe(self) -> pd.DataFrame:
-
+        """
+        Create the dataframe summary of the 
+        runner, listing each result parameters.
+        """
         rows = []
 
         for r in self.results:
@@ -77,8 +87,8 @@ class BenchmarkRunner:
                 {
                     "benchmark": r.benchmark_name,
                     "function": r.function_name,
-                    "acquisition": r.acquisition,
                     "strategy": r.strategy,
+                    "acquisition": r.acquisition,
                     "seed": r.seed,
                     "evaluations": r.n_evaluations,
                     "elapsed_time": r.elapsed_time,
@@ -89,7 +99,11 @@ class BenchmarkRunner:
 
 
     def save_summary(self) -> None:
+        """
+        Save the runner dataframe summary as csv.
 
+        Save an additional .txt file for the config notes.
+        """
         if not self.results:
             return
 

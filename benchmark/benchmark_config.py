@@ -1,12 +1,3 @@
-"""
-benchmark_config.py
-
-Configuration objects used by the benchmarking framework.
-
-These classes are completely independent from the optimizer.
-Their purpose is only to describe which benchmark has to be executed.
-"""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -15,38 +6,39 @@ import copy
 
 from .functions.base import TestFunction
 
+
 @dataclass(slots=True)
 class BenchmarkConfig:
     """
-    Configuration of one benchmark campaign.
+    Benchmark configuration, gathering the parameters for the runs.
+
+    It is used as individual config class after build_opt_form.
 
     One BenchmarkConfig may execute many optimization runs
     (typically one run per random seed and target function).
 
-    Parameters
-    ----------
-    name: (str)
-        Name of the experiment.
+    Args:
+        name: (str)
+            Name of the benchmark.
 
-    optimizer_form: (dict)
-        Human-readable OPT_FORM dictionary.
+        optimizer_form: (dict)
+            Human-readable OPT_FORM dictionary.
 
-    target_functions: (list[TestFunction])
-        List of TestFunction used by the dummy server.
+        target_functions: (list[TestFunction])
+            List of TestFunction used by the dummy server.
 
-    iterations: (int)
-        Number of BO iterations after initialization.
+        iterations: (int)
+            Number of BO iterations after initialization.
 
-    seeds: (list[int])
-        List of random seeds.
+        seeds: (list[int])
+            List of random seeds.
 
-    output_folder: (str)
-        Root folder where results are saved.
+        output_folder: (str)
+            Root folder where results are saved.
 
-    notes:
-        Free text for benchmark summary.
+        notes:
+            Free text for benchmark summary.
     """
-
     name: str
 
     optimizer_form: dict
@@ -61,12 +53,15 @@ class BenchmarkConfig:
 
     notes: str = ""
 
-    # tags: list[str] = field(default_factory=list)
-
 
     @property
     def n_runs(self) -> int:
+        """Number of runs for a given target function."""
         return len(self.seeds)
+
+    @property
+    def n_func(self) -> int:
+        return len(self.target_functions)
 
     @property
     def is_multi_objective(self) -> bool:
@@ -74,7 +69,6 @@ class BenchmarkConfig:
 
     @property
     def acquisition_name(self) -> str:
-
         if not self.optimizer_form["opt"]["enabled"]:
             return "None"
 
@@ -86,7 +80,6 @@ class BenchmarkConfig:
 
     @property
     def strategy_name(self) -> str:
-
         if not self.optimizer_form["opt"]["enabled"]:
             return "None"
 
@@ -111,20 +104,20 @@ class BenchmarkConfig:
         return names
 
 
-    def build_opt_form(self, seed: int, target_function: TestFunction) -> dict:
+    def build_opt_form(self, target_function: TestFunction, seed: int) -> dict:
         """
-        Return a deep copy of OPT_FORM with the correct seed inserted.
+        Return a deep copy of OPT_FORM with 
+        the correct seed and target function inserted.
 
         The original OPT_FORM is never modified.
         """
-
         form = copy.deepcopy(self.optimizer_form)
 
-        # initialization seed
-        init_name = next(iter(form["init"]))
-
+        ### initialization seed
+        init_name = next( iter( form["init"] ) )
         form["init"][init_name]["seed"] = seed
 
+        ### strategy seed
         if form["opt"]["enabled"]:
 
             strat_name = next(
@@ -135,23 +128,22 @@ class BenchmarkConfig:
 
             form["opt"]["pipeline"]["strategy"][strat_name]["seed"] = seed
 
-        # adapt the input to the target function
+        ### adapt the input to the target function
         if hasattr(target_function, "name"):
             func_name = target_function.name
         else:
             func_name = target_function.__name__
 
-        form["target_function"] = {
+        form["target_function"] = {                  # add the target function
             "name": func_name,
             "bounds": target_function.bounds.tolist(),
             "minimize": target_function.minimize
         }
 
-        for i, key in enumerate(form["inputs"].keys()):
+        for i, key in enumerate( form["inputs"].keys() ):
             form["inputs"][key]["bounds"] = target_function.bounds[:, i].tolist()
 
-
-        # adapt the objective to the target function
+        ### adapt the objective to the target function
         for i, key in enumerate(form["obj"].keys()):
             form["obj"][key]["minimize"] = target_function.minimize
 
@@ -162,17 +154,19 @@ class BenchmarkConfig:
         """
         Folder where one optimization run is saved.
         """
-
         return (
             self.output_folder
-            / self.name
-            / function_name
-            / f"seed_{seed:04d}"
+            / self.name             # name of the benchmark
+            / function_name         # name of the function
+            / f"seed_{seed:04d}"    # name of the seed
         )
 
 
     def summary(self) -> str:
-
+        """
+        Summary of the configuration 
+        used by the runner.
+        """
         txt = []
 
         txt.append("=" * 60)
@@ -180,12 +174,13 @@ class BenchmarkConfig:
         txt.append("=" * 60)
 
         txt.append(f"Name            : {self.name}")
-        txt.append(f"Function        : {self.function_names}")
-        txt.append(f"Acquisition     : {self.acquisition_name}")
-        txt.append(f"Strategy        : {self.strategy_name}")
-        txt.append(f"Iterations      : {self.iterations}")
-        txt.append(f"Runs            : {self.n_runs}")
+        txt.append(f"Functions       : {self.function_names}")
         txt.append(f"Seeds           : {self.seeds}")
+        txt.append(f"Strategy        : {self.strategy_name}")
+        txt.append(f"Acquisition     : {self.acquisition_name}")
+        txt.append(f"Iterations      : {self.iterations}")
+        txt.append(f"N_func          : {self.n_func}") 
+        txt.append(f"N_runs          : {self.n_runs}")
         txt.append(f"Output folder   : {self.output_folder}")
 
         if self.notes:
