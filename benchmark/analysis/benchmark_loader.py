@@ -1,17 +1,22 @@
 from __future__ import annotations
 
+
 from pathlib import Path
 
 from ..benchmark_result import BenchmarkResult
 
 
 class BenchmarkLoader:
+    """
+    Helper loading all the BenchmarkResult from
+    a benchmarker folder according to the relevant filer.
+    """
 
     def __init__(self, root):
-
         self.root = Path(root)
 
-    def load(self):
+
+    def load(self) -> list[BenchmarkResult]:
 
         results = []
 
@@ -30,7 +35,7 @@ class BenchmarkLoader:
         return results
 
 
-    def load_function(self, function_name):
+    def load_function(self, function_name: str) -> list[BenchmarkResult]:
 
         return [
 
@@ -43,7 +48,7 @@ class BenchmarkLoader:
         ]
 
 
-    def load_seed(self, seed):
+    def load_seed(self, seed: int) -> list[BenchmarkResult]:
 
         return [
 
@@ -56,7 +61,7 @@ class BenchmarkLoader:
         ]
 
 
-    def load_strategy(self, strategy):
+    def load_strategy(self, strategy: str) -> list[BenchmarkResult]:
 
         return [
 
@@ -69,7 +74,7 @@ class BenchmarkLoader:
         ]
 
 
-    def load_acquisition(self, acquisition):
+    def load_acquisition(self, acquisition: str) -> list[BenchmarkResult]:
 
         return [
 
