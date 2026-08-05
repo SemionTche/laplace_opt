@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 import time
-import hashlib
 import json
-
-from laplace_log import log
 
 from laplace_opt.core.optimizer import Optimizer
 
@@ -18,95 +15,151 @@ from .functions.base import TestFunction
 
 class BenchmarkExperiment:
 
-    def __init__(
-            self, 
-            config: BenchmarkConfig, 
-            target_function: TestFunction, 
-            seed: int):
+    def __init__(self, 
+                 config: BenchmarkConfig, 
+                 target_function: TestFunction, 
+                 seed: int):
 
         self.config = config
         self.seed = seed
         self.target_function = target_function
 
+        # target function name
+        if hasattr(self.target_function, "name"):
+            self.func_name = self.target_function.name 
+        else:
+            self.func_name = self.target_function.__name__ 
+
         self.last_payload = None
 
 
-    def _capture_candidates(self, payload):
-        """Made in order to capture optimizer's candidates."""
+    def _capture_candidates(self, payload) -> None:
+        """Capture optimizer's suggestions."""
         self.last_payload = payload
 
 
-    def run(self):
-        # prepare the opt form
+    def run(self) -> BenchmarkResult:
+        """
+        Run a benchmark experiment. 
+        
+            Return:
+                BenchmarkResult
+        """
+        ### prepare the opt form
+            # fill the target function and the seed
+            # with the corresponding attribute of
+            # the experiment
         opt_form = self.config.build_opt_form(
+            target_function=self.target_function,
             seed=self.seed, 
-            target_function=self.target_function
         )
+            # convert the features from human dict
+            # to corresponding classes for optimizer
+            # compatibility
         opt_form = convert_opt_form_bench(opt_form)
 
         # create the optimizer
         optimizer = Optimizer(opt_form)
 
+        # capture the suggestions
         optimizer.new_candidates.connect(
             self._capture_candidates
         )
 
-        # single / multi mode
-        if self.config.is_multi_objective:
-            mode = "multi"
-        else:
-            mode = "single"
-
-        # target function name
-        if hasattr(self.target_function, "name"):
-            func_name = self.target_function.name 
-        else:
-            func_name = self.target_function.__name__ 
-
         # create the result sheet
         result = BenchmarkResult(
+
             benchmark_name=self.config.name,
-            function_name=func_name,
+
+            function_name=self.func_name,
+
             strategy=self.config.strategy_name,
+
             acquisition=self.config.acquisition_name,
+
             seed=self.seed,
+
             n_inputs=len(opt_form["inputs"]),
+
             n_objectives=len(opt_form["obj"]),
-            mode=mode
+
         )
 
         t0 = time.perf_counter()  # start the timer
 
-        optimizer.init_opt()
+        optimizer.init_opt()      # generate the init candidates
 
-        if self.last_payload is None:
+        if self.last_payload is None:  # if the last_payload did not catch the candidates
             raise RuntimeError(
                 "Initialization produced no candidates."
             )
 
-        for it in range(self.config.iterations):
 
+        for it in range(self.config.iterations):   # for each opt iteration
+
+            # sample the candidates
             server_reply = dummy_server_response_bench(
                 payload=self.last_payload,
                 target_function=self.target_function,
             )
 
+            # send the values to the optimizer
             optimizer.update_opt(server_reply)
 
-        elapsed = time.perf_counter() - t0   # compute the elapsed time
+            # add the current state of the model
+            self.capture_model_snapshot(
+                iteration=it,
+                result=result,
+                optimizer=optimizer,
+            )
 
-        result.elapsed_time = elapsed
+            # add the current state of acquisition
+            result.add_acquisition_state(
+                iteration=it,
+                acquisition=optimizer.acquisition,
+            )
 
-        self._fill_result(result, optimizer)  # fill the result sheet
+        # elapsed time in seconde
+        result.finish()
+
+        if len(result.model_history) == 0:     # if the model was not catched
+            raise RuntimeError(
+                "No model snapshots were saved during benchmark execution"
+            )
+
+        self._fill_result(        # fill the rest of the result
+            result=result, 
+            optimizer=optimizer
+        )
 
         return result
 
 
-    def _fill_result(
-        self,
-        result: BenchmarkResult,
-        optimizer: Optimizer):
+    def capture_model_snapshot(self,
+                               iteration: int,
+                               result: BenchmarkResult,
+                               optimizer: Optimizer,) -> None:
+        """
+        Add the current model to the result.
+        """
+        model = optimizer.model
+        train_X = optimizer.context.X_physical
+        train_Y = optimizer.context.Y_physical
 
+        result.add_model_snapshot(
+            iteration=iteration,
+            model=model,
+            train_X=train_X,
+            train_Y=train_Y,
+        )
+
+
+    def _fill_result(self,
+                     result: BenchmarkResult,
+                     optimizer: Optimizer) -> None:
+        """
+        Complete the result with the relevant elements.
+        """
         context = optimizer.context
 
         # observations
@@ -118,7 +171,6 @@ class BenchmarkExperiment:
                 y_opt.unsqueeze(0)
             )[0]
 
-
             result.add_observation(
                 x=obs.x,
 
@@ -126,21 +178,15 @@ class BenchmarkExperiment:
 
                 y_opt=y_opt,
 
-                iteration=max(
-                    0,
-                    i - context.n_init
-                ),
+                iteration=max( 0, i - context.n_init ),
 
-                is_init=(
-                    i < context.n_init
-                ),
+                is_init=( i < context.n_init ),
 
                 shot_number=obs.shot_number,
             )
 
-
+        # static info
         result.add_problem(
-
             bounds=context.bounds.tolist(),
 
             inputs=context.get_input_state_dict(),
@@ -150,88 +196,39 @@ class BenchmarkExperiment:
             global_min=self.target_function.global_min,
 
             global_value=self.target_function.global_value.item()
-
         )
 
+        # metadata
+        opt_form = self.config.build_opt_form(
+            target_function=self.target_function,
+            seed=self.seed,
+        )
+
+        config_json = json.dumps(
+            opt_form,
+            sort_keys=True,
+            default=str,
+        )
 
         result.add_metadata(
-
             n_init=context.n_init,
 
             n_total=len(context._observations),
 
-        )
+            config_json=config_json,
 
-
-        # reproducibility fingerprint
-        opt_form = self.config.build_opt_form(
-            seed=self.seed,
-            target_function=self.target_function
-        )
-
-        config_hash = hashlib.sha256(
-            json.dumps(
-                opt_form,
-                sort_keys=True,
-                default=str,
-            ).encode()
-        ).hexdigest()
-
-
-        result.add_metadata(
-
-            config_hash=config_hash,
-
-        )
-
-
-        # optimizer decisions
-        try:
-
-            result.add_metadata(
-
-                suggestions=[
+            suggestions=[
                     s.tolist()
                     for s in optimizer.suggestion_history
                 ]
+        )
 
-            )
-
-        except Exception:
-
-            pass
-
-
-        try:
-
-            result.add_metrics(
-
-                pareto=
-                    context.get_pareto_front_physical()
-                    .tolist()
-
-            )
-
-        except Exception:
-
-            pass
-
-
-        try:
-
-            result.add_metrics(
-
-                best_results=
-                    optimizer.compute_best_results()
-
-            )
-
-        except Exception:
-
-            pass
-
+        # best results
+        # result.add_metrics(
+        #     best_results = 
+        #         optimizer.compute_best_results()
+        # )
 
     @staticmethod
     def replay(result):
-
         return result.dataframe
