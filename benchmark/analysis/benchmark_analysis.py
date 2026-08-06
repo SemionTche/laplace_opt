@@ -9,23 +9,36 @@ from .benchmark_analyzer import BenchmarkAnalyzer
 from ..benchmark_result import BenchmarkResult
 
 
-
 class BenchmarkAnalysis:
     """
     Analysis of a complete benchmark campaign.
-
-    Input:
-        list[BenchmarkResult]
     """
 
     def __init__(self, results: list[BenchmarkResult]):
+        """
+        Args:
+
+            result (list[BenchmarkResult]):
+                The benchmark list of results to study.
+        """
 
         self.results = results
+
+        for r in results:
+            analyzer = BenchmarkAnalyzer(
+                r
+            )
+            print()
+            print(f"target: {r.function_name}")
+            print(f"bounds: {analyzer.bounds}")
+            print(f"diag: {analyzer.diagonal}")
+            print()
+            print()
 
 
     def dataframe(self) -> pd.DataFrame:
         """
-        One row per optimization run.
+        Full analysis dataframe.
         """
         rows = []
 
@@ -42,21 +55,17 @@ class BenchmarkAnalysis:
         return pd.DataFrame(rows)
 
 
-    def aggregate(
-        self,
-        group_by=[
-            "function",
-            "strategy",
-            "acquisition",
-        ]) -> pd.DataFrame:
+    def aggregate(self,
+                  group_by=[
+                      "function",
+                      "strategy",
+                      "acquisition",]) -> pd.DataFrame:
         """
-        Aggregate repeated seeds.
+        Aggregate the relevant features.
 
         Computes:
-            mean
-            std
+            mean and std
         """
-
         df = self.dataframe()
 
         metrics = [
@@ -70,9 +79,7 @@ class BenchmarkAnalysis:
         ]
 
         grouped = (
-            df
-            .groupby(group_by)[metrics]
-            .agg(
+            df.groupby(group_by)[metrics].agg(
                 [
                     "mean",
                     "std",
@@ -149,20 +156,13 @@ class BenchmarkAnalysis:
         return curves
 
 
-    def save_summary(self, path: Path):
-
+    def save_summary(self, path: Path) -> None:
+        """Save the full analysis summary."""
         df = self.dataframe()
-
-        df.to_csv(
-            path,
-            index=False
-        )
+        df.to_csv(path, index=False)
 
 
-    def save_aggregate(self, path: Path):
-
+    def save_aggregate(self, path: Path) -> None:
+        """Save the full analysis aggregate."""
         df = self.aggregate()
-
-        df.to_csv(
-            path
-        )
+        df.to_csv(path)

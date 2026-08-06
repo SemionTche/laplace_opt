@@ -16,7 +16,7 @@ class GoldsteinPrice(TestFunction):
          [2., 2.]]
     )
 
-    global_min = [0., -1.]
+    optimum_input = [0., -1.]
 
     info = "one global min, " + \
            "several local min, " + \

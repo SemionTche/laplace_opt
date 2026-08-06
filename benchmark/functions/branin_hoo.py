@@ -16,7 +16,7 @@ class BraninHoo(TestFunction):
          [10., 15.]]
     )
 
-    global_min = [
+    optimum_input = [
         [-torch.pi, 12.275], 
         [torch.pi, 2.275], 
         [9.42478, 2.475]

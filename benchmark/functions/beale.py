@@ -17,7 +17,7 @@ class Beale(TestFunction):
          [4.5, 4.5]]
     )
 
-    global_min = [3., 0.5]
+    optimum_input = [3., 0.5]
 
     info = "multimodal, " + \
            "sharp peaks at the corners, " + \

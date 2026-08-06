@@ -16,7 +16,7 @@ class Himmelblau(TestFunction):
          [6., 6.]]
     )
 
-    global_min = [
+    optimum_input = [
         [3., 2.],
         [-2.805118, 3.131312],
         [-3.779310, -3.283186],

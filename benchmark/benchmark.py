@@ -49,19 +49,19 @@ if __name__ == "__main__":
     # run a benchmark
     
     cfg = BenchmarkConfig(
-        name="bench_test_for_print",
+        name="bench_test_06",
 
         optimizer_form=OPT_FORM_SINGLE,
 
         target_functions=[
             # Ackley(), 
-            # Booth(), 
+            Booth(), 
             Sphere()
         ],
 
         iterations=10,
 
-        seeds=list(range(2)),
+        seeds=list(range(5)),
 
         output_folder=Path("benchmark/results"),
 

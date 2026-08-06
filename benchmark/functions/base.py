@@ -15,7 +15,7 @@ class TestFunction(ABC):
          [5., 5.]]
     )
 
-    global_min = None
+    optimum_input = None
     info = ""
 
     n_inputs = 2
@@ -23,20 +23,20 @@ class TestFunction(ABC):
     mode = "single"
 
     @property
-    def global_value(self):
+    def optimum_obj(self):
         """
         Value of the function at the known global minimum.
 
         Computed automatically from evaluate().
         """
 
-        if self.global_min is None:
+        if self.optimum_input is None:
             raise RuntimeError(
-                f"{self.name} does not define global_min"
+                f"{self.name} does not define optimum_input"
             )
 
         x = torch.as_tensor(
-            self.global_min,
+            self.optimum_input,
             dtype=torch.float32
         )
 

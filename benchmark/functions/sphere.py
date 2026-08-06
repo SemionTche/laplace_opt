@@ -16,7 +16,7 @@ class Sphere(TestFunction):
          [5.12, 5.12]]
     )
 
-    global_min = [0., 0.]
+    optimum_input = [0., 0.]
 
     info = "unimodal, " + \
            "continous, " + \

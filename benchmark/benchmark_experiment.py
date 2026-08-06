@@ -193,9 +193,9 @@ class BenchmarkExperiment:
 
             objectives=context.get_obj_state_dict(),
 
-            global_min=self.target_function.global_min,
+            optimum_input=self.target_function.optimum_input,
 
-            global_value=self.target_function.global_value.item()
+            optimum_obj=self.target_function.optimum_obj.item()
         )
 
         # metadata

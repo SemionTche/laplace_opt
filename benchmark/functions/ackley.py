@@ -16,7 +16,7 @@ class Ackley(TestFunction):
          [5., 5.]]
     )
 
-    global_min = [0., 0.]
+    optimum_input = [0., 0.]
 
     info = "non-convex, " + \
            "fine-textured broadly unimodal space, i.e. " + \

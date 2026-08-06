@@ -16,7 +16,7 @@ class Booth(TestFunction):
          [10., 10.]]
     )
 
-    global_min = [1., 3.]
+    optimum_input = [1., 3.]
 
     info = "continuos, " + \
            "convex, " + \
