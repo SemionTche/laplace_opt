@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-import torch
-from botorch.models.model import Model
+from torch import Tensor
+from botorch.models import ModelListGP, SingleTaskGP
 
 
 @dataclass(slots=True)
@@ -9,11 +9,11 @@ class ModelSnapshot:
 
     iteration: int
 
-    model: Model
+    model: ModelListGP
 
-    train_X: torch.Tensor
+    train_X: Tensor
 
-    train_Y: torch.Tensor
+    train_Y: Tensor
 
 
     def copy(self):

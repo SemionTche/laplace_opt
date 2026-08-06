@@ -1,3 +1,4 @@
+from .base import TestFunction
 from .sphere import Sphere
 from .booth import Booth
 from .beale import Beale
@@ -13,7 +14,7 @@ from .noise import NoisyFunction
 from .reverse import ReverseFunction
 
 
-FUNCTIONS = {
+FUNCTIONS: dict[str, type[TestFunction]] = {
     "Sphere": Sphere,
     "Booth": Booth,
     "Beale": Beale,

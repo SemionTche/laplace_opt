@@ -1,0 +1,30 @@
+import numpy as np
+
+from .metric import Metric
+from ..analysis.benchmark_analyzer import BenchmarkAnalyzer
+
+
+class TimeToEpsilon(Metric):
+    name = "time_to_eps"
+    relative_name = "time_to_eps_rel"
+
+    def compute(self, analyzer: BenchmarkAnalyzer, epsilon: float=0.01) -> int | None:
+        """Number of evaluations needed to reach epsilon optimality."""
+        regret = analyzer.regret_curve()
+        idx = np.where( regret <= epsilon )[0]
+
+        if len(idx) == 0:
+            return None
+
+        return int(idx[0])
+
+
+    def compute_relative(self, analyzer: BenchmarkAnalyzer, epsilon_rel: float=0.05) -> int | None:
+        """Number of evaluations needed to reach epsilon optimality (in %)."""
+        regret_rel = analyzer.regret_curve_relative()
+        idx = np.where( regret_rel <= epsilon_rel )[0]
+
+        if len(idx) == 0:
+            return None
+
+        return int(idx[0])

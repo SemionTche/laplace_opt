@@ -9,7 +9,7 @@ import time
 import pandas as pd
 
 import torch
-from botorch.models.model import Model
+from botorch.models import ModelListGP
 
 from .bench_utils.model_snapshot import ModelSnapshot
 
@@ -158,7 +158,7 @@ class BenchmarkResult:
 
     def add_model_snapshot(self,
                            iteration: int,
-                           model: Model,
+                           model: ModelListGP,
                            train_X: torch.Tensor,
                            train_Y: torch.Tensor):
 

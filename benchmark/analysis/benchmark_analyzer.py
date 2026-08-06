@@ -1,25 +1,26 @@
 from __future__ import annotations
 
+
 from copy import deepcopy
 import numpy as np
 
 import torch
-from torch.distributions import Normal
+from botorch.models.transforms.outcome import Standardize
+from botorch.utils.transforms import normalize
 
 from ..benchmark_result import BenchmarkResult
 from ..metrics import METRICS
-
 
 
 class BenchmarkAnalyzer:
     """
     Analyze one BenchmarkResult.
 
-    This class computes BO metrics
-    from one optimization run.
+    This class computes BO metrics from one experiment.
     """
     def __init__(self, result: BenchmarkResult):
         self.result = result
+        self.loo = self._loo_predictions()
 
 
     @property
@@ -93,159 +94,37 @@ class BenchmarkAnalyzer:
 
 
     def best_curve(self) -> np.ndarray:
-        """
-        Best objective found so far.
-        """
+        """Best objective found so far."""
         y = self.y_values
 
         if self.minimize:
-
             return np.minimum.accumulate(y)
-
         else:
-
             return np.maximum.accumulate(y)
 
 
     def regret_curve(self) -> np.ndarray:
-        """
-        Simple regret evolution.
-        """
-        return np.abs(
-            self.best_curve()
-            -
-            self.optimum_obj
-        )
+        """Simple regret evolution."""
+        return np.abs( self.best_curve() - self.optimum_obj )
 
 
     def regret_curve_relative(self) -> np.ndarray:
-
+        """Simple relative regret."""
         r = self.regret_curve()
-
         r0 = r[0]
 
         if r0 == 0:
-
             return np.zeros_like(r)
 
         return r / r0
 
 
-    def simple_regret(self) -> float:
-        """
-        Final regret.
-        """
-        return float(
-            self.regret_curve()[-1]
-        )
-
-
-    def simple_regret_relative(self) -> float:
-
-        return float(
-            self.regret_curve_relative()[-1]
-        )
-
-
-    def instantaneous_regret(self) -> np.ndarray:
-        """
-        Regret of every evaluation.
-        """
+    def regret_instantaneous(self) -> np.ndarray:
+        """Regret of every evaluation."""
         if self.minimize:
-
-            return (
-                self.y_values
-                -
-                self.optimum_obj
-            )
-
+            return self.y_values - self.optimum_obj
         else:
-
-            return (
-                self.optimum_obj
-                -
-                self.y_values
-            )
-
-
-
-    def area_under_regret_curve(self):
-        """
-        Integral of regret curve.
-        """
-        return float(
-            np.trapezoid(
-                self.regret_curve()
-            )
-        )
-
-
-    def area_under_regret_curve_relative(self) -> float:
-        return float(
-            np.trapezoid(
-                self.regret_curve_relative()
-            )
-            /
-            (len(self.regret_curve()) - 1)
-        )
-
-    def time_to_epsilon(self, epsilon=0.01) -> int | None:
-        """
-        Number of evaluations needed
-        to reach epsilon optimality.
-        """
-        indexes = np.where(
-            self.regret_curve() <= epsilon
-        )[0]
-
-        if len(indexes) == 0:
-            return None
-
-        return int(indexes[0])
-
-
-    def time_to_relative_epsilon(self, epsilon=0.05) -> int | None:
-
-        regret = self.regret_curve_relative()
-
-        idx = np.where(
-            regret <= epsilon
-        )[0]
-
-        if len(idx) == 0:
-
-            return None
-
-        return int(idx[0])
-
-
-    def distance_to_optimum(self) -> float:
-        """
-        Distance in X space between
-        best found point and true optimum.
-        """
-        best_id = np.argmin(
-            self.regret_curve()
-        )
-
-        x_found = np.asarray(
-            self.observations[best_id]["x"]
-        )
-
-        return float(
-            np.linalg.norm(
-                x_found - self.optimum_input
-            )
-        )
-
-
-    def distance_to_optimum_relative(self):
-
-        return (
-            self.distance_to_optimum()
-            /
-            self.diagonal
-        )
+            return self.optimum_obj - self.y_values
 
 
     def build_model(self, iteration=-1,):
@@ -255,41 +134,47 @@ class BenchmarkAnalyzer:
         model = deepcopy(
             snap.model
         )
-
         model.eval()
 
         return model
 
 
-    def _loo_predictions(self, iteration=-1):
-
+    def _loo_predictions(self, iteration: int=-1) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Leave one out method.
+        
+            Args:
+                iteration (int):
+                    The model iteration.
+            
+            Return:
+                means (Tensor): the expected value of the prediction
+                variances (Tensor): the variance of the prediction
+                targets (Tensor): the sampled point
+        """
         snap = self.result.model_history[iteration]
-
         model = self.build_model(iteration)
 
         # For now: only first objective
         gp = model.models[0]
 
-        # print(f"snap x shape = {snap.train_X.shape}, snap y shape = {snap.train_Y.shape}")
-
         X = snap.train_X
-
         Y = snap.train_Y
 
-        means = []
-        variances = []
+        means, variances = [], []
         targets = []
-
         n = len(X)
 
-
         for i in range(n):
-
             X_train = torch.cat(
                 [
                     X[:i],
                     X[i+1:]
                 ]
+            )
+
+            X_train_norm = normalize(
+                X_train, torch.Tensor(self.bounds)
             )
 
             Y_train = torch.cat(
@@ -299,12 +184,11 @@ class BenchmarkAnalyzer:
                 ]
             )
 
-            # print(f"train X shape : {X_train.shape}, Y train shape = {Y_train.shape}")
             loo_gp = gp.__class__(
-                train_X=X_train,
+                train_X=X_train_norm, #X_train,
                 train_Y=Y_train,
+                standardize=Standardize(m=1)
             )
-
 
             # loo_gp.load_state_dict(
             #     gp.state_dict()
@@ -312,26 +196,12 @@ class BenchmarkAnalyzer:
 
             loo_gp.eval()
 
+            X_norm = normalize(X[i:i+1], torch.Tensor(self.bounds))
+            posterior = loo_gp.posterior( X_norm )
 
-            posterior = loo_gp.posterior(
-                X[i:i+1]
-            )
-
-
-            means.append(
-                posterior.mean.squeeze()
-            )
-
-
-            variances.append(
-                posterior.variance.squeeze()
-            )
-
-
-            targets.append(
-                Y[i].squeeze()
-            )
-
+            means.append( posterior.mean.squeeze() )
+            variances.append( posterior.variance.squeeze() )
+            targets.append( Y[i].squeeze() )
 
         return (
             torch.stack(means),
@@ -340,12 +210,12 @@ class BenchmarkAnalyzer:
         )
 
 
-    def lengthscale_curve(self):
+    def lengthscale_curve(self) -> np.ndarray:
 
         curve = []
+        n = len(self.result.model_history)
 
-        for i in range(len(self.result.model_history)):
-
+        for i in range(n):
             model = self.build_model(i)
 
             gp = model.models[0]
@@ -360,12 +230,12 @@ class BenchmarkAnalyzer:
         return np.asarray(curve)
 
 
-    def noise_curve(self):
+    def noise_curve(self) -> np.ndarray:
 
         curve = []
+        n = len(self.result.model_history)
 
-        for i in range(len(self.result.model_history)):
-
+        for i in range(n):
             model = self.build_model(i)
 
             gp = model.models[0]
@@ -377,178 +247,101 @@ class BenchmarkAnalyzer:
         return np.asarray(curve)
 
 
+    def contraction_variance_curve(self, n_points: int=2000) -> np.ndarray:
+        """
+        Integrated posterior variance.
 
-    def loo_rmse(self):
-
-        mean, _, target = self._loo_predictions()
-
-        return torch.sqrt(
-
-            torch.mean(
-
-                (mean-target)**2
-
-            )
-
-        ).item()
-
-
-    def loo_nlpd(self):
-        # lower is better, Perfect GP -> small NLPD, overconfident -> huge NLPD
-        mean, var, target = self._loo_predictions()
-
-        std = torch.sqrt(
-
-            torch.clamp(
-
-                var,
-
-                min=1e-12,
-
-            )
-
+            Returns:
+                curve (ndarray) :
+                    Average posterior variance over the design space
+                    at every BO iteration.
+        """
+        bounds = torch.tensor(
+            self.bounds,
+            dtype=torch.double,
         )
+        dim = bounds.shape[1]
 
-        dist = Normal(
+        # fixed MC points for every iteration
+        X = torch.rand( n_points, dim, dtype=torch.double )
 
-            mean,
+        curve = []
+        n = len(self.result.model_history)
 
-            std,
-
-        )
-
-        return (
-
-            -dist.log_prob(
-
-                target
-
-            )
-
-            .mean()
-
-            .item()
-
-        )
-
-
-    def coverage95(self):
-
-        mean, var, target = self._loo_predictions()
-
-        std = torch.sqrt(var)
-
-        lower = mean - 1.96*std
-
-        upper = mean + 1.96*std
-
-        inside = (
-
-            (target >= lower)
-
-            &
-
-            (target <= upper)
-
-        )
-
-        return inside.float().mean().item()
-
-
-
-    def posterior_contraction(self):
-
-        values = []
-
-        for i in range(len(self.result.model_history)):
-
+        for i in range(n):
             model = self.build_model(i)
-
-            X = model.models[0].train_inputs[0]
-
             post = model.posterior(X)
 
-            values.append(
+            curve.append(
                 post.variance.mean().item()
             )
 
-        return values
+        return np.asarray(curve)
 
 
+    def contraction_entropy_curve(self, n_points: int=2000) -> np.ndarray:
+        """
+        Integrated posterior entropy.
+
+            Returns:
+                curve (ndarray) :
+                    Average posterior entropy over the design 
+                    space at every BO iteration.
+        """
+        bounds = torch.tensor(
+            self.bounds,
+            dtype=torch.double,
+        )
+        dim = bounds.shape[1]
+
+        # fixed MC points for every iteration
+        X = torch.rand( n_points, dim, dtype=torch.double )
+
+        curve = []
+        n = len(self.result.model_history)
+
+        for i in range(n):
+            model = self.build_model(i)
+            post = model.posterior(X)
+
+            cts = 2 * torch.pi * torch.e
+            entropy = 0.5 * torch.log( cts * post.variance )
+
+            curve.append(
+                entropy.mean().item()
+            )
+
+        return np.asarray(curve)
 
 
+    def contraction_variance_rate(self, n_points: int=2000) -> np.ndarray:
+        curve = self.contraction_variance_curve(n_points=n_points)
+        curve = np.maximum(curve, 1e-14)
+        t = np.arange(len(curve))
+        slope, intercept = np.polyfit( t, np.log(curve), 1 )
 
-    def summary(self):
-
-        return {
-
-            "function":
-                self.result.function_name,
-
-
-            "strategy":
-                self.result.strategy,
+        return - slope
 
 
-            "acquisition":
-                self.result.acquisition,
+    def summary(self) -> dict[str, float | int | str]:
+        """Return the summary of the analyzer as dictionary."""
+        sum = {
+            "function": self.result.function_name,
 
+            "strategy": self.result.strategy,
 
-            "seed":
-                self.result.seed,
+            "acquisition": self.result.acquisition,
 
+            "seed": self.result.seed,
 
-            "evaluations":
-                len(self.result),
-
-
-            # "simple_regret":
-            #     self.simple_regret(),
-
-
-            # "auc_regret":
-            #     self.area_under_regret_curve(),
-
-
-            # "time_to_eps":
-            #     self.time_to_epsilon(),
-
-
-            # "distance_x":
-            #     self.distance_to_optimum(),
-
-
-            "simple_regret":
-                self.simple_regret(),
-
-            "simple_regret_rel":
-                self.simple_regret_relative(),
-
-            "auc_regret":
-                self.area_under_regret_curve(),
-
-            "auc_regret_rel":
-                self.area_under_regret_curve_relative(),
-
-            "distance_x":
-                self.distance_to_optimum(),
-
-            "distance_x_rel":
-                self.distance_to_optimum_relative(),
-
-            "time_to_eps":
-                self.time_to_relative_epsilon(),
-
-            "LOO RMSE":
-                self.loo_rmse(),
-
-            "LOO NLPD":
-                self.loo_nlpd(),
-
-            "Coverage":
-                self.coverage95(),
-
-            "Post Constraction":
-                self.posterior_contraction(),
-
+            "evaluations": len(self.result),
         }
+
+        for metric in METRICS.values():
+
+            sum[metric.name] = metric.compute(analyzer=self)
+
+            if metric.relative_name is not None:
+                sum[ metric.relative_name ] = metric.compute_relative(analyzer=self)
+
+        return sum

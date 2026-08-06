@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
+from ..analysis.benchmark_analyzer import BenchmarkAnalyzer
+
 
 class Metric(ABC):
 
@@ -9,8 +11,8 @@ class Metric(ABC):
     relative_name: str | None = None
 
     @abstractmethod
-    def compute(self, analyzer):
+    def compute(self, analyzer: BenchmarkAnalyzer) -> float | int:
         """Compute the metric."""
 
-    def compute_relative(self, analyzer):
+    def compute_relative(self, analyzer: BenchmarkAnalyzer) -> float | int:
         raise NotImplementedError
