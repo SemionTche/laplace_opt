@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-
 from pathlib import Path
-
 import pandas as pd
 
 from .benchmark_analyzer import BenchmarkAnalyzer
-from ..benchmark_result import BenchmarkResult
+from ..experiment import BenchmarkResult
 from ..metrics import METRICS
 
 
@@ -22,6 +20,10 @@ class BenchmarkAnalysis:
                 The benchmark list of results to study.
         """
         self.results = results
+        self.analyzers : list[BenchmarkAnalyzer] = []
+
+        for result in results:
+            self.analyzers.append( BenchmarkAnalyzer(result=result) )
 
         self.df = self.dataframe()
         self.agg = self.aggregate()
@@ -29,20 +31,11 @@ class BenchmarkAnalysis:
 
 
     def dataframe(self) -> pd.DataFrame:
-        """
-        Full analysis dataframe.
-        """
+        """Full analysis dataframe."""
         rows = []
 
-        for result in self.results:
-
-            analyzer = BenchmarkAnalyzer(
-                result
-            )
-
-            rows.append(
-                analyzer.summary()
-            )
+        for a in self.analyzers:
+            rows.append(a.summary())
 
         return pd.DataFrame(rows)
 
@@ -58,83 +51,53 @@ class BenchmarkAnalysis:
         Computes:
             mean and std
         """
-        df = self.dataframe()
         metrics = [metric.name for metric in METRICS.values()]
         grouped = (
-            df.groupby(group_by)[metrics].agg(
+            self.df.groupby(group_by)[metrics].agg(
                 [
                     "mean",
                     "std",
                 ]
             )
         )
-
         return grouped
 
 
     def regret_curves(self):
-        """
-        Return regret history for every run.
-        """
+        """Return regret history for every run."""
         curves = []
-
-        for result in self.results:
-
-            analyzer = BenchmarkAnalyzer(
-                result
-            )
-
+        for a in self.analyzers:
             curves.append(
                 {
-                    "function":
-                        result.function_name,
+                    "function": a.result.function_name,
 
-                    "strategy":
-                        result.strategy,
+                    "strategy": a.result.strategy,
 
-                    "acquisition":
-                        result.acquisition,
+                    "acquisition": a.result.acquisition,
 
-                    "seed":
-                        result.seed,
+                    "seed": a.result.seed,
 
-                    "curve":
-                        analyzer.regret_curve(),
+                    "curve": a.regret_curve(),
                 }
             )
-
         return curves
 
 
     def best_objective_curves(self):
         curves = []
 
-        for result in self.results:
-
-            analyzer = BenchmarkAnalyzer(
-                result
-            )
-
+        for a in self.analyzers:
             curves.append(
-
                 {
-                    "function":
-                        result.function_name,
+                    "function": a.result.function_name,
 
+                    "strategy": a.result.strategy,
 
-                    "strategy":
-                        result.strategy,
+                    "seed": a.result.seed,
 
-
-                    "seed":
-                        result.seed,
-
-
-                    "curve":
-                        analyzer.best_curve(),
+                    "curve": a.best_curve(),
                 }
             )
-
         return curves
 
 

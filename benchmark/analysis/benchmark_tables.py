@@ -146,3 +146,55 @@ class BenchmarkTables:
         ) as f:
 
             f.write(latex)
+
+
+
+
+
+   # table, ax = plt.subplots(1, 1, figsize=(18, 18))
+    # ax = make_df(ax=ax, df=self.df)
+
+
+    # def make_df(self, ax: Axes, df):
+    #     """
+    #     Display a pandas DataFrame as a matplotlib table.
+
+    #         Args:
+    #             ax (Axes):
+    #                 Axis on which to draw the table.
+                
+    #             df (DataFrame, optional):
+    #                 DataFrame to display. If None, uses self.df.
+    #     """
+    #     if df is None:
+    #         df = self.df
+
+    #     ax.clear()
+    #     ax.axis("off")
+
+    #     # Round floats for readability
+    #     display_df = df.copy()
+    #     display_df = display_df.round(3)
+
+    #     table = ax.table(
+    #         cellText=display_df.values,
+    #         rowLabels=display_df.index.astype(str),
+    #         colLabels=display_df.columns.astype(str),
+    #         loc="center",
+    #         cellLoc="center",
+    #     )
+
+    #     table.auto_set_font_size(False)
+    #     table.set_fontsize(7)
+    #     table.scale(1.2, 1.4)
+
+    #     # Optional styling
+    #     for (row, col), cell in table.get_celld().items():
+    #         if row == 0:  # header
+    #             cell.set_text_props(weight="bold")
+    #             cell.set_facecolor("#DDDDDD")
+    #         if col == -1:  # index column
+    #             cell.set_text_props(weight="bold")
+    #             cell.set_facecolor("#F5F5F5")
+
+    #     return table

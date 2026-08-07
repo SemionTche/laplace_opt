@@ -5,12 +5,12 @@ import json
 
 from laplace_opt.core.optimizer import Optimizer
 
-from .starter.convert_opt_to_form_bench import convert_opt_form_bench
-from .starter.dummy_server_response_bench import dummy_server_response_bench
+from ..starter.convert_opt_to_form_bench import convert_opt_form_bench
+from ..starter.dummy_server_response_bench import dummy_server_response_bench
+from ..functions.base import TestFunction
 
 from .benchmark_result import BenchmarkResult
 from .benchmark_config import BenchmarkConfig
-from .functions.base import TestFunction
 
 
 class BenchmarkExperiment:

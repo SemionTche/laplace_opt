@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-
 from pathlib import Path
 
-from ..benchmark_result import BenchmarkResult
+from ..experiment import BenchmarkResult
 
 
 class BenchmarkLoader:

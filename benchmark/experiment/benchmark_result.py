@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-
 from dataclasses import dataclass, field
 from copy import deepcopy
 from pathlib import Path
 
 import time
 import pandas as pd
-
 import torch
 from botorch.models import ModelListGP
 
-from .bench_utils.model_snapshot import ModelSnapshot
+from ..bench_utils.model_snapshot import ModelSnapshot
 
 
 @dataclass(slots=True)

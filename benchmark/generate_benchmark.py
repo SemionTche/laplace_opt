@@ -4,9 +4,7 @@ import logging
 from laplace_log import LoggerLHC, log
 from laplace_server.protocol import LOGGER_NAME
 
-from .benchmark_runner import BenchmarkRunner
-from .benchmark_config import BenchmarkConfig
-
+from .experiment import BenchmarkRunner, BenchmarkConfig
 
 ### select the benchmark parameters
 # ---------------------------------------------------------
@@ -49,14 +47,15 @@ if __name__ == "__main__":
     # run a benchmark
     
     cfg = BenchmarkConfig(
-        name="bench_test_07",
+        name="bench_test_08",
 
         optimizer_form=OPT_FORM_SINGLE,
 
         target_functions=[
             # Ackley(), 
-            Booth(), 
-            Sphere()
+            # Booth(), 
+            Sphere(),
+            Himmelblau()
         ],
 
         iterations=10,
@@ -65,7 +64,7 @@ if __name__ == "__main__":
 
         output_folder=Path("benchmark/results"),
 
-        notes="Test 05 with metrics and gp metrics"
+        notes="Test 08 with metrics and gp metrics"
     )
 
     runner = BenchmarkRunner(cfg)  # create the runner

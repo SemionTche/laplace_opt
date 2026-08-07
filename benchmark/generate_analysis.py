@@ -1,14 +1,13 @@
 from pathlib import Path
 
-from .analysis.benchmark_loader import BenchmarkLoader
-from .analysis.benchmark_analysis import BenchmarkAnalysis
+from analysis import BenchmarkLoader, BenchmarkAnalysis
 # from .analysis.benchmark_tables import BenchmarkTables
 
 
 if __name__ == "__main__":
 
     root = Path(
-        "benchmark/results/bench_test_07"
+        "benchmark/results/bench_test_08"
     )
 
     # load the data

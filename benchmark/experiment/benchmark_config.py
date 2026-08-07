@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import copy
 
-from .functions.base import TestFunction
+from ..functions.base import TestFunction
 
 
 @dataclass(slots=True)

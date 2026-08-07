@@ -8,7 +8,7 @@ import torch
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.transforms import normalize
 
-from ..benchmark_result import BenchmarkResult
+from ..experiment.benchmark_result import BenchmarkResult
 from ..metrics import METRICS
 
 
