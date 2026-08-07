@@ -32,6 +32,7 @@ class BenchmarkLoader:
 
                 print(f"Cannot load {file}: {e}")
 
+        print(f"Benchark loaded from {self.root}.")
         return results
 
 

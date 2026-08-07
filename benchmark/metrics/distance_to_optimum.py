@@ -1,8 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 import numpy as np
 
 from .metric import Metric
-
-from ..analysis.benchmark_analyzer import BenchmarkAnalyzer
+if TYPE_CHECKING:
+    from ..analysis.benchmark_analyzer import BenchmarkAnalyzer
 
 
 class DistanceToOptimum(Metric):
@@ -23,10 +26,14 @@ class DistanceToOptimum(Metric):
             analyzer.observations[best_id]["x"]
         )
 
-        return np.linalg.norm(
+        print("distance verif")
+
+        dist = np.linalg.norm(
             x - analyzer.optimum_input
         )
+        print(f"x = {x}, {analyzer.optimum_input}, dist = {dist}")
 
+        return dist
 
     def compute_relative(self, analyzer: BenchmarkAnalyzer):
         """

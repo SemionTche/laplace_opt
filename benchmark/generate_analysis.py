@@ -1,46 +1,41 @@
 from pathlib import Path
 
-from .benchmark_loader import BenchmarkLoader
-from .benchmark_analysis import BenchmarkAnalysis
-from .benchmark_tables import BenchmarkTables
+from .analysis.benchmark_loader import BenchmarkLoader
+from .analysis.benchmark_analysis import BenchmarkAnalysis
+# from .analysis.benchmark_tables import BenchmarkTables
 
 
 if __name__ == "__main__":
 
     root = Path(
-        "benchmark/results/bench_test_01"
+        "benchmark/results/bench_test_07"
     )
 
     # load the data
-    loader = BenchmarkLoader(
-        root
-    )
+    loader = BenchmarkLoader( root )
     results = loader.load()
 
-
     # analyse the data
-    analysis = BenchmarkAnalysis(
-        results
-    )
+    analysis = BenchmarkAnalysis( results )
 
     print()
     print("=" * 60)
     print("df:")
-    print(analysis.dataframe())
+    print(analysis.df)
     print()
     print("=" * 60)
     print("aggregate:")
-    print(analysis.aggregate())
+    print(analysis.agg)
     print()
     print("=" * 60)
     print()
 
     analysis.save_summary(
-        path=root / "analysis_summary.csv"
+        path=root / "analysis_summary"
     )
 
     analysis.save_aggregate(
-        path=root / "analysis_aggregate.csv"
+        path=root / "analysis_aggregate"
     )
 
 

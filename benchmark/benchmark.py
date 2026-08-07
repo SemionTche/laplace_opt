@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # run a benchmark
     
     cfg = BenchmarkConfig(
-        name="bench_test_06",
+        name="bench_test_07",
 
         optimizer_form=OPT_FORM_SINGLE,
 

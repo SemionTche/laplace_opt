@@ -1,11 +1,12 @@
-from .metric import Metric
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import torch
 from torch.distributions import Normal
 
 from .metric import Metric
-from ..analysis.benchmark_analyzer import BenchmarkAnalyzer
-
+if TYPE_CHECKING:
+    from ..analysis.benchmark_analyzer import BenchmarkAnalyzer
 
 class Coverage(Metric):
 
@@ -27,9 +28,8 @@ class Coverage(Metric):
         std = torch.sqrt(var)
 
         z = Normal(0., 1.).icdf(
-            torch.Tensor( (1 + percent) / 2 )
+            torch.Tensor( [(1 + percent) / 2] )
         )
-        print(f"covarage z: {z}")
         lower = mean - z * std
         upper = mean + z * std
 

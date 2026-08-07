@@ -1,6 +1,10 @@
-from .metric import Metric
+from __future__ import annotations
 
-from ..analysis.benchmark_analyzer import BenchmarkAnalyzer
+from typing import TYPE_CHECKING
+
+from .metric import Metric
+if TYPE_CHECKING:
+    from ..analysis.benchmark_analyzer import BenchmarkAnalyzer
 
 
 class NoiseMean(Metric):

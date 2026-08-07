@@ -187,7 +187,7 @@ class BenchmarkAnalyzer:
             loo_gp = gp.__class__(
                 train_X=X_train_norm, #X_train,
                 train_Y=Y_train,
-                standardize=Standardize(m=1)
+                outcome_transform=Standardize(m=1)
             )
 
             # loo_gp.load_state_dict(

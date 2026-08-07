@@ -7,6 +7,7 @@ import pandas as pd
 
 from .benchmark_analyzer import BenchmarkAnalyzer
 from ..benchmark_result import BenchmarkResult
+from ..metrics import METRICS
 
 
 class BenchmarkAnalysis:
@@ -17,23 +18,14 @@ class BenchmarkAnalysis:
     def __init__(self, results: list[BenchmarkResult]):
         """
         Args:
-
             result (list[BenchmarkResult]):
                 The benchmark list of results to study.
         """
-
         self.results = results
 
-        for r in results:
-            analyzer = BenchmarkAnalyzer(
-                r
-            )
-            print()
-            print(f"target: {r.function_name}")
-            print(f"bounds: {analyzer.bounds}")
-            print(f"diag: {analyzer.diagonal}")
-            print()
-            print()
+        self.df = self.dataframe()
+        self.agg = self.aggregate()
+        print("Analysis generated.")
 
 
     def dataframe(self) -> pd.DataFrame:
@@ -67,17 +59,7 @@ class BenchmarkAnalysis:
             mean and std
         """
         df = self.dataframe()
-
-        metrics = [
-            "simple_regret",
-
-            "auc_regret",
-
-            "time_to_eps",
-
-            "distance_x",
-        ]
-
+        metrics = [metric.name for metric in METRICS.values()]
         grouped = (
             df.groupby(group_by)[metrics].agg(
                 [
@@ -158,11 +140,13 @@ class BenchmarkAnalysis:
 
     def save_summary(self, path: Path) -> None:
         """Save the full analysis summary."""
-        df = self.dataframe()
-        df.to_csv(path, index=False)
+        self.df.to_csv(path.with_suffix(".csv"), index=False)
+        self.df.to_html(path.with_suffix(".htlm"))
+        print("DataFrame saved.")
 
 
     def save_aggregate(self, path: Path) -> None:
         """Save the full analysis aggregate."""
-        df = self.aggregate()
-        df.to_csv(path)
+        self.agg.to_csv(path.with_suffix(".csv"))
+        self.agg.to_html(path.with_suffix(".htlm"))
+        print("Aggregate saved.")

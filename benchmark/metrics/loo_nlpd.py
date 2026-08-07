@@ -1,8 +1,13 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import torch
 from torch.distributions import Normal
 
 from .metric import Metric
-from ..analysis.benchmark_analyzer import BenchmarkAnalyzer
+if TYPE_CHECKING:
+    from ..analysis.benchmark_analyzer import BenchmarkAnalyzer
 
 
 class LOONLPD(Metric):
