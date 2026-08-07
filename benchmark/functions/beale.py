@@ -17,7 +17,7 @@ class Beale(TestFunction):
          [4.5, 4.5]]
     )
 
-    optimum_input = [3., 0.5]
+    optimum_input = torch.Tensor([[3., 0.5]])
 
     info = "multimodal, " + \
            "sharp peaks at the corners, " + \

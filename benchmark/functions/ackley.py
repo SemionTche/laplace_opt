@@ -16,7 +16,7 @@ class Ackley(TestFunction):
          [5., 5.]]
     )
 
-    optimum_input = [0., 0.]
+    optimum_input = torch.Tensor([[0., 0.]])
 
     info = "non-convex, " + \
            "fine-textured broadly unimodal space, i.e. " + \

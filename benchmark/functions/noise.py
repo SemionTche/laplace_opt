@@ -1,9 +1,11 @@
 import torch
 
+from .base import TestFunction
+
 
 class NoisyFunction:
 
-    def __init__(self, function, relative_noise=0.05):
+    def __init__(self, function: TestFunction, relative_noise=0.05):
 
         self.function = function
 
@@ -12,6 +14,10 @@ class NoisyFunction:
         self.name = function.name + "_noisy"
 
         self.bounds = function.bounds
+
+        self.optimum_input = function.optimum_input
+
+        self.optimum_obj = function.optimum_obj
 
         self.n_inputs = function.n_inputs
 

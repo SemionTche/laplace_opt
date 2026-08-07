@@ -16,7 +16,7 @@ class Booth(TestFunction):
          [10., 10.]]
     )
 
-    optimum_input = [1., 3.]
+    optimum_input = torch.Tensor([[1., 3.]])
 
     info = "continuos, " + \
            "convex, " + \

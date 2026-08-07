@@ -8,14 +8,11 @@ class TestFunction(ABC):
 
     name = "Unnamed"
 
-    minimize: bool = True
+    minimize: bool
 
-    bounds: torch.Tensor = torch.Tensor(
-        [[-5., -5.], 
-         [5., 5.]]
-    )
+    bounds: torch.Tensor
 
-    optimum_input = None
+    optimum_input: torch.Tensor
     info = ""
 
     n_inputs = 2
@@ -38,7 +35,7 @@ class TestFunction(ABC):
         x = torch.as_tensor(
             self.optimum_input,
             dtype=torch.float32
-        )
+        )[0]
 
         value = self.evaluate(
             *x.unbind()

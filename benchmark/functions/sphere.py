@@ -16,7 +16,7 @@ class Sphere(TestFunction):
          [5.12, 5.12]]
     )
 
-    optimum_input = [0., 0.]
+    optimum_input = torch.Tensor([[0., 0.]])
 
     info = "unimodal, " + \
            "continous, " + \

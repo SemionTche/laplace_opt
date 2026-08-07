@@ -16,7 +16,7 @@ class Rosenbrock(TestFunction):
          [2., 3.]]
     )
 
-    optimum_input = [1., 1.] # [a, a**2]
+    optimum_input = torch.Tensor([[1., 1.]]) # [a, a**2]
 
     info = "non-convex, " + \
            "The global minimum is inside a long," + \

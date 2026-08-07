@@ -16,7 +16,7 @@ class StyblinskiTang(TestFunction):
          [5., 5.]]
     )
 
-    optimum_input = [-2.903534, -2.903534]
+    optimum_input = torch.Tensor([[-2.903534, -2.903534]])
 
     info = "non-convex, " + \
            "multi-modal, " + \

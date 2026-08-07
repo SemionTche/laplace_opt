@@ -16,11 +16,11 @@ class BraninHoo(TestFunction):
          [10., 15.]]
     )
 
-    optimum_input = [
-        [-torch.pi, 12.275], 
-        [torch.pi, 2.275], 
-        [9.42478, 2.475]
-    ]
+    optimum_input = torch.Tensor(
+        [[-torch.pi, 12.275], 
+         [torch.pi, 2.275], 
+         [9.42478, 2.475]]
+    )
 
     info = "3 global minima"
 
