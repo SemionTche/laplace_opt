@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from analysis import BenchmarkLoader, BenchmarkAnalysis
+from .analysis import BenchmarkLoader, BenchmarkAnalysis
 # from .analysis.benchmark_tables import BenchmarkTables
 
 

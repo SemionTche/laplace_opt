@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-
 from copy import deepcopy
 import numpy as np
-
 import torch
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.transforms import normalize
 
-from ..experiment.benchmark_result import BenchmarkResult
+from ..experiment import BenchmarkResult
 from ..metrics import METRICS
 
 
@@ -22,25 +20,19 @@ class BenchmarkAnalyzer:
         self.result = result
         self.loo = self._loo_predictions()
 
-
     @property
     def observations(self):
         return self.result.observations
 
     @property
     def bounds(self) -> np.ndarray:
-        return np.asarray(
-            self.result.problem["bounds"]
-        )
+        return np.asarray( self.result.problem["bounds"] )
 
     @property
     def diagonal(self):
         """Diagonal length in input space."""
         bounds = self.bounds
-
-        return np.linalg.norm(
-            bounds[1] - bounds[0]
-        )
+        return np.linalg.norm( bounds[1] - bounds[0] )
 
     @property
     def minimize(self) -> bool:
@@ -68,30 +60,13 @@ class BenchmarkAnalyzer:
 
     @property
     def optimum_obj(self) -> float:
-        """
-        True optimum objective value.
-        """
-        return float(
-            self.result.problem["optimum_obj"]
-        )
+        """True optimum objective value."""
+        return float( self.result.problem["optimum_obj"] )
 
     @property
     def optimum_input(self)-> np.ndarray:
-        """
-        True optimum location.
-        """
-        return np.asarray(
-            self.result.problem["optimum_input"]
-        )
-
-    @property
-    def initial_regret(self) -> float:
-        return self.regret_curve()[0]
-
-    @property
-    def final_model(self):
-        return self.result.model_history[-1]
-
+        """True optimum location."""
+        return np.asarray( self.result.problem["optimum_input"] )
 
     def best_curve(self) -> np.ndarray:
         """Best objective found so far."""
@@ -102,22 +77,20 @@ class BenchmarkAnalyzer:
         else:
             return np.maximum.accumulate(y)
 
-
     def regret_curve(self) -> np.ndarray:
         """Simple regret evolution."""
         return np.abs( self.best_curve() - self.optimum_obj )
 
 
-    def regret_curve_relative(self) -> np.ndarray:
-        """Simple relative regret."""
-        r = self.regret_curve()
-        r0 = r[0]
+    # def regret_curve_relative(self) -> np.ndarray:
+    #     """Simple relative regret."""
+    #     r = self.regret_curve()
+    #     r0 = r[0]
 
-        if r0 == 0:
-            return np.zeros_like(r)
+    #     if r0 == 0:
+    #         return np.zeros_like(r)
 
-        return r / r0
-
+    #     return r / r0
 
     def regret_instantaneous(self) -> np.ndarray:
         """Regret of every evaluation."""
