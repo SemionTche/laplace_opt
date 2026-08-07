@@ -7,7 +7,7 @@ from .analysis import BenchmarkLoader, BenchmarkAnalysis
 if __name__ == "__main__":
 
     root = Path(
-        "benchmark/results/bench_test_08"
+        "benchmark/results/bench_test_09"
     )
 
     # load the data

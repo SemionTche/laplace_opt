@@ -20,7 +20,7 @@ OPT_FORM_SINGLE = {
     ### initialization
     "init": {
         "SobolInitialization": {
-            "n_samples": 4,                 # the parameters
+            "n_samples": 8,                 # the parameters
             "q_candidates": 1,
             "seed": 0
         }

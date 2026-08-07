@@ -47,24 +47,26 @@ if __name__ == "__main__":
     # run a benchmark
     
     cfg = BenchmarkConfig(
-        name="bench_test_08",
+        name="bench_test_09",
 
         optimizer_form=OPT_FORM_SINGLE,
 
         target_functions=[
-            # Ackley(), 
-            # Booth(), 
+            Booth(), 
             Sphere(),
+            StyblinskiTang(),
+            Rosenbrock(),
+            Ackley(),
             Himmelblau()
         ],
 
-        iterations=10,
+        iterations=50,
 
-        seeds=list(range(5)),
+        seeds=list(range(20)),
 
         output_folder=Path("benchmark/results"),
 
-        notes="Test 08 with metrics and gp metrics"
+        notes="Test 09 ; 6 functions, 20 seeds, 50 iterations"
     )
 
     runner = BenchmarkRunner(cfg)  # create the runner

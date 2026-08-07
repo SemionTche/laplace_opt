@@ -20,7 +20,37 @@ class PlotMaker():
             self.df = self.analysis.df
             self.agg = self.analysis.aggregate()
             n = len(self.analysis.curve_names)
-            fig, axs = plt.subplots(n, 4, figsize=(20, 10))
+            # fig, axs = plt.subplots(n, 4, figsize=(20, 10))
+
+            # for i, name in enumerate(self.analysis.curve_names):
+                 
+            #     self.plot_curve(
+            #         ax=axs[i, 0], 
+            #         curve=name,
+            #         normalization=None,
+            #         reduction=None
+            #     )
+            #     self.plot_curve(
+            #         ax=axs[i, 1], 
+            #         curve=name, 
+            #         normalization="relative", 
+            #         reduction=None
+            #     )
+            #     self.plot_curve(
+            #         ax=axs[i, 2], 
+            #         curve=name, 
+            #         normalization=None, 
+            #         reduction="mean"
+            #     )
+            #     self.plot_curve(
+            #         ax=axs[i, 3], 
+            #         curve=name, 
+            #         normalization="relative", 
+            #         reduction="mean"
+            #     )
+            
+
+            fig, axs = plt.subplots(n, 2, figsize=(20, 10))
 
             for i, name in enumerate(self.analysis.curve_names):
                  
@@ -34,21 +64,8 @@ class PlotMaker():
                     ax=axs[i, 1], 
                     curve=name, 
                     normalization="relative", 
-                    reduction=None
-                )
-                self.plot_curve(
-                    ax=axs[i, 2], 
-                    curve=name, 
-                    normalization=None, 
                     reduction="mean"
                 )
-                self.plot_curve(
-                    ax=axs[i, 3], 
-                    curve=name, 
-                    normalization="relative", 
-                    reduction="mean"
-                )
-            
 
             fig.tight_layout()
             plt.show()
