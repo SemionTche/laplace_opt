@@ -2,7 +2,7 @@ from .metric import Metric
 
 
 from .regret import (
-    SimpleRegret, AreaUnderRegretCurve
+    SimpleRegret, AreaUnderRegretCurve, CumulativeRegret
 )
 from .time_to_epsilon import TimeToEpsilon
 from .distance_to_optimum import DistanceToOptimum
@@ -23,8 +23,9 @@ from .noise_stats import NoiseMean, NoiseStd
 
 
 METRICS: dict[str, Metric] = {
-    "AreaUnderRegretCurve": AreaUnderRegretCurve(),
     "SimpleRegret": SimpleRegret(),
+    "CumulativeRegret": CumulativeRegret(),
+    "AreaUnderRegretCurve": AreaUnderRegretCurve(),
     "TimeToEpsilon": TimeToEpsilon(),
     "DistanceToOptimum": DistanceToOptimum(),
 

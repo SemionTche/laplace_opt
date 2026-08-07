@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from ..analysis.benchmark_analyzer import BenchmarkAnalyzer
 from ..bench_utils.normalize import norm_curve
 
+
 class SimpleRegret(Metric):
 
     name = "simple_regret"
@@ -26,8 +27,22 @@ class SimpleRegret(Metric):
             normalization="relative"
         )
         return rel[-1]
-        
 
+
+class CumulativeRegret(Metric):
+
+    name = "Cumulative regret"
+    relative_name = "Relative cumylative regret"
+
+    def compute(self, analyzer: BenchmarkAnalyzer) -> float:
+        return np.sum( analyzer.regret_curve() )
+
+    def compute_relative(self, analyzer: BenchmarkAnalyzer) -> float:
+        rel = norm_curve(
+            curve=analyzer.regret_curve(),
+            normalization="relative"
+        )
+        return np.sum( rel )
 
 
 class AreaUnderRegretCurve(Metric):

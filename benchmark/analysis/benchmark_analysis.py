@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
 from collections import defaultdict
 import numpy as np
 import pandas as pd
@@ -38,6 +37,7 @@ class BenchmarkAnalysis:
             "noise_curve",
             "contraction_variance_curve",
             "contraction_entropy_curve",
+
             # "lengthscale_curve",
             # "contraction_variance_rate",
         ]
@@ -65,7 +65,12 @@ class BenchmarkAnalysis:
         Computes:
             mean and std
         """
-        metrics = [metric.name for metric in METRICS.values()]
+        metrics = []
+        for metric in METRICS.values():
+            metrics.append(metric.name)
+            if metric.relative_name is not None:
+                metrics.append(metric.relative_name)
+
         grouped = (
             self.df.groupby(group_by)[metrics].agg(
                 [
@@ -75,56 +80,6 @@ class BenchmarkAnalysis:
             )
         )
         return grouped
-
-    # def regret_curves(self, *, 
-    #                   normalization: str|None=None, 
-    #                   reduction: str|None=None, 
-    #                   groupby=("function")):
-    #     return self.curves(
-    #         curve="regret_curve",
-    #         normalization=normalization,
-    #         reduction=reduction,
-    #         groupby=groupby
-    #     )
-
-
-    # def regret_curves(self, relative: bool=False):
-    #     """Return regret history for every run."""
-    #     curves = []
-    #     for a in self.analyzers:
-    #         vals = a.regret_curve_relative() if relative else a.regret_curve()
-    #         curves.append(
-    #             {
-    #                 "function": a.result.function_name,
-
-    #                 "strategy": a.result.strategy,
-
-    #                 "acquisition": a.result.acquisition,
-
-    #                 "seed": a.result.seed,
-
-    #                 "curve": vals,
-    #             }
-    #         )
-    #     return curves
-
-
-    # def best_objective_curves(self):
-    #     curves = []
-
-    #     for a in self.analyzers:
-    #         curves.append(
-    #             {
-    #                 "function": a.result.function_name,
-
-    #                 "strategy": a.result.strategy,
-
-    #                 "seed": a.result.seed,
-
-    #                 "curve": a.best_curve(),
-    #             }
-    #         )
-    #     return curves
 
 
     def curves(self,
