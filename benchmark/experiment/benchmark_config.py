@@ -108,6 +108,7 @@ class BenchmarkConfig:
         """
         Return a deep copy of OPT_FORM with 
         the correct seed and target function inserted.
+        (including boundaries and minimize/maximize).
 
         The original OPT_FORM is never modified.
         """

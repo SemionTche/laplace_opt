@@ -38,7 +38,8 @@ LoggerLHC(
 )
 
 logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)
-logging.getLogger("matplotlib").setLevel(logging.WARNING)
+# logging.getLogger("matplotlib").setLevel(logging.WARNING)
+
 
 
 if __name__ == "__main__":
@@ -46,26 +47,26 @@ if __name__ == "__main__":
     # run a benchmark
     
     cfg = BenchmarkConfig(
-        name="bench_test_10",
+        name="bench_test_11",
 
         optimizer_form=OPT_FORM_SINGLE,
 
         target_functions=[
             Booth(), 
             Sphere(),
-            # StyblinskiTang(),
-            # Rosenbrock(),
-            # Ackley(),
-            # Himmelblau()
+            StyblinskiTang(),
+            Rosenbrock(),
+            Ackley(),
+            Himmelblau()
         ],
 
-        iterations=3,
+        iterations=50,
 
-        seeds=list(range(2)),
+        seeds=list(range(20)),
 
         output_folder=Path("benchmark/results"),
 
-        notes="Test 10 ; logs test"
+        notes="Test 11 ; 6 functions ; 20 seeds ; 50 iterations ; single objective"
     )
 
     runner = BenchmarkRunner(cfg)  # create the runner
