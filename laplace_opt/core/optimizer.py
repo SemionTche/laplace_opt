@@ -74,10 +74,10 @@ class Optimizer(QObject):
             self.acq: dict = opt_form["opt"]["pipeline"]["acquisition"]
         
         self.inputs, self.bounds = get_inputs(self.inputs_opt) # get the boundaries from the input dictionary
-        log.info("Optimization inputs:\n" + json_style(self.inputs))
+        log.debug("Optimization inputs:\n" + json_style(self.inputs))
         
         self.objectives = get_objectives(self.objectives_opt)
-        log.info("Optimization objectives:\n" + json_style(self.objectives))
+        log.debug("Optimization objectives:\n" + json_style(self.objectives))
 
         self.suggestion_history = []
 
@@ -134,7 +134,7 @@ class Optimizer(QObject):
                 )
 
                 # print the sample candidates
-                log.info(f"Init suggestion:\n"
+                log.debug(f"Init suggestion:\n"
                         f"{format_candidate_batch(self.init_x, self.inputs)}"
                 )
                 
@@ -143,7 +143,7 @@ class Optimizer(QObject):
 
             elif self.init_y is not None and len(self.init_y) > 2:      # else if there are y-elements
             
-                log.info(f"Loaded {len(self.init_x)} previous observations from file.")
+                log.debug(f"Loaded {len(self.init_x)} previous observations from file.")
                 
                 for x, y in zip(self.init_x, self.init_y):      # fulfil the context
                     self.context.add_observation(
@@ -188,7 +188,7 @@ class Optimizer(QObject):
     
     def build_posterior(self, model, strategy) -> None:
         names = [obj.__class__.__qualname__ for obj in self.objective_list]
-        print(f'names in post = {names}')
+        # print(f'names in post = {names}')
 
         X_grid = make_grid(self.bounds, n_per_dim=self.model_samples)
         X_norm = normalize(X_grid, self.bounds)
@@ -200,7 +200,7 @@ class Optimizer(QObject):
         )
         log.debug(f"Posterior built.")
         input_names = [inp.__class__.__qualname__ for inp in self.inputs_opt.values()]
-        print(f"input names in post = {input_names}")
+        # print(f"input names in post = {input_names}")
         posterior = {
             "means": means,
             "stds": stds,
@@ -242,7 +242,7 @@ class Optimizer(QObject):
             num_restarts=params.get("num_restarts", None),
             raw_samples=params.get("raw_samples", None),
         )
-        log.info(
+        log.debug(
             f"Optimization completed. "
             f"Number of candidates: {params.get('q_candidates', 1)}"
         )
@@ -259,7 +259,7 @@ class Optimizer(QObject):
         '''
         Make the suggestion of new candidates.
         '''
-        log.info("Suggesting new candidates...")
+        log.debug("Suggesting new candidates...")
 
         # get the context values
         X_list = self.context.X_by_objective()
@@ -289,11 +289,11 @@ class Optimizer(QObject):
             candidates = candidates.repeat_interleave(self.n_repeats, dim=0)
             log.debug("Repetition made.")
 
-        for i, gp in enumerate(self.model.models):
-            print(f"\nHyperparameters")
-            print(f"Objective {i}")
-            print("lengthscale:", gp.covar_module.lengthscale.detach())
-            print("noise:", gp.likelihood.noise.detach())
+        # for i, gp in enumerate(self.model.models):
+        #     print(f"\nHyperparameters")
+        #     print(f"Objective {i}")
+        #     print("lengthscale:", gp.covar_module.lengthscale.detach())
+        #     print("noise:", gp.likelihood.noise.detach())
         
         self.suggestion_history.append(candidates.detach().clone())
 
@@ -305,7 +305,7 @@ class Optimizer(QObject):
         Add the received data to the context, looks for new suggestions
         and emit a signal to send the new requested points. 
         '''
-        log.info(f"Data received:\n" + 
+        log.debug(f"Data received:\n" + 
                  print_evaluations(data.get("results", []), self.inputs)
         )
         
@@ -313,11 +313,11 @@ class Optimizer(QObject):
 
         if self.context.n_init == -1:                   # if the number of initial points was not set
             self.context.n_init = len(observations)     # this is the initial size
-            log.info(f"Initial batch size received: {self.context.n_init}")
+            log.debug(f"Initial batch size received: {self.context.n_init}")
 
         for obs in observations:
             self.context.add_observation(obs.x, obs.y, obs.shot_number)  # add the observations to the context
-        log.info(f"Context updated: total_observations={len(self.context._observations)}")
+        log.debug(f"Context updated: total_observations={len(self.context._observations)}")
 
         if not self.is_opt:  # if there is no optimization
             log.debug("Optimization disabled: no suggestion available.")
@@ -354,7 +354,7 @@ class Optimizer(QObject):
             is_init=False,
         )
 
-        log.info("Emitting new candidates to server...")
+        log.debug("Emitting new candidates to server...")
         self.new_candidates.emit(payload)  # look for new candidates
 
 
@@ -363,7 +363,7 @@ class Optimizer(QObject):
         best_results = self.strategy_cls.get_best_results(
             context=self.context, model=self.model, **strategy_params
         )
-        print(f"[best results] best_results = {json_style(best_results)}")
+        # print(f"[best results] best_results = {json_style(best_results)}")
         
         return best_results
 
@@ -374,8 +374,8 @@ class Optimizer(QObject):
         the observation tensors.
         '''
         observations = []
-        print(f"in parse, data = {data}")
-        print(f"and results = {data['results']}")
+        # print(f"in parse, data = {data}")
+        # print(f"and results = {data['results']}")
         for r in data["results"]:  # for every results
             
             # build x (the input position)
@@ -396,7 +396,7 @@ class Optimizer(QObject):
             )
 
             outputs = r["outputs"]
-            print(f"outputs = {outputs} for results = {r}")
+            # print(f"outputs = {outputs} for results = {r}")
             for i, obj in enumerate(self.objective_list):   # for every objective
                 addr = obj.address
                 key = obj.output_key

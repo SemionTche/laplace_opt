@@ -34,12 +34,11 @@ from .functions import (
 LoggerLHC(
     "laplace.benchmark",
     file_level="info",
-    console_level="warnings",
+    console_level="info",
 )
 
 logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
-# logging.getLogger("laplace.benchmark").setLevel(level=70)
 
 
 if __name__ == "__main__":
@@ -47,26 +46,26 @@ if __name__ == "__main__":
     # run a benchmark
     
     cfg = BenchmarkConfig(
-        name="bench_test_09",
+        name="bench_test_10",
 
         optimizer_form=OPT_FORM_SINGLE,
 
         target_functions=[
             Booth(), 
             Sphere(),
-            StyblinskiTang(),
-            Rosenbrock(),
-            Ackley(),
-            Himmelblau()
+            # StyblinskiTang(),
+            # Rosenbrock(),
+            # Ackley(),
+            # Himmelblau()
         ],
 
-        iterations=50,
+        iterations=3,
 
-        seeds=list(range(20)),
+        seeds=list(range(2)),
 
         output_folder=Path("benchmark/results"),
 
-        notes="Test 09 ; 6 functions, 20 seeds, 50 iterations"
+        notes="Test 10 ; logs test"
     )
 
     runner = BenchmarkRunner(cfg)  # create the runner

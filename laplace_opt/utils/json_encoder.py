@@ -59,7 +59,7 @@ def print_evaluations(data: list[dict], inputs: dict,) -> str:
     '''
     Pretty-print evaluated inputs and objectives from server OPT messages.
     '''
-    print(f"we want to print data = {data}, inputs = {inputs}")
+    # print(f"we want to print data = {data}, inputs = {inputs}")
     # Map position_index to input name
     index_to_name = {
         v["position_index"]: name
@@ -100,8 +100,8 @@ def print_evaluations(data: list[dict], inputs: dict,) -> str:
         for _, obj_dict in item["outputs"].items():             # for each objective
             for obj_name, value in obj_dict.items():           # for each value
                 # usually one value per evaluation
-                print(f"values obj = {value}, type = {type(value)}, obj name = {obj_name}")
-                print(f"obj dict = {obj_dict}")
+                # print(f"values obj = {value}, type = {type(value)}, obj name = {obj_name}")
+                # print(f"obj dict = {obj_dict}")
                 val = value if value else None
                 lines.append(f"      {obj_name} = {val:.6g}")   # print name = value
 
