@@ -12,10 +12,9 @@ if __name__ == "__main__":
 
     # load the data
     loader = BenchmarkLoader( root )
-    results = loader.load()
 
     # analyse the data
-    analysis = BenchmarkAnalysis( results )
+    analysis = BenchmarkAnalysis( loader )
 
     print()
     print("=" * 60)
