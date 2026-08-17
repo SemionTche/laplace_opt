@@ -85,3 +85,48 @@ class BenchmarkLoader:
             if r.acquisition == acquisition
 
         ]
+
+
+    def iter_paths(self):
+        return list(
+            self.root.rglob("benchmark_result.pt")
+        )
+
+
+    def iter_load(self):
+        """
+        Load one BenchmarkResult at a time.
+
+        Only one result is yielded at a time.
+        """
+
+        files = list(
+            self.root.rglob("benchmark_result.pt")
+        )
+
+        total = len(files)
+
+        print(
+            f"Found {total} benchmark results."
+        )
+
+        for i, file in enumerate(files, start=1):
+
+            print(
+                f"Loading result {i}/{total}: "
+                f"{file.parent}"
+            )
+
+            try:
+
+                result = BenchmarkResult.load(
+                    file.parent
+                )
+
+                yield result
+
+            except Exception as e:
+
+                print(
+                    f"Cannot load {file}: {e}"
+                )

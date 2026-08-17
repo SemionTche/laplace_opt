@@ -24,14 +24,14 @@ from .noise_stats import NoiseMean, NoiseStd
 
 METRICS: dict[str, Metric] = {
     "SimpleRegret": SimpleRegret(),
-    "CumulativeRegret": CumulativeRegret(),
+    # "CumulativeRegret": CumulativeRegret(),
     "AreaUnderRegretCurve": AreaUnderRegretCurve(),
     "TimeToEpsilon": TimeToEpsilon(),
-    "DistanceToOptimum": DistanceToOptimum(),
+    # "DistanceToOptimum": DistanceToOptimum(),
 
-    "LOORMSE": LOORMSE(),
-    "LOONLPD": LOONLPD(),
-    "Covarage": Coverage(),
+    # "LOORMSE": LOORMSE(),
+    # "LOONLPD": LOONLPD(),
+    # "Covarage": Coverage(),
 
     "FinalVarianceContraction": FinalVarianceContraction(),
     "FinalEntropyContraction": FinalEntropyContraction(),
@@ -39,8 +39,8 @@ METRICS: dict[str, Metric] = {
     "HalfLifeVarianceContraction": HalfLifeVarianceContraction(),
     "HalfLifeEntropyContraction": HalfLifeEntropyContraction(),
 
-    "LengthscaleMean": LengthscaleMean(),
-    "LengthscaleStd": LengthscaleStd(),
-    "NoiseMean": NoiseMean(),
-    "NoiseStd": NoiseStd(),
+    # "LengthscaleMean": LengthscaleMean(),
+    # "LengthscaleStd": LengthscaleStd(),
+    # "NoiseMean": NoiseMean(),
+    # "NoiseStd": NoiseStd(),
 }

@@ -16,12 +16,12 @@ class FinalVarianceContraction(Metric):
 
     def compute(self, analyzer: BenchmarkAnalyzer) -> float:
         """Final posterior variance contraction."""
-        curve = analyzer.contraction_variance_curve()
+        curve = analyzer.contraction_variance
         return curve[-1]
 
     def compute_relative(self, analyzer: BenchmarkAnalyzer) -> float:
         """Final relative posterior variance contraction."""
-        curve = analyzer.contraction_variance_curve()
+        curve = analyzer.contraction_variance
         return curve[-1] / curve[0]
 
 
@@ -32,12 +32,12 @@ class FinalEntropyContraction(Metric):
 
     def compute(self, analyzer: BenchmarkAnalyzer) -> float:
         """Final posterior entropy contraction."""
-        curve = analyzer.contraction_entropy_curve()
+        curve = analyzer.contraction_entropy
         return curve[-1]
 
     def compute_relative(self, analyzer: BenchmarkAnalyzer) -> float:
         """Final relative posterior entropy contraction."""
-        curve = analyzer.contraction_entropy_curve()
+        curve = analyzer.contraction_entropy
         return curve[-1] / curve[0]
 
 
@@ -48,7 +48,7 @@ class HalfLifeVarianceContraction(Metric):
 
     def compute(self, analyzer: BenchmarkAnalyzer) -> int | float:
         """Half-life posterior variance contraction."""
-        curve = analyzer.contraction_variance_curve()
+        curve = analyzer.contraction_variance
         target = curve[0] / 2
 
         idx = np.where(curve <= target)[0]
@@ -61,7 +61,7 @@ class HalfLifeVarianceContraction(Metric):
     def compute_relative(self, analyzer: BenchmarkAnalyzer) -> float:
         """Half-life relative posterior variance contraction."""
         idx = self.compute(analyzer=analyzer)
-        n = len(analyzer.result.model_history)
+        n = len(analyzer.contraction_variance)
         return idx / n
 
 
@@ -72,7 +72,7 @@ class HalfLifeEntropyContraction(Metric):
 
     def compute(self, analyzer: BenchmarkAnalyzer) -> int | float:
         """Half-life posterior entropy contraction."""
-        curve = analyzer.contraction_entropy_curve()
+        curve = analyzer.contraction_entropy
         target = curve[0] / 2
 
         idx = np.where(curve <= target)[0]
@@ -85,5 +85,5 @@ class HalfLifeEntropyContraction(Metric):
     def compute_relative(self, analyzer: BenchmarkAnalyzer) -> float:
         """Half-life relative posterior entropy contraction."""
         idx = self.compute(analyzer=analyzer)
-        n = len(analyzer.result.model_history)
+        n = len(analyzer.contraction_entropy)
         return idx / n

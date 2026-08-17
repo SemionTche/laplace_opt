@@ -16,14 +16,14 @@ class SimpleRegret(Metric):
     relative_name = "simple_regret_rel"
 
     def compute(self, analyzer: BenchmarkAnalyzer) -> float:
-        return float( analyzer.regret_curve()[-1] )
+        return float( analyzer.regret[-1] )
 
     def compute_relative(self, analyzer: BenchmarkAnalyzer) -> float:
         # return float(
         #     analyzer.regret_curve_relative()[-1]
         # )
         rel = norm_curve(
-            curve=analyzer.regret_curve(),
+            curve=analyzer.regret,
             normalization="relative"
         )
         return rel[-1]
@@ -32,14 +32,14 @@ class SimpleRegret(Metric):
 class CumulativeRegret(Metric):
 
     name = "Cumulative regret"
-    relative_name = "Relative cumylative regret"
+    relative_name = "Relative cumulative regret"
 
     def compute(self, analyzer: BenchmarkAnalyzer) -> float:
-        return np.sum( analyzer.regret_curve() )
+        return np.sum( analyzer.regret )
 
     def compute_relative(self, analyzer: BenchmarkAnalyzer) -> float:
         rel = norm_curve(
-            curve=analyzer.regret_curve(),
+            curve=analyzer.regret,
             normalization="relative"
         )
         return np.sum( rel )
@@ -51,15 +51,15 @@ class AreaUnderRegretCurve(Metric):
 
 
     def compute(self, analyzer: BenchmarkAnalyzer) -> float:
-        """Integral of regret curve."""
+        """Integral of instantaneous regret curve."""
         return float(
             np.trapezoid(
-                analyzer.regret_curve()
+                analyzer.regret_instantaneous()
             )
         )
 
     def compute_relative(self, analyzer: BenchmarkAnalyzer) -> float:
-        """Integral of relative regret curve normalized by number of iteration."""
+        """Integral of relative instantaneous regret curve normalized by number of iteration."""
         # return float(
         #     np.trapezoid(
         #         analyzer.regret_curve_relative()
@@ -68,7 +68,7 @@ class AreaUnderRegretCurve(Metric):
         #     (len(analyzer.regret_curve()) - 1)
         # )
         rel = norm_curve(
-            curve=analyzer.regret_curve(),
+            curve=analyzer.regret_instantaneous(),
             normalization="relative"
         )
         area = np.trapezoid(rel) / (len(rel) - 1)

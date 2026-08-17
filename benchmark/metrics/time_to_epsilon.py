@@ -15,7 +15,7 @@ class TimeToEpsilon(Metric):
 
     def compute(self, analyzer: BenchmarkAnalyzer, epsilon: float=0.01) -> int | None:
         """Number of evaluations needed to reach epsilon optimality."""
-        regret = analyzer.regret_curve()
+        regret = analyzer.regret
         idx = np.where( regret <= epsilon )[0]
 
         if len(idx) == 0:
@@ -29,7 +29,7 @@ class TimeToEpsilon(Metric):
         # regret_rel = analyzer.regret_curve_relative()
         # idx = np.where( regret_rel <= epsilon_rel )[0]
         rel = norm_curve(
-            curve=analyzer.regret_curve(),
+            curve=analyzer.regret,
             normalization="relative"
         )
         idx = np.where( rel <= epsilon_rel )[0]

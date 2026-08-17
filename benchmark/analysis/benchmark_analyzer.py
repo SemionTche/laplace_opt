@@ -1,23 +1,40 @@
 from __future__ import annotations
 
 from copy import deepcopy
+
 import numpy as np
 import torch
+
 from botorch.models.transforms.outcome import Standardize
 from botorch.utils.transforms import normalize
 
 from ..experiment import BenchmarkResult
 from ..metrics import METRICS
+from .analysis_record import AnalysisRecord
 
 
 class BenchmarkAnalyzer:
     """
     Analyze one BenchmarkResult.
 
-    This class computes BO metrics from one experiment.
+    This object is intentionally temporary.
+
+    A BenchmarkAnalyzer owns a potentially large BenchmarkResult.
+    It should therefore be converted to an AnalysisRecord and then
+    deleted as soon as possible.
     """
     def __init__(self, result: BenchmarkResult):
+        n_points = 500
+
         self.result = result
+
+        self.regret = self.regret_curve()
+
+        self.contraction_variance = self.contraction_variance_curve(n_points=n_points)
+        self.contraction_entropy = self.contraction_entropy_curve(n_points=n_points)
+        self.noise = self.noise_curve()
+        self.lengthscale = self.lengthscale_curve()
+
         self.loo = self._loo_predictions()
 
     @property
@@ -74,39 +91,32 @@ class BenchmarkAnalyzer:
 
         if self.minimize:
             return np.minimum.accumulate(y)
-        else:
-            return np.maximum.accumulate(y)
+        
+        return np.maximum.accumulate(y)
 
     def regret_curve(self) -> np.ndarray:
         """Simple regret evolution."""
         return np.abs( self.best_curve() - self.optimum_obj )
 
 
-    # def regret_curve_relative(self) -> np.ndarray:
-    #     """Simple relative regret."""
-    #     r = self.regret_curve()
-    #     r0 = r[0]
-
-    #     if r0 == 0:
-    #         return np.zeros_like(r)
-
-    #     return r / r0
-
     def regret_instantaneous(self) -> np.ndarray:
         """Regret of every evaluation."""
         if self.minimize:
             return self.y_values - self.optimum_obj
-        else:
-            return self.optimum_obj - self.y_values
+
+        return self.optimum_obj - self.y_values
 
 
     def build_model(self, iteration=-1,):
 
-        snap = self.result.model_history[iteration]
+        # snap = self.result.model_history[iteration]
 
-        model = deepcopy(
-            snap.model
-        )
+        # model = deepcopy(
+        #     snap.model
+        # )
+        # model.eval()
+
+        model = self.result.model_history[iteration].model
         model.eval()
 
         return model
@@ -138,43 +148,48 @@ class BenchmarkAnalyzer:
         targets = []
         n = len(X)
 
-        for i in range(n):
-            X_train = torch.cat(
-                [
-                    X[:i],
-                    X[i+1:]
-                ]
-            )
+        with torch.inference_mode():
 
-            X_train_norm = normalize(
-                X_train, torch.Tensor(self.bounds)
-            )
+            for i in range(n):
+                X_train = torch.cat(
+                    [
+                        X[:i],
+                        X[i+1:]
+                    ]
+                )
 
-            Y_train = torch.cat(
-                [
-                    Y[:i],
-                    Y[i+1:]
-                ]
-            )
+                X_train_norm = normalize(
+                    X_train, torch.Tensor(self.bounds)
+                )
 
-            loo_gp = gp.__class__(
-                train_X=X_train_norm, #X_train,
-                train_Y=Y_train,
-                outcome_transform=Standardize(m=1)
-            )
+                Y_train = torch.cat(
+                    [
+                        Y[:i],
+                        Y[i+1:]
+                    ]
+                )
 
-            # loo_gp.load_state_dict(
-            #     gp.state_dict()
-            # )
+                loo_gp = gp.__class__(
+                    train_X=X_train_norm, #X_train,
+                    train_Y=Y_train,
+                    outcome_transform=Standardize(m=1)
+                )
 
-            loo_gp.eval()
+                # loo_gp.load_state_dict(
+                #     gp.state_dict()
+                # )
 
-            X_norm = normalize(X[i:i+1], torch.Tensor(self.bounds))
-            posterior = loo_gp.posterior( X_norm )
+                loo_gp.eval()
 
-            means.append( posterior.mean.squeeze() )
-            variances.append( posterior.variance.squeeze() )
-            targets.append( Y[i].squeeze() )
+                X_norm = normalize( X[i:i+1], torch.Tensor(self.bounds) )
+                posterior = loo_gp.posterior( X_norm )
+
+                means.append( posterior.mean.squeeze().detach().cpu() )
+                variances.append( posterior.variance.squeeze().detach().cpu() )
+                targets.append( Y[i].squeeze().detach().cpu() )
+
+                del loo_gp      # remove for memory space
+                del posterior
 
         return (
             torch.stack(means),
@@ -188,17 +203,19 @@ class BenchmarkAnalyzer:
         curve = []
         n = len(self.result.model_history)
 
-        for i in range(n):
-            model = self.build_model(i)
+        with torch.inference_mode():
 
-            gp = model.models[0]
+            for i in range(n):
+                model = self.build_model(i)
 
-            curve.append(
-                gp.covar_module.lengthscale
-                .detach()
-                .cpu()
-                .numpy()
-            )
+                gp = model.models[0]
+
+                curve.append(
+                    gp.covar_module.lengthscale
+                    .detach()
+                    .cpu()
+                    .numpy()
+                )
 
         return np.asarray(curve)
 
@@ -208,19 +225,21 @@ class BenchmarkAnalyzer:
         curve = []
         n = len(self.result.model_history)
 
-        for i in range(n):
-            model = self.build_model(i)
+        with torch.inference_mode():
 
-            gp = model.models[0]
+            for i in range(n):
+                model = self.build_model(i)
 
-            curve.append(
-                gp.likelihood.noise.item()
-            )
+                gp = model.models[0]
+
+                curve.append(
+                    gp.likelihood.noise.item()
+                )
 
         return np.asarray(curve)
 
 
-    def contraction_variance_curve(self, n_points: int=2000) -> np.ndarray:
+    def contraction_variance_curve(self, n_points: int=500) -> np.ndarray:
         """
         Integrated posterior variance.
 
@@ -241,18 +260,20 @@ class BenchmarkAnalyzer:
         curve = []
         n = len(self.result.model_history)
 
-        for i in range(n):
-            model = self.build_model(i)
-            post = model.posterior(X)
+        with torch.inference_mode():
 
-            curve.append(
-                post.variance.mean().item()
-            )
+            for i in range(n):
+                model = self.build_model(i)
+                post = model.posterior(X)
+
+                curve.append(
+                    post.variance.mean().item()
+                )
 
         return np.asarray(curve)
 
 
-    def contraction_entropy_curve(self, n_points: int=2000) -> np.ndarray:
+    def contraction_entropy_curve(self, n_points: int=500) -> np.ndarray:
         """
         Integrated posterior entropy.
 
@@ -273,21 +294,23 @@ class BenchmarkAnalyzer:
         curve = []
         n = len(self.result.model_history)
 
-        for i in range(n):
-            model = self.build_model(i)
-            post = model.posterior(X)
+        with torch.inference_mode():
 
-            cts = 2 * torch.pi * torch.e
-            entropy = 0.5 * torch.log( cts * post.variance )
+            for i in range(n):
+                model = self.build_model(i)
+                post = model.posterior(X)
 
-            curve.append(
-                entropy.mean().item()
-            )
+                cts = 2 * torch.pi * torch.e
+                entropy = 0.5 * torch.log( cts * post.variance )
+
+                curve.append(
+                    entropy.mean().item()
+                )
 
         return np.asarray(curve)
 
 
-    def contraction_variance_rate(self, n_points: int=2000) -> np.ndarray:
+    def contraction_variance_rate(self, n_points: int=500) -> np.ndarray:
         curve = self.contraction_variance_curve(n_points=n_points)
         curve = np.maximum(curve, 1e-14)
         t = np.arange(len(curve))
@@ -312,9 +335,70 @@ class BenchmarkAnalyzer:
 
         for metric in METRICS.values():
 
-            sum[metric.name] = metric.compute(analyzer=self)
+            sum[ metric.name ] = metric.compute(analyzer=self)
 
             if metric.relative_name is not None:
                 sum[ metric.relative_name ] = metric.compute_relative(analyzer=self)
 
         return sum
+
+
+    def to_record(self) -> AnalysisRecord:
+        """
+        Convert this expensive BenchmarkAnalyzer into a lightweight
+        AnalysisRecord.
+
+        After this method returns, the BenchmarkAnalyzer can be deleted.
+        """
+
+        metrics = self.summary()
+
+        # Remove metadata from the metrics dictionary. (it's already in result)
+        for key in (
+            "function",
+            "strategy",
+            "acquisition",
+            "seed",
+            "evaluations",
+        ):
+            metrics.pop(key, None)
+
+        curves = {
+            "regret_curve":
+                np.asarray(self.regret).copy(),
+
+            "noise_curve":
+                np.asarray(self.noise).copy(),
+
+            "contraction_variance_curve":
+                np.asarray(
+                    self.contraction_variance
+                ).copy(),
+
+            "contraction_entropy_curve":
+                np.asarray(
+                    self.contraction_entropy
+                ).copy(),
+
+            "lengthscale_curve":
+                np.asarray(self.lengthscale).copy(),
+        }
+
+        loo = tuple(
+            x.detach()
+            .cpu()
+            .numpy()
+            .copy()
+            for x in self.loo
+        )
+
+        return AnalysisRecord(
+            function=self.result.function_name,
+            strategy=self.result.strategy,
+            acquisition=self.result.acquisition,
+            seed=self.result.seed,
+            evaluations=len(self.result),
+            metrics=metrics,
+            curves=curves,
+            loo=loo,
+        )

@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 from collections import defaultdict
+import gc
+
 import numpy as np
 import pandas as pd
 
+from .analysis_record import AnalysisRecord
 from .benchmark_analyzer import BenchmarkAnalyzer
-from ..experiment import BenchmarkResult
+from .benchmark_loader import BenchmarkLoader
+
 from ..metrics import METRICS
 from ..bench_utils.normalize import norm_curve
 
@@ -16,23 +20,18 @@ class BenchmarkAnalysis:
     Analysis of a complete benchmark campaign.
     """
 
-    def __init__(self, results: list[BenchmarkResult]):
+    def __init__(self, loader: BenchmarkLoader):
         """
         Args:
-            result (list[BenchmarkResult]):
-                The benchmark list of results to study.
+            loader (BenchmarkLoader):
+                Object from which extract the data.
+                Either using a load or an iterative method.
         """
-        self.results = results
-        self.analyzers : list[BenchmarkAnalyzer] = []
-
-        for result in results:
-            self.analyzers.append( BenchmarkAnalyzer(result=result) )
-
-        self.df = self.dataframe()
-        self.agg = self.aggregate()
+        self.records: list[AnalysisRecord] = []
         self.curve_names = [
             # "best_curve",
             "regret_curve",
+            # "cumulative_regret_curve",
             # "regret_instantaneous",
             "noise_curve",
             "contraction_variance_curve",
@@ -41,6 +40,12 @@ class BenchmarkAnalysis:
             # "lengthscale_curve",
             # "contraction_variance_rate",
         ]
+        
+        self._process(loader)
+
+        self.df = self.dataframe()
+        self.agg = self.aggregate()
+
         print("Analysis generated.")
 
 
@@ -48,8 +53,8 @@ class BenchmarkAnalysis:
         """Full analysis dataframe."""
         rows = []
 
-        for a in self.analyzers:
-            rows.append(a.summary())
+        for r in self.records:
+            rows.append(r.summary())
 
         return pd.DataFrame(rows)
 
@@ -82,6 +87,21 @@ class BenchmarkAnalysis:
         return grouped
 
 
+
+    def _process(self, loader: BenchmarkLoader):
+        for result in loader.iter_load():
+            analyzer = BenchmarkAnalyzer(result=result)
+            record = analyzer.to_record()
+
+            self.records.append(record)
+
+        del analyzer
+        del result
+        gc.collect()
+
+
+
+
     def curves(self,
                curve: str,
                *,
@@ -105,23 +125,40 @@ class BenchmarkAnalysis:
         groupby
             Metadata used when averaging.
         """
+        if curve not in self.curve_names:
+            raise ValueError(
+                f"Unknown curve '{curve}'. "
+                f"Available curves: {self.curve_names}"
+            )
+
         rows = []
 
-        for analyzer in self.analyzers:
+        for record in self.records:
 
-            values = getattr(analyzer, curve)()
+            values = record.curves[curve]
+            # values = getattr(analyzer, curve)()
 
             values = norm_curve(
-                curve=values, 
-                normalization=normalization
+                curve=values,
+                normalization=normalization,
             )
+
+            # rows.append(
+            #     {
+            #         "function": analyzer.result.function_name,
+            #         "strategy": analyzer.result.strategy,
+            #         "acquisition": analyzer.result.acquisition,
+            #         "seed": analyzer.result.seed,
+            #         "curve": values,
+            #     }
+            # )
 
             rows.append(
                 {
-                    "function": analyzer.result.function_name,
-                    "strategy": analyzer.result.strategy,
-                    "acquisition": analyzer.result.acquisition,
-                    "seed": analyzer.result.seed,
+                    "function": record.function,
+                    "strategy": record.strategy,
+                    "acquisition": record.acquisition,
+                    "seed": record.seed,
                     "curve": values,
                 }
             )
