@@ -11,13 +11,18 @@ if __name__ == "__main__":
 
     pm = PlotMaker(root)
 
-    pm.make_indiv_plots(
-        save=True,
-        show=False
-    )
+    # pm.make_indiv_plots(
+    #     save=True,
+    #     show=False
+    # )
 
-    pm.make_average_plots(
-        normalization="relative",
+    # pm.make_average_plots(
+    #     normalization="relative",
+    #     save=True,
+    #     show=True
+    # )
+
+    pm.make_metric_seed_plots(
         save=True,
-        show=True
+        show=True,
     )

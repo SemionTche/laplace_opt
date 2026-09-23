@@ -29,9 +29,9 @@ METRICS: dict[str, Metric] = {
     "TimeToEpsilon": TimeToEpsilon(),
     # "DistanceToOptimum": DistanceToOptimum(),
 
-    # "LOORMSE": LOORMSE(),
-    # "LOONLPD": LOONLPD(),
-    # "Covarage": Coverage(),
+    "LOORMSE": LOORMSE(),
+    "LOONLPD": LOONLPD(),
+    "Covarage": Coverage(),
 
     "FinalVarianceContraction": FinalVarianceContraction(),
     "FinalEntropyContraction": FinalEntropyContraction(),

@@ -1,4 +1,5 @@
 from pathlib import Path
+from collections import defaultdict
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -327,6 +328,380 @@ class PlotMaker():
                 plt.show()
 
             plt.close(fig)
+
+
+    def make_metric_seed_plots(
+        self,
+        *,
+        save: bool = False,
+        show: bool = True,
+        output_folder: str = "figures",
+        metrics_folder: str = "metrics",
+    ):
+        """
+        Create bar plots of metrics for individual seeds.
+
+        One figure is created for each metric.
+
+        Within each figure:
+            - x-axis = test functions
+            - each test function contains one bar per seed
+
+        Parameters
+        ----------
+        save:
+            If True, save figures to disk.
+
+        show:
+            If True, display figures.
+
+        output_folder:
+            Main figure output directory.
+
+        metrics_folder:
+            Subdirectory for metric figures.
+        """
+
+        if save:
+
+            output_root = (
+                self.root
+                / output_folder
+                / metrics_folder
+            )
+
+            output_root.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+        # ---------------------------------------------------------
+        # Metrics to plot
+        # ---------------------------------------------------------
+
+        metrics = []
+
+        for metric in self.analysis.df.columns:
+
+            if metric in {
+                "function",
+                "strategy",
+                "acquisition",
+                "seed",
+                "evaluations",
+            }:
+                continue
+
+            metrics.append(metric)
+
+        # ---------------------------------------------------------
+        # Functions
+        # ---------------------------------------------------------
+
+        functions = sorted(
+            self.analysis.df["function"].unique()
+        )
+
+        # ---------------------------------------------------------
+        # One figure per metric
+        # ---------------------------------------------------------
+
+        for metric in metrics:
+
+            fig, ax = plt.subplots(
+                figsize=(12, 6)
+            )
+
+            # Width of one individual bar.
+            bar_width = 0.8 / max(
+                1,
+                len(
+                    self.analysis.df["seed"].unique()
+                )
+            )
+
+            # -----------------------------------------------------
+            # Plot each function
+            # -----------------------------------------------------
+
+            for function_index, function in enumerate(functions):
+
+                data = self.analysis.df[
+                    self.analysis.df["function"] == function
+                ]
+
+                # Sort seeds for reproducible ordering.
+                data = data.sort_values("seed")
+
+                seeds = data["seed"].to_numpy()
+                values = data[metric].to_numpy()
+
+                n_seeds = len(values)
+
+                # Center the group around the function position.
+                offsets = (
+                    np.arange(n_seeds)
+                    - (n_seeds - 1) / 2
+                ) * bar_width
+
+                x = function_index + offsets
+
+                ax.bar(
+                    x,
+                    values,
+                    width=bar_width,
+                    label=(
+                        "seed "
+                        + seeds.astype(str)
+                    )
+                    if function_index == 0
+                    else None,
+                )
+
+            # -----------------------------------------------------
+            # Formatting
+            # -----------------------------------------------------
+
+            ax.set_xticks(
+                np.arange(len(functions))
+            )
+
+            ax.set_xticklabels(
+                functions,
+                rotation=30,
+                ha="right",
+            )
+
+            ax.set_xlabel(
+                "test function"
+            )
+
+            ax.set_ylabel(
+                metric
+            )
+
+            ax.set_title(
+                f"{metric} — individual seeds"
+            )
+
+            ax.legend(
+                title="seed",
+                bbox_to_anchor=(1.02, 1),
+                loc="upper left",
+            )
+
+            fig.tight_layout()
+
+            # -----------------------------------------------------
+            # Save
+            # -----------------------------------------------------
+
+            if save:
+
+                filename = (
+                    metric
+                    + ".png"
+                )
+
+                fig.savefig(
+                    output_root / filename,
+                    dpi=300,
+                    bbox_inches="tight",
+                )
+
+            if show:
+                plt.show()
+
+            plt.close(fig)
+
+
+
+    def make_metric_average_plots(
+        self,
+        *,
+        save: bool = False,
+        show: bool = True,
+        output_folder: str = "figures",
+        metrics_folder: str = "metrics_averaged",
+        show_std: bool = True,
+    ):
+        """
+        Create bar plots of metrics averaged over seeds.
+
+        One figure is created for each metric.
+
+        Within each figure:
+            - x-axis = test functions
+            - bar height = mean over seeds
+            - optional error bar = standard deviation over seeds
+
+        Parameters
+        ----------
+        save:
+            If True, save figures to disk.
+
+        show:
+            If True, display figures.
+
+        output_folder:
+            Main figure output directory.
+
+        metrics_folder:
+            Subdirectory for averaged metric figures.
+
+        show_std:
+            If True, display +/- one standard deviation.
+        """
+
+        if save:
+
+            output_root = (
+                self.root
+                / output_folder
+                / metrics_folder
+            )
+
+            output_root.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+        # ---------------------------------------------------------
+        # Metrics to plot
+        # ---------------------------------------------------------
+
+        metrics = []
+
+        for metric in self.analysis.df.columns:
+
+            if metric in {
+                "function",
+                "strategy",
+                "acquisition",
+                "seed",
+                "evaluations",
+            }:
+                continue
+
+            metrics.append(metric)
+
+        # ---------------------------------------------------------
+        # Functions
+        # ---------------------------------------------------------
+
+        functions = sorted(
+            self.analysis.df["function"].unique()
+        )
+
+        # ---------------------------------------------------------
+        # One figure per metric
+        # ---------------------------------------------------------
+
+        for metric in metrics:
+
+            means = []
+            stds = []
+
+            for function in functions:
+
+                data = self.analysis.df[
+                    self.analysis.df["function"] == function
+                ]
+
+                values = data[metric].to_numpy()
+
+                means.append(
+                    np.mean(values)
+                )
+
+                stds.append(
+                    np.std(values)
+                )
+
+            means = np.asarray(means)
+            stds = np.asarray(stds)
+
+            fig, ax = plt.subplots(
+                figsize=(10, 6)
+            )
+
+            x = np.arange(
+                len(functions)
+            )
+
+            if show_std:
+
+                ax.bar(
+                    x,
+                    means,
+                    yerr=stds,
+                    capsize=5,
+                )
+
+            else:
+
+                ax.bar(
+                    x,
+                    means,
+                )
+
+            # -----------------------------------------------------
+            # Formatting
+            # -----------------------------------------------------
+
+            ax.set_xticks(x)
+
+            ax.set_xticklabels(
+                functions,
+                rotation=30,
+                ha="right",
+            )
+
+            ax.set_xlabel(
+                "test function"
+            )
+
+            ax.set_ylabel(
+                metric
+            )
+
+            title = (
+                f"{metric} — averaged over seeds"
+            )
+
+            if show_std:
+                title += " (mean ± std)"
+
+            ax.set_title(title)
+
+            fig.tight_layout()
+
+            # -----------------------------------------------------
+            # Save
+            # -----------------------------------------------------
+
+            if save:
+
+                filename = (
+                    metric
+                    + ".png"
+                )
+
+                fig.savefig(
+                    output_root / filename,
+                    dpi=300,
+                    bbox_inches="tight",
+                )
+
+            if show:
+                plt.show()
+
+            plt.close(fig)
+
+
+
+
+
 
 
 if __name__ == "__main__":
