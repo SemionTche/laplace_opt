@@ -52,8 +52,8 @@ def check_category(category: str) -> None:
         "acquisitions",
     ]
     if category not in available_categories:
-        raise ValueError(f"category '{category}' invalid."
-                         f"must be chosen among '{available_categories}.")
+        raise ValueError(f"category '{category}' invalid.\n"
+                         f"Must be chosen among '{available_categories}.")
 
 
 def get_structure(category: str):

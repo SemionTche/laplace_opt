@@ -4,12 +4,16 @@ from copy import deepcopy
 from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QComboBox, QPushButton, QCheckBox
+    QComboBox, QPushButton, QCheckBox,
+    QMessageBox
 )
 from PyQt6.QtCore import pyqtSignal
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
+
+# project
+# from .sliceWidget import SliceWidget
 
 
 class PlotWidget(QWidget):
@@ -73,6 +77,10 @@ class PlotWidget(QWidget):
         self.log_X = QCheckBox("Log X")
         self.log_Y = QCheckBox("Log Y")
 
+        # posterior checkox
+        self.posterior_checkbox = QCheckBox("Model")
+        self.posterior_checkbox.setEnabled(False)
+
         # delete button
         self.delete_button = QPushButton("Delete plot")
 
@@ -81,14 +89,25 @@ class PlotWidget(QWidget):
         controls.addWidget(self.y_selector)
         controls.addWidget(self.log_X)
         controls.addWidget(self.log_Y)
+        controls.addWidget(self.posterior_checkbox)
         controls.addWidget(self.delete_button)
 
         main_layout.addLayout(controls)
 
         # Matplotlib Figure
         self.figure = Figure()
+
+        plot_layout = QHBoxLayout()
+
         self.canvas = FigureCanvasQTAgg(self.figure)
-        main_layout.addWidget(self.canvas)
+        plot_layout.addWidget(self.canvas)
+
+        # self.slice_widget = SliceWidget()
+        # self.slice_widget.hide()
+
+        # plot_layout.addWidget(self.slice_widget)
+
+        main_layout.addLayout(plot_layout)
 
 
     def actions(self) -> None:
@@ -107,6 +126,10 @@ class PlotWidget(QWidget):
         self.y_selector.currentTextChanged.connect(self._redraw)
         self.log_Y.stateChanged.connect(self._redraw)
         self.log_X.stateChanged.connect(self._redraw)
+
+        self.posterior_checkbox.stateChanged.connect(self._redraw_posterior)
+
+        # self.slice_widget.slice_changed.connect(self._redraw_posterior)
 
 
     def update_plot_dict(self, data_dict: dict[str, list]) -> None:
@@ -146,6 +169,9 @@ class PlotWidget(QWidget):
         if x_key not in self._data or y_key not in self._data:     # if the keys are not in the data dict
             self.canvas.draw()                                     # keep it white
             return
+        
+        if self.posterior_checkbox.isChecked():
+            self._redraw_posterior()
 
         x = self._data[x_key]      # get the data associated to the key
         y = self._data[y_key]
@@ -181,7 +207,63 @@ class PlotWidget(QWidget):
             ax.set_yscale("log")
 
         self.canvas.draw()
-    
+
+
+    def _redraw_posterior(self) -> None:
+        print("print redraw_posterior used")
+        if not self.posterior_checkbox.isChecked():
+            # self.slice_widget.hide()
+            self._redraw()
+        else:
+            x_key = self.x_selector.currentText()   # get the current keys
+            y_key = self.y_selector.currentText()
+            means_keys = self.means.keys()
+            
+            if x_key in means_keys or y_key not in means_keys and x_key != "iterations":
+                self.posterior_checkbox.setChecked(False)
+                QMessageBox.warning(
+                    self, 
+                    "Posterior Warning", 
+                    "Warning: the configuration is invalid to display a posterior.\n"
+                    "Verify that the x_axis is an input and the y_axis an objective."
+                )
+                return
+
+           # input slice colon 
+            # if len(self.input_list) > 1:
+            #     self.slice_widget.set_slice(
+            #         self.input_list,
+            #         x_key,
+            #         self.bounds
+            #     )
+            #     self.slice_widget.show()
+            # else:
+            #     self.slice_widget.hide()
+
+
+            mean = self.means[y_key]
+            std = self.stds[y_key]
+            input_idx = self.input_list.index(x_key)
+            x = self.x_grid[:, input_idx]
+            upper_confidence = mean + 1.96 * std
+            lower_confidence = mean - 1.96 * std
+            print(f"plot post input_idx = {input_idx}")
+            print(f"post x shape = {x.shape}")
+            print(f"post x = {x}")
+            print(f"plot post mean shape = {mean.shape}")
+            print(f"plot post mean {mean}")
+            self.figure.axes[0].plot(x, mean, label=r"Mean")
+            self.figure.axes[0].fill_between(
+                x,
+                upper_confidence,
+                lower_confidence,
+                color="gray",
+                alpha=0.3,
+                label=r"95% confidence"
+            )
+
+            self.canvas.draw()
+
 
     def set_available_keys(self, keys: list[str]) -> None:
         '''
@@ -205,3 +287,15 @@ class PlotWidget(QWidget):
 
         self.x_selector.blockSignals(False)  # unblock the signals
         self.y_selector.blockSignals(False)
+
+
+    def set_posterior(self, means: dict, stds: dict, input_list: list[str], x_grid, bounds) -> None:
+        self.means = means
+        self.stds = stds
+        self.input_list = input_list
+        self.x_grid = x_grid
+        self.bounds = bounds
+        self.posterior_checkbox.setEnabled(True)
+
+        if self.posterior_checkbox.isChecked():
+            self._redraw_posterior()

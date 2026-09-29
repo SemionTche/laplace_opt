@@ -35,6 +35,7 @@ def is_date_folder(path: pathlib.Path) -> bool:
 def make_form(exec: dict[str, bool | str], 
               inputs: dict[str, InputStructure], 
               obj: dict[str, ObjectiveStructure], 
+              crit,
               init: dict[str, InitializationStructure | dict[str, int | float | bool | str]], 
               opt: dict[str, bool | dict[str, dict[str, StratOrAcq | dict[str, int | float | bool | str]]]]
             ) -> tuple[dict, tuple[ValidationLevel, str]]:
@@ -52,6 +53,7 @@ def make_form(exec: dict[str, bool | str],
         "exec": exec,
         "inputs": inputs,
         "obj": obj,
+        "criterium": crit,
         "init": init,
         "opt": opt
     }
@@ -72,10 +74,26 @@ def check_form(form: dict) -> tuple[ValidationLevel, str]:
     opt = form["opt"]
     if opt["enabled"] is True:
         objectives = form["obj"]
-        if len(objectives) < 1:
+        nb_obj = len(objectives)
+        if nb_obj < 1:
             return (
                 ValidationLevel.ERROR,
                 "When optimizing, at least one objective must be selected."
+            )
+        
+        acq = opt["pipeline"]["acquisition"]["cls"]
+        print(f"acq = {acq}")
+        if nb_obj < acq.nb_min_obj_required:
+            return(
+                ValidationLevel.ERROR,
+                "Your acquisition function required at least one other objective.\n"
+                f"Given {nb_obj}, mininum required {acq.nb_min_obj_required}"
+            )
+        elif acq.nb_max_obj_required < nb_obj:
+            return(
+                ValidationLevel.ERROR,
+                "Your acquisition function required at least one objective less.\n"
+                f"Given {nb_obj}, maximum required {acq.nb_max_obj_required}"
             )
 
     execution = form["exec"]

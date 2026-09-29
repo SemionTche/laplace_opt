@@ -25,6 +25,8 @@ class qLogNEHVI(AcquisitionStructure):
         "Batch Bayesian optimization acquisition for multi-objective,\n"
         "using q-Log Noisy Expected Hypervolume Improvement."
     )
+    nb_min_obj_required: int = 2
+    nb_max_obj_required: int = 10_000
 
     parameters = {
         "mc_samples": {

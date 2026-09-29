@@ -23,6 +23,8 @@ class qLogNEI(AcquisitionStructure):
         "Batch Bayesian optimization acquisition for single-objective,\n"
         "using q-Log Noisy Expected Improvement."
     )
+    nb_min_obj_required: int = 1
+    nb_max_obj_required: int = 1
 
     parameters = {
         "mc_samples": {

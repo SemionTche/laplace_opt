@@ -5,12 +5,15 @@ import qdarkstyle
 from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton,
-    QGridLayout, QMessageBox
+    QGridLayout, QMessageBox, QSpinBox,
+    QLabel, QHBoxLayout
 )
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QIcon
 
 # project
 from .widgets import PlotWidget
+from ..utils.config_helper import get_from_config, set_in_config
 
 
 class PlotWindow(QWidget):
@@ -25,6 +28,7 @@ class PlotWindow(QWidget):
     '''
     MAX_ROWS = 3
     MAX_COLS = 4
+    model_sample = pyqtSignal(int)
 
     def __init__(self):
         '''
@@ -63,9 +67,34 @@ class PlotWindow(QWidget):
 
         main_layout = QVBoxLayout(self)
 
+        top_layout = QHBoxLayout()
+
         # "+" button
         self.add_button = QPushButton("+ Add Plot")
-        main_layout.addWidget(self.add_button)
+        top_layout.addWidget(self.add_button, stretch=3)
+        top_layout.addStretch()
+
+        # model sample
+        sample_layout = QHBoxLayout()
+        sample_layout.setSpacing(2)
+        sample = get_from_config(
+            module="plot",
+            item="model_sample",
+            default_value=1000,
+            type=int
+        )
+        sample_label = QLabel("Model samples")
+        sample_label.setToolTip("Define the number of sample to plot the model.")
+        self.model_sample_spin = QSpinBox()
+        self.model_sample_spin.setToolTip("Define the number of sample to plot the model.")
+        self.model_sample_spin.setRange(1, 5000)
+        self.model_sample_spin.setValue(sample)
+
+        sample_layout.addWidget(sample_label, stretch=1)
+        sample_layout.addWidget(self.model_sample_spin, stretch=1)
+        top_layout.addLayout(sample_layout)
+
+        main_layout.addLayout(top_layout)
 
         # Grid for plots
         self.grid = QGridLayout()
@@ -80,6 +109,21 @@ class PlotWindow(QWidget):
         self.add_button.clicked.connect(
             self.add_plot
         )
+
+        self.model_sample_spin.valueChanged.connect(
+            self.on_model_sample
+        )
+
+
+    def on_model_sample(self) -> None:
+        val = self.model_sample_spin.value()
+        set_in_config(
+            module="plot",
+            item="model_sample",
+            val=val,
+        )
+        log.debug("Model sample changed.")
+        self.model_sample.emit(val)
 
 
     def add_plot(self) -> None:
@@ -107,6 +151,14 @@ class PlotWindow(QWidget):
         self.plots.append(plot)            # add the plot widget in the list
         self._refresh_grid()               # refresh the display
         log.debug("Plot widget added.")
+        
+        if self.means is not None:
+            plot.set_posterior(
+                means=self.means,
+                stds=self.stds,
+                input_list=self.input_list,
+                x_grid=self.x_grid
+            )
 
 
     def remove_plot(self, plot_widget: PlotWidget) -> None:
@@ -184,7 +236,7 @@ class PlotWindow(QWidget):
                     payload = outputs[address]  # get the values
 
                     if key in payload:            # if the key is in the values
-                        value = payload[key][0]
+                        value = payload[key]#[0]
                         self.data[display_name].append(value)   # add the value in the corresponding list
 
         self.data["iteration"] = range(len(self.data[display_name]))    # make an iteration list
@@ -206,6 +258,9 @@ class PlotWindow(QWidget):
         '''
         # Clear data and plot list
         self.data = {}
+        self.means = None
+        self.stds = None
+        self.input_list = None
         self.plots.clear()
 
         # Clear the grid
@@ -247,3 +302,20 @@ class PlotWindow(QWidget):
         
         self.available_keys = list(self.data.keys())    # define the available keys for the plot widgets
         log.debug(f"PlotWindow configured with keys: {self.available_keys}")
+
+
+    def set_posterior(self, posterior: dict) -> None:
+        self.means = posterior["means"]
+        self.stds = posterior["stds"]
+        self.input_list = posterior["input_list"]
+        self.x_grid = posterior["x_grid"]
+        self.bounds = posterior["bounds"]
+        for plot in self.plots:
+            plot.set_posterior(
+                means=self.means, 
+                stds=self.stds, 
+                input_list=self.input_list, 
+                x_grid=self.x_grid,
+                bounds=self.bounds
+            )
+        log.debug(f"Posterior setted in PlotWindow.")

@@ -36,6 +36,7 @@ class InputWidget(QWidget):
         # get relevant features from the instance
         self.ip_port = self.instance.ip_port
         self.position_index = self.instance.position_index
+        self.motor_number = self.instance.motor_number
         self.description = self.instance.description
         self.unit = self.instance.unit
         self.safe_bounds = self.instance.safe_bounds
@@ -93,6 +94,15 @@ class InputWidget(QWidget):
         self.position_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.position_label.setToolTip("The position of the input device in the server list")
         line_layout.addWidget(self.position_label)
+
+        # motor number
+        self.motor_label = QLabel()
+        self.motor_label.setText(f"Motor {self.motor_number}" or "Unknown")
+        self.motor_label.setEnabled(False)
+        self.motor_label.setFixedWidth(60)
+        self.motor_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.motor_label.setToolTip("The motor number of the input device (position in list + 1)")
+        line_layout.addWidget(self.motor_label)
 
         # name
         self.name_label = QLabel(self.name)

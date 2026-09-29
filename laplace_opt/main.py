@@ -13,6 +13,7 @@ log.info("Starting OptWindow...")
 logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
+from laplace_log import uncaught_exception
 # from .utils import uncaught_exception
 
 # project

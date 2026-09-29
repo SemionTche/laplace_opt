@@ -31,7 +31,7 @@ class SobolInitialization(InitializationStructure):
         
         "q_candidates": {
             "type": int,
-            "default": 2,
+            "default": 1,
             "min": 1,
             "max": 1024,
             "label": "Number of candidates",

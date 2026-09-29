@@ -22,6 +22,9 @@ class OptManager(QObject):
 
     on_server_address = pyqtSignal(str)  # transmit the optimizer server address
     data_for_plot = pyqtSignal(list)
+    on_max_it_reached = pyqtSignal()
+    step_counter = pyqtSignal(int)
+    posterior_to_plot = pyqtSignal(object)
 
     def __init__(self):
         '''
@@ -38,6 +41,14 @@ class OptManager(QObject):
         self.is_online: bool = False
         self.is_opt: bool = False
         self._opt_form = {}
+        self.model_samples = get_from_config(
+            module="plot", 
+            item="model_sample", 
+            default_value=1000, 
+            type=int
+        )
+        
+        self.step = 0
 
     @property
     def opt_form(self) -> dict:
@@ -60,6 +71,15 @@ class OptManager(QObject):
         self.set_form(opt_form)  # set and save the opt_form
 
         self.optimizer = Optimizer(self.opt_form)  # make an optimizer drived by this form
+        self.optimizer.set_model_samples(
+            model_samples=self.model_samples
+        )
+        self.optimizer.max_it_reached.connect(
+            self._handle_max_it
+        )
+        self.optimizer.new_posterior.connect(
+            self._handle_new_posterior
+        )
 
         self.is_online = self.opt_form["exec"]["is_online"]  # is it an online process
         self.is_opt = self.opt_form["opt"]["enabled"]        # is there an optimization
@@ -81,17 +101,34 @@ class OptManager(QObject):
                 self.serv.set_data
             )
 
+            # when new candidates are probided by optimizer, update the step counter
+            self.optimizer.new_candidates.connect(
+                self._handle_step
+            )
+
         self.optimizer.init_opt()   # get the first candidates
+
+
+    def _handle_step(self) -> None:
+        self.step += 1
+        self.step_counter.emit(self.step)
+
+
+    def _handle_max_it(self) -> None:
+        self.on_max_it_reached.emit()
 
 
     def _handle_new_result(self, data) -> None:
         results = data.get("results", [])
         self.data_for_plot.emit(results)
+    
+    def _handle_new_posterior(self, posterior: dict) -> None:
+        self.posterior_to_plot.emit(posterior)
 
 
     def stop_opt(self) -> None:
         '''Stop the optimization process.'''
-        
+
         if self.is_online:  # if the server is involved
 
             # disconnect the relevant features
@@ -104,6 +141,7 @@ class OptManager(QObject):
         self.is_online = False
         self.is_opt = False
         self.is_saving = False
+        self.step = 0
         log.info("Optimization stopped.")
 
 
@@ -161,3 +199,12 @@ class OptManager(QObject):
         '''Helper setting and saving the 'opt_form' dictionary.'''
         self._opt_form = opt_form                 # set the attribute
         self.is_saving = save_opt_form(opt_form)  # save the configuration
+
+
+    def set_model_samples(self, model_samples: int) -> None:
+        self.model_samples = model_samples
+
+        if self.optimizer is not None:
+            self.optimizer.set_model_samples(
+                model_samples=model_samples
+            )

@@ -1,0 +1,131 @@
+{
+    "saved_date": "2026-06-04",
+    "saved_time": "16:32:32",
+    "exec": {
+        "is_online": true,
+        "is_reading_file": false,
+        "reading_path": "",
+        "saving_path": "C:/Users/APPLI/Documents/GitHub/laplace_opt/post_analysis/examples/data",
+        "server_address": "147.250.140.65:1254"
+    },
+    "inputs": {
+        "GasJetHeight": {
+            "__type__": "instance",
+            "class": "inputs.input_gas_jet_height.GasJetHeight",
+            "repr": "<GasJetHeight(name='gas_jet_height', bounds=(-2.0, 10.0), unit='mm', safe_bounds=(-2.0, 10.0), address=147.250.140.65:5555, position index=0>",
+            "state_dict": {
+                "name": "gas_jet_height",
+                "unit": "mm",
+                "bounds": [
+                    -2.0,
+                    10.0
+                ],
+                "safe_bounds": [
+                    -2.0,
+                    10.0
+                ],
+                "ip": "147.250.140.65",
+                "port": "5555",
+                "address": "147.250.140.65:5555",
+                "symbol": "y_gas",
+                "description": "Vertical position of the gas jet.",
+                "position_index": 0,
+                "motor_number": 1
+            }
+        },
+        "GasJetLongitudinal": {
+            "__type__": "instance",
+            "class": "inputs.input_gas_jet_longitudinal.GasJetLongitudinal",
+            "repr": "<GasJetLongitudinal(name='gas_jet_longitudinal', bounds=(4.0, 4.0), unit='mm', safe_bounds=(-2.0, 10.0), address=147.250.140.65:5555, position index=1>",
+            "state_dict": {
+                "name": "gas_jet_longitudinal",
+                "unit": "mm",
+                "bounds": [
+                    4.0,
+                    4.0
+                ],
+                "safe_bounds": [
+                    -2.0,
+                    10.0
+                ],
+                "ip": "147.250.140.65",
+                "port": "5555",
+                "address": "147.250.140.65:5555",
+                "symbol": "z_gas",
+                "description": "Position of the gas jet along the propagation axis.",
+                "position_index": 1,
+                "motor_number": 2
+            }
+        }
+    },
+    "obj": {
+        "ElectronEnergyMean": {
+            "__type__": "instance",
+            "class": "objectives.objective_electron_energy_mean.ElectronEnergyMean",
+            "repr": "<ElectronEnergyMean(name='electron_energy_mean', minimize='False', unit='MeV'), address=147.250.140.65:5556, position index=0>",
+            "state_dict": {
+                "name": "electron_energy_mean",
+                "unit": "MeV",
+                "minimize": false,
+                "ip": "147.250.140.65",
+                "port": "5556",
+                "address": "147.250.140.65:5556",
+                "symbol": "$E_0$",
+                "description": "The spectrum mean energy",
+                "position_index": 0
+            }
+        }
+    },
+    "criterium": {
+        "max_iterations": 20,
+        "n_repeats": 1,
+        "save_period": 1,
+        "is_optimization_criterium": false
+    },
+    "init": {
+        "cls": {
+            "__type__": "class",
+            "module": "initializations.initialization_sobol_sampling",
+            "name": "SobolInitialization"
+        },
+        "params": {
+            "n_samples": 4,
+            "q_candidates": 1,
+            "seed": 0
+        }
+    },
+    "opt": {
+        "enabled": true,
+        "pipeline": {
+            "strategy": {
+                "cls": {
+                    "__type__": "class",
+                    "module": "strategies.strategy_model_list",
+                    "name": "ModelList"
+                },
+                "params": {
+                    "seed": 0,
+                    "q_candidates": 1,
+                    "num_restarts": 5,
+                    "raw_samples": 10,
+                    "standardize_outputs": true,
+                    "covar_module": {
+                        "__type__": "class",
+                        "module": "gpytorch.kernels.rbf_kernel",
+                        "name": "RBFKernel"
+                    }
+                }
+            },
+            "acquisition": {
+                "cls": {
+                    "__type__": "class",
+                    "module": "acquisitions.acquisition_qlognei",
+                    "name": "qLogNEI"
+                },
+                "params": {
+                    "mc_samples": 128
+                }
+            }
+        }
+    }
+}

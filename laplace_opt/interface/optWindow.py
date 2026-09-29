@@ -13,7 +13,8 @@ from laplace_log import log
 from .plotWindow import PlotWindow
 from .panels import (
     ExecutionPanel, InOutPanel,
-    InitializationPanel, OptPanel
+    InitializationPanel, OptPanel, 
+    CriteriumPanel
 )
 from ..core.optManager import OptManager
 from ..utils.model_form import make_form, ValidationLevel
@@ -43,7 +44,7 @@ class OptWindow(QMainWindow):
         # set title, geometry and style
         self.setWindowTitle("Optimization Window")
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
-        self.setGeometry(100, 30, 1200, 700)
+        self.setGeometry(100, 30, 1250, 900)
 
         # icon
         icon_path = p.parent / 'icons' # path to the icon folder
@@ -67,13 +68,20 @@ class OptWindow(QMainWindow):
 
             # input / obj layout
         in_out_layout = QHBoxLayout()
-        in_out_layout.addWidget(self.input_panel, stretch=1)
+        in_out_layout.addWidget(self.input_panel, stretch=2)
         in_out_layout.addWidget(self.objective_panel, stretch=1)
         main_layout.addLayout(in_out_layout)
 
-        # Block 3: Init
+        # Block 3: criterium and init
+            # criterium
+        crit_init_layout = QHBoxLayout()
+        self.criterium_panel = CriteriumPanel()
+        crit_init_layout.addWidget(self.criterium_panel, stretch=1)
+            
+            # init
         self.init_panel = InitializationPanel()
-        main_layout.addWidget(self.init_panel, stretch=1)
+        crit_init_layout.addWidget(self.init_panel, stretch=1)
+        main_layout.addLayout(crit_init_layout)
 
         # Block 4: Pipeline
         self.opt_panel = OptPanel()
@@ -85,6 +93,9 @@ class OptWindow(QMainWindow):
         bottom_layout.addWidget(self.plot_button)
 
         bottom_layout.addStretch()
+        self.step_label = QLabel("Step: -/-")
+        self.step_label.setStyleSheet("font-weight: bold;")
+        bottom_layout.addWidget(self.step_label)
             # state label
         self.status_label = QLabel("🟢 Ready")
         self.status_label.setStyleSheet("font-weight: bold;")
@@ -134,6 +145,16 @@ class OptWindow(QMainWindow):
             self.execution_panel.set_server_address
         )
 
+        # stop the optimizer if the maximun iteration is reached
+        self.opt_manager.on_max_it_reached.connect(
+            self.on_max_iteration_reached
+        )
+
+        # update step
+        self.opt_manager.step_counter.connect(
+            self.on_step
+        )
+
         # plotting actions
             # button to display the window
         self.plot_button.clicked.connect(
@@ -142,6 +163,14 @@ class OptWindow(QMainWindow):
             # data to plot
         self.opt_manager.data_for_plot.connect(
             self.plot_window.add_result
+        )
+            # posterior to plot
+        self.opt_manager.posterior_to_plot.connect(
+            self.plot_window.set_posterior
+        )
+            # number of sample for plotting the model
+        self.plot_window.model_sample.connect(
+            self.opt_manager.set_model_samples
         )
     
 
@@ -160,6 +189,7 @@ class OptWindow(QMainWindow):
         execution = self.execution_panel.get_execution()
         inputs = self.input_panel.get_enabled_rows()
         objectives = self.objective_panel.get_enabled_rows()
+        criterium = self.criterium_panel.get_criterium()
         init = self.init_panel.get_initialization()
         opt = self.opt_panel.get_opt()
 
@@ -168,6 +198,7 @@ class OptWindow(QMainWindow):
             exec=execution,
             inputs=inputs,
             obj=objectives,
+            crit=criterium,
             init=init,
             opt=opt
         )
@@ -210,6 +241,37 @@ class OptWindow(QMainWindow):
         self.opt_manager.stop_opt()
 
         self.set_opt_state(False)
+    
+
+    def on_max_iteration_reached(self) -> None:
+        '''
+        Maximum iteration set a initialization is reached.
+        '''
+        log.debug("The maximum number of iterations has been reached. Stopping the process...")
+
+        self.opt_manager.stop_opt()
+        self.set_opt_state(False)
+
+        QMessageBox.warning(
+            self,
+            "End criterium",
+            "Maximum iteration reached."
+        )
+    
+
+    def on_step(self, step: int) -> None:
+        '''
+        Update the Step label.
+        '''
+        is_opt = self.opt_manager.opt_form["opt"]["enabled"]
+        if not is_opt:
+            self.step_label.setText(f"Step: {str(step)}/1")
+        else:
+            max_it = self.opt_manager.opt_form["criterium"]["max_iterations"]
+            if max_it == 0:
+                self.step_label.setText(f"Step: {str(step)}/∞")
+            else:
+                self.step_label.setText(f"Step: {str(step)}/{max_it}")
 
     
     def on_plot_window(self) -> None:
@@ -228,6 +290,7 @@ class OptWindow(QMainWindow):
             self.status_label.setStyleSheet("color: green; font-weight: bold;")
             self.start_button.setEnabled(True)      # unlock the start button
             self.execution_panel.set_locked(False)  # unlock the ExecutionPanel
+            self.step_label.setText("Step: -/-")
 
 
     def closeEvent(self, event) -> None:

@@ -1,6 +1,7 @@
 # libraries
 from abc import ABC, abstractmethod
 
+import torch
 from botorch.models.model import Model
 
 # project
@@ -22,27 +23,6 @@ class StrategyStructure(ABC):
 
     # parameters required for every strategy
     core_parameters = {
-        "n_repeats": {
-            "type": int,
-            "default": 1,
-            "min": 1,
-            "max": 1000,
-            "label": "Number sample repeats",
-            "description": "Number of repeated evaluations per candidate."
-        },
-
-        "save_period": {
-            "type": int,
-            "default": 5,
-            "min": 0,
-            "max": 100,
-            "label": "Saving period",
-            "description": (
-                "Number of optimization steps between automatic saves of observations and model state.\n"
-                "Set to 0 to disable periodic saving."
-            )
-        },
-
         "seed": {
             "type": int,
             "default": 0,
@@ -109,3 +89,41 @@ class StrategyStructure(ABC):
                 ready to be used by an acquisition function.
         '''
 
+
+    @abstractmethod
+    def fit_model(self, model: Model) -> Model:
+        '''
+        Fit the model
+        '''
+
+
+    @abstractmethod
+    def get_best_results(self,
+                         context: OptimizationContext,
+                         model: Model | None,
+                         **params) -> list[dict]:
+        '''
+        Return best sampled point for each objective of the model.
+
+        Args:
+            context: (OptimizationContext)
+                Optimization context providing observations, bounds, 
+                and objective structure required to build the model.
+            
+            model:
+                
+
+            **params:
+                Additional keyword arguments defining model-specific
+                hyperparameters (e.g., kernel type, output transforms).
+
+        Returns:
+             list[dict]:
+                A dictionary per objective, gathering its best value,
+                the uncertainty and the position when sampling.
+        '''
+
+    @abstractmethod
+    def posterior(self, names: list[str], model: Model, X_norm: torch.Tensor) -> tuple[dict, dict, dict]:
+        '''        
+        '''

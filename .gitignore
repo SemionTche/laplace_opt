@@ -1,6 +1,6 @@
-# test saves
-opt_lhc/tests/bo/save/
-opt_lhc/tests/saving/
+**/experiment_analysis
+
+**/benchmark/results
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
@@ -316,3 +316,4 @@ pyrightconfig.json
 # Ignore all local history of files
 .history
 .ionide
+*.ini

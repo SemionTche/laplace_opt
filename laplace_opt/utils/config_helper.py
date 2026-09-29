@@ -15,7 +15,7 @@ def get_config():
     return settings
 
 
-def get_from_config(module: str, item: str, default_value = "", type = str):
+def get_from_config(module: str, item: str, default_value: str | int = "", type: type = str):
     '''Get the 'item' stored in 'module' in the config file.'''
     settings = QSettings(
         str(CONFIG_PATH), 
