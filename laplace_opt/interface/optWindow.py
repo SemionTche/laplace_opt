@@ -18,7 +18,9 @@ from .panels import (
 )
 from ..core.optManager import OptManager
 from ..utils.model_form import make_form, ValidationLevel
+from ..utils.config_helper import get_from_config
 from ..utils.json_encoder import json_style
+from ..utils.model_source import ModelSource
 
 
 class OptWindow(QMainWindow):
@@ -26,7 +28,17 @@ class OptWindow(QMainWindow):
     def __init__(self):
 
         super().__init__() # heritage from QMainWindow
-
+        model_path = get_from_config(
+            module="interface", 
+            item="model_path", 
+            default_value="", 
+            type=str
+        )
+        log.info(f"Loading interface from '{model_path}'")
+        
+        self.source = ModelSource(
+            external_path=model_path
+        )
         self.opt_manager = OptManager()  # class managing the optimization
         self.plot_window = PlotWindow()
 
@@ -57,14 +69,20 @@ class OptWindow(QMainWindow):
         main_layout = QVBoxLayout(central_widget)
 
         # Block 1: Server and Reader modes
-        self.execution_panel = ExecutionPanel()
+        self.execution_panel = ExecutionPanel(source=self.source)
         main_layout.addWidget(self.execution_panel)
 
         # Block 2: Inputs
-        self.input_panel = InOutPanel(folder_name="inputs")
+        self.input_panel = InOutPanel(
+            folder_name="inputs", 
+            source=self.source
+        )
 
         # Block 2: Objectives
-        self.objective_panel = InOutPanel(folder_name="objectives")
+        self.objective_panel = InOutPanel(
+            folder_name="objectives", 
+            source=self.source
+        )
 
             # input / obj layout
         in_out_layout = QHBoxLayout()
@@ -79,12 +97,12 @@ class OptWindow(QMainWindow):
         crit_init_layout.addWidget(self.criterium_panel, stretch=1)
             
             # init
-        self.init_panel = InitializationPanel()
+        self.init_panel = InitializationPanel(source=self.source)
         crit_init_layout.addWidget(self.init_panel, stretch=1)
         main_layout.addLayout(crit_init_layout)
 
         # Block 4: Pipeline
-        self.opt_panel = OptPanel()
+        self.opt_panel = OptPanel(source=self.source)
         main_layout.addWidget(self.opt_panel, stretch=1)
 
         # Block 5: Start and Stop buttons

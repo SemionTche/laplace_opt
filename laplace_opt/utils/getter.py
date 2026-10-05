@@ -11,29 +11,37 @@ from ..model_construction import (
 )
 
 
-def get_classes(category: str) -> dict[str, type]:
+def get_classes(dir: Path, category: str) -> dict[str, type]:
     '''
     Get a dictionary {class_name, class} of every class
     contained in the 'model_construction/category' folder.
     '''
     # folder path
-    dir = Path(__file__).parent.parent / "model_construction" / category
-    
+    # dir = Path(__file__).parent.parent / "model_construction" / category
+    dir = dir / category
+
     result: dict[str, type] = {} # {class_name: class}
 
     structure = get_structure(category) # structure class to use depending on the category
-
+    
+    
     for py in dir.glob("*.py"): # for every python file in this folder
         
         # load the module
-        spec = importlib.util.spec_from_file_location(f"{category}.{py.stem}", py)
+        spec = importlib.util.spec_from_file_location(
+            f"{category}.{py.stem}", 
+            py
+        )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         
         for _, cls in inspect.getmembers(mod, inspect.isclass): # for every class in the module
             
             # if the class does have the same name as the file, is a subclass and not the parent (structure) class
-            if cls.__module__ == mod.__name__ and issubclass(cls, structure) and cls is not structure:
+            if (
+                cls.__module__ == mod.__name__ 
+                and issubclass(cls, structure) 
+                and cls is not structure ):
                 
                 result[cls.__name__] = cls # add it to the dictionary
     

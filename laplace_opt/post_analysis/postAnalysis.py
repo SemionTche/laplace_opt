@@ -9,8 +9,10 @@ from botorch.posteriors.gpytorch import GPyTorchPosterior
 # project
 from ..core.optimizerContext import OptimizationContext
 from ..utils.getter import get_classes
+from ..utils.model_source import ModelSource
 from ..model_construction import StrategyStructure
 
+source = ModelSource()
 
 @dataclass
 class RunMetadata:
@@ -451,7 +453,7 @@ class PostAnalysis:
                 The instanciated strategy and the parameter dictionary
         '''
         # get the strategies in model_construction
-        strategies = get_classes("strategies")
+        strategies = get_classes(dir=source.root, category="strategies")
 
         # get the strategy and the parameters from the loaded data
         strat = self.data["problem"]["strategy"]

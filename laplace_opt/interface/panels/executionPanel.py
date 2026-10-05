@@ -9,6 +9,7 @@ from laplace_log import log
 
 # project
 from ...utils.config_helper import get_from_config, set_in_config
+from ...utils.model_source import ModelSource
 
 
 class ExecutionPanel(QGroupBox):
@@ -19,9 +20,9 @@ class ExecutionPanel(QGroupBox):
     # signal indicating that the server checkbox state changed
     server_state_changed = pyqtSignal(bool)
 
-    def __init__(self):
+    def __init__(self, source: ModelSource):
         super().__init__("Execution & Data Configuration")
-
+        self.source = source
         self.set_up()  # build the elements
         self.actions() # defines the panel actions
 
@@ -42,9 +43,9 @@ class ExecutionPanel(QGroupBox):
             # file
         self.read_file = QRadioButton("Read data from file")
         self.read_file.setChecked(True)  # default mode read from file
-        self.read_entry = QLineEdit()
-        self.read_entry.setPlaceholderText("reading path")
-        self.read_browse_button = QPushButton("Read Browse")
+        self.model_path_entry = QLineEdit()
+        self.model_path_entry.setPlaceholderText("model path")
+        self.model_browse_button = QPushButton("Model Browse")
 
             # server
         self.read_server = QRadioButton("Read data from server")
@@ -66,8 +67,8 @@ class ExecutionPanel(QGroupBox):
 
         exc_layout.addWidget(self.read_file, 1, 0)
         exc_layout.addWidget(QLabel("Reading path:"), 1, 1)
-        exc_layout.addWidget(self.read_entry, 1, 2)
-        exc_layout.addWidget(self.read_browse_button, 1, 3)
+        exc_layout.addWidget(self.model_path_entry, 1, 2)
+        exc_layout.addWidget(self.model_browse_button, 1, 3)
 
         exc_layout.addWidget(self.read_server, 2, 0)
 
@@ -94,14 +95,14 @@ class ExecutionPanel(QGroupBox):
         self.set_path_saving(default_saving_path)
         
             # get and set default reading path
-        default_reading_path = get_from_config(
+        default_model_path = get_from_config(
             module="interface",
-            item="default_reading_path",
+            item="model_path",
             default_value="",
             type=str
         )
-        self.read_path_tmp = default_reading_path
-        self.set_path_reading(default_reading_path)
+        self.model_path_tmp = default_model_path
+        self.set_path_reading(default_model_path)
 
 
     def actions(self) -> None:
@@ -118,7 +119,7 @@ class ExecutionPanel(QGroupBox):
         self.lock_button.toggled.connect(self.set_locked)
 
         # when the read button is pressed, select the reading folder
-        self.read_browse_button.clicked.connect(
+        self.model_browse_button.clicked.connect(
             lambda: self.browse_folder(is_read=True)
         )
         
@@ -128,8 +129,8 @@ class ExecutionPanel(QGroupBox):
         )
 
         # when the reading path is modified, change the default reading path
-        self.read_entry.textChanged.connect(
-            self.on_read_path_changed
+        self.model_path_entry.textChanged.connect(
+            self.on_model_path_changed
         )
 
         # when the saving path is modified, change the default saving path
@@ -138,17 +139,17 @@ class ExecutionPanel(QGroupBox):
         )
 
 
-    def on_read_path_changed(self, path: str) -> None:
+    def on_model_path_changed(self, path: str) -> None:
         '''
         Change the default reading path in 'config.ini' and
         display it in the logs.
         '''
         set_in_config(
             module="interface",
-            item="default_reading_path",
+            item="model_path",
             val=path,
         )
-        log.debug(f"Reading folder modified, new reading folder: {path}")
+        log.debug(f"Model folder modified, new model folder: {path}")
 
 
     def on_save_path_changed(self, path: str) -> None:
@@ -209,8 +210,8 @@ class ExecutionPanel(QGroupBox):
         )
 
         # enable / disable the reading entry and button
-        self.read_entry.setEnabled(enabled)
-        self.read_browse_button.setEnabled(enabled)
+        self.model_path_entry.setEnabled(enabled)
+        self.model_browse_button.setEnabled(enabled)
 
 
     def set_locked(self, locked: bool) -> None:
@@ -222,8 +223,8 @@ class ExecutionPanel(QGroupBox):
         widgets = [
             self.server_checkbox,
             self.read_file,
-            self.read_entry,
-            self.read_browse_button,
+            self.model_path_entry,
+            self.model_browse_button,
             self.read_server,
             self.saving_entry,
             self.save_browse_button
@@ -244,8 +245,8 @@ class ExecutionPanel(QGroupBox):
         log.debug("Configuration locked." if locked else "Configuration unlocked.")
 
         if not locked:  # if unlocking
-            if self.get_path_reading() != self.read_path_tmp:  # if the current reading path != the one registered during locked
-                self.read_entry.setText(self.read_path_tmp)    # set the reading path
+            if self.get_path_reading() != self.model_path_tmp:  # if the current reading path != the one registered during locked
+                self.model_path_entry.setText(self.model_path_tmp)    # set the reading path
             
             if self.get_path_saving() != self.save_path_tmp:   # if the current saving path != the one registered during locked
                 self.saving_entry.setText(self.save_path_tmp)  # set the saving path 
@@ -305,7 +306,7 @@ class ExecutionPanel(QGroupBox):
 
         # getters
     def get_path_reading(self) -> str:
-        return self.read_entry.text().strip()
+        return self.model_path_entry.text().strip()
 
     def get_path_saving(self) -> str:
         return self.saving_entry.text().strip()
@@ -318,10 +319,10 @@ class ExecutionPanel(QGroupBox):
     def set_path_reading(self, path: str) -> None:
         if not self.is_locked():
             log.info(f"Reading path setted: '{path}'")
-            self.read_entry.setText(path)
+            self.model_path_entry.setText(path)
         else:
             log.info(f"Configuration locked, reading path unchanged before unlocking.")
-        self.read_path_tmp = path
+        self.model_path_tmp = path
     
     def set_path_saving(self, path: str) -> None:
         if not self.is_locked():

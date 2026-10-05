@@ -3,7 +3,7 @@ import pathlib
 
 from PyQt6.QtCore import QSettings
 
-CONFIG_PATH = pathlib.Path(__file__).parent.parent / "config.ini"
+CONFIG_PATH = pathlib.Path(__file__).parent.parent / "app_config.ini"
 
 
 def get_config():
