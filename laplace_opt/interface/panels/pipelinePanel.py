@@ -36,8 +36,8 @@ class PipelinePanel(QGroupBox):
         # the first element is the title, the second the folder
         # in which the classes must be read
         self.stages = {
-            "strategy": ("Strategy", "strategies", "default_strategy_name"),
-            "acquisition": ("Acquisition", "acquisitions", "default_acquisition_name"),
+            "strategy": ("Strategy", "strategies", "strategy_name"),
+            "acquisition": ("Acquisition", "acquisitions", "acquisition_name"),
         }
         # for each stage, there is a dictionary of the corresponding classes
         self.classes: dict[str, dict[str, StratOrAcq]] = {}
@@ -53,7 +53,8 @@ class PipelinePanel(QGroupBox):
                 module="interface", 
                 item=default_in_config, 
                 default_value="", 
-                type=str
+                type=str,
+                config_path=self.source.config
             )
             # for each stage class
             for index, cls_name in enumerate(self.classes[stage].keys()):

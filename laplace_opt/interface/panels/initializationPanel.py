@@ -68,9 +68,10 @@ class InitializationPanel(QGroupBox):
         # get the default initialization structure
         default_init = get_from_config(
             module="interface", 
-            item="default_initialization_name", 
+            item="initialization_name", 
             default_value="",
-            type=str
+            type=str,
+            config_path=self.source.config
         )
         
         if default_init:                                # if there is a default init
