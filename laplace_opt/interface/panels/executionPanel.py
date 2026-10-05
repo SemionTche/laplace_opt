@@ -1,7 +1,7 @@
 # libraries
 from PyQt6.QtWidgets import (
     QGroupBox, QGridLayout, QRadioButton,
-    QCheckBox, QLineEdit, QPushButton, 
+    QCheckBox, QLineEdit, QPushButton,
     QLabel, QFileDialog
 )
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -23,14 +23,14 @@ class ExecutionPanel(QGroupBox):
     def __init__(self, source: ModelSource):
         super().__init__("Execution & Data Configuration")
         self.source = source
-        self.set_up()  # build the elements
-        self.actions() # defines the panel actions
+        self.set_up()           # build the elements
+        self.actions()          # defines the panel actions
 
 
     def set_up(self) -> None:
         '''
-        Function made to create and set the elements
-        of the ExecutionPanel class.
+        Function made to create and set 
+        the elements of the ExecutionPanel.
         '''
         exc_layout = QGridLayout(self)
 
@@ -66,7 +66,7 @@ class ExecutionPanel(QGroupBox):
         exc_layout.addWidget(self.server_entry, 0, 2)
 
         exc_layout.addWidget(self.read_file, 1, 0)
-        exc_layout.addWidget(QLabel("Reading path:"), 1, 1)
+        exc_layout.addWidget(QLabel("Model path:"), 1, 1)
         exc_layout.addWidget(self.model_path_entry, 1, 2)
         exc_layout.addWidget(self.model_browse_button, 1, 3)
 
@@ -81,28 +81,25 @@ class ExecutionPanel(QGroupBox):
         exc_layout.setColumnStretch(2, 1) # set the Stretch of the 2nd column, to 1 (other are 0)
 
         self.update_read_server_state() # enable / disable the read_server radiobutton
-        self.update_read_file_state()   # enable / disable the read_entry
 
-        # get the default execution (reading and saving) path
+        # get the default execution (model and saving) path
             # get and set default saving path
-        default_saving_path = get_from_config(
+        self.save_path = get_from_config(
             module="interface",
-            item="default_saving_path",
+            item="saving_path",
             default_value="",
             type=str
         )
-        self.save_path_tmp = default_saving_path   # path update when the panel is unlocked
-        self.set_path_saving(default_saving_path)
+        self.set_path_saving(self.save_path)  # path update when the panel is unlocked
         
-            # get and set default reading path
-        default_model_path = get_from_config(
+            # get and set default model path
+        self.model_path = get_from_config(
             module="interface",
             item="model_path",
             default_value="",
             type=str
         )
-        self.model_path_tmp = default_model_path
-        self.set_path_reading(default_model_path)
+        self.set_path_model(self.model_path)
 
 
     def actions(self) -> None:
@@ -112,23 +109,20 @@ class ExecutionPanel(QGroupBox):
         # when the server checkbox is toggled, emit a PyQt6 signal (to start server)
         self.server_checkbox.toggled.connect(self.update_online_state)
         
-        # when the read from file radiobutton is toggled, enable / disable the read_entry
-        self.read_file.toggled.connect(self.update_read_file_state)
-        
         # when the lock_button is pressed, enable / disable the widgets
         self.lock_button.toggled.connect(self.set_locked)
 
-        # when the read button is pressed, select the reading folder
+        # when the model button is pressed, select the reading folder
         self.model_browse_button.clicked.connect(
-            lambda: self.browse_folder(is_read=True)
+            lambda: self.browse_folder(is_model=True)
         )
         
         # when the save button is pressed, select the saving folder
         self.save_browse_button.clicked.connect(
-            lambda: self.browse_folder(is_read=False)
+            lambda: self.browse_folder(is_model=False)
         )
 
-        # when the reading path is modified, change the default reading path
+        # when the model path is modified, change the default model path
         self.model_path_entry.textChanged.connect(
             self.on_model_path_changed
         )
@@ -141,8 +135,8 @@ class ExecutionPanel(QGroupBox):
 
     def on_model_path_changed(self, path: str) -> None:
         '''
-        Change the default reading path in 'config.ini' and
-        display it in the logs.
+        Change the default model path in 'app_config.ini' 
+        and display it in the logs.
         '''
         set_in_config(
             module="interface",
@@ -154,12 +148,12 @@ class ExecutionPanel(QGroupBox):
 
     def on_save_path_changed(self, path: str) -> None:
         '''
-        Change the default saving path in 'config.ini' and
-        display it in the logs.
+        Change the default saving path in 'app_config.ini' 
+        and display it in the logs.
         '''
         set_in_config(
             module="interface",
-            item="default_saving_path",
+            item="saving_path",
             val=path
         )
         log.debug(f"Saving folder modified, new saving folder: {path}")
@@ -196,24 +190,6 @@ class ExecutionPanel(QGroupBox):
         self.saving_entry.setReadOnly(enabled) # in server mode, cannot change the saving path
 
 
-    def update_read_file_state(self) -> None:
-        '''
-        Enable / disable the file reading widgets.
-
-        Enable read file widgets (entry and button) 
-        if read_file radiobutton is selected and
-        configuration not locked.
-        '''
-        enabled = (
-            self.read_file.isChecked()            # if the read file radiobutton is checked
-            and not self.lock_button.isChecked()  # and the lock button not pressed
-        )
-
-        # enable / disable the reading entry and button
-        self.model_path_entry.setEnabled(enabled)
-        self.model_browse_button.setEnabled(enabled)
-
-
     def set_locked(self, locked: bool) -> None:
         '''
         Enable / disable every widget of the panel when
@@ -233,10 +209,9 @@ class ExecutionPanel(QGroupBox):
         for w in widgets: # for every widget
             w.setEnabled(not locked) # lock / unlock it (locked = True means disable -> Enable = False)
 
-        # lock / unlock the server radiobutton and the 
-        # reading widgets according to the current chosen mode
+        # lock / unlock the server radiobutton 
+        # according to the current mode chosen
         self.update_read_server_state()
-        self.update_read_file_state()
 
         # change the button text 
         self.lock_button.setText(
@@ -245,16 +220,16 @@ class ExecutionPanel(QGroupBox):
         log.debug("Configuration locked." if locked else "Configuration unlocked.")
 
         if not locked:  # if unlocking
-            if self.get_path_reading() != self.model_path_tmp:  # if the current reading path != the one registered during locked
-                self.model_path_entry.setText(self.model_path_tmp)    # set the reading path
+            if self.get_path_model() != self.model_path:  # if the current model path != the one registered during locked
+                self.model_path_entry.setText(self.model_path)    # set the model path
             
-            if self.get_path_saving() != self.save_path_tmp:   # if the current saving path != the one registered during locked
-                self.saving_entry.setText(self.save_path_tmp)  # set the saving path 
+            if self.get_path_saving() != self.save_path:   # if the current saving path != the one registered during locked
+                self.saving_entry.setText(self.save_path)  # set the saving path 
 
 
-    def browse_folder(self, is_read: bool=True) -> None:
+    def browse_folder(self, is_model: bool=True) -> None:
         '''
-        Open a QFileDialog to select a folder. Modify the reading
+        Open a QFileDialog to select a folder. Modify the model
         or saving entry according to the button used.
         '''
         path = QFileDialog.getExistingDirectory(
@@ -267,8 +242,8 @@ class ExecutionPanel(QGroupBox):
         # if a folder was selected
         if path:
             # update the corresponding entry
-            if is_read:
-                self.set_path_reading(path)
+            if is_model:
+                self.set_path_model(path)
             else:
                 self.set_path_saving(path)
 
@@ -283,7 +258,7 @@ class ExecutionPanel(QGroupBox):
         execution = {}
         execution["is_online"] = self.is_online_enabled()
         execution["is_reading_file"] = self.read_from_file()
-        execution["reading_path"] = self.get_path_reading()
+        execution["model_path"] = self.get_path_model()
         execution["saving_path"] = self.get_path_saving()
         execution["server_address"] = self.get_server_address()
 
@@ -305,7 +280,7 @@ class ExecutionPanel(QGroupBox):
 
 
         # getters
-    def get_path_reading(self) -> str:
+    def get_path_model(self) -> str:
         return self.model_path_entry.text().strip()
 
     def get_path_saving(self) -> str:
@@ -316,13 +291,13 @@ class ExecutionPanel(QGroupBox):
 
         
         ### setters
-    def set_path_reading(self, path: str) -> None:
+    def set_path_model(self, path: str) -> None:
         if not self.is_locked():
-            log.info(f"Reading path setted: '{path}'")
+            log.info(f"Model path setted: '{path}'")
             self.model_path_entry.setText(path)
         else:
-            log.info(f"Configuration locked, reading path unchanged before unlocking.")
-        self.model_path_tmp = path
+            log.info(f"Configuration locked, model path unchanged before unlocking.")
+        self.model_path = path
     
     def set_path_saving(self, path: str) -> None:
         if not self.is_locked():
@@ -330,7 +305,7 @@ class ExecutionPanel(QGroupBox):
             self.saving_entry.setText(path)
         else:
             log.info(f"Configuration locked, saving path unchanged before unlocking.")
-        self.save_path_tmp = path
+        self.save_path = path
     
     def set_server_address(self, address: str) -> None:
         return self.server_entry.setText(address)
