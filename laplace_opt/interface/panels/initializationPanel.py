@@ -102,8 +102,9 @@ class InitializationPanel(QGroupBox):
         self.selector.currentIndexChanged.connect(
             lambda index: set_in_config(
                 module="interface",
-                item="default_initialization_name",
-                val=list(self.init_cls.keys())[index]
+                item="initialization_name",
+                val=list(self.init_cls.keys())[index],
+                config_path=self.source.config
             )
         )
 

@@ -17,6 +17,8 @@ class ModelSource:
         else:
             self.external_path = Path(__file__).resolve().parent.parent / "model_construction"
             self.is_external = False
+        self.validate()
+
 
     @property
     def root(self) -> Path:

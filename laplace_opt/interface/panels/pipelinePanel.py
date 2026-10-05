@@ -127,7 +127,8 @@ class PipelinePanel(QGroupBox):
         set_in_config(
             module="interface",
             item=default_in_config,
-            val=val
+            val=val,
+            config_path=self.source.config
         )
 
         self.combos[stage].setToolTip(self.classes[stage][val].description)

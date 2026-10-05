@@ -43,6 +43,7 @@ def set_in_config(
         val,
         config_path: Path | str = APP_CONFIG_PATH) -> None:
     '''Set the value of 'item' stored in 'module' in the config file.'''
+    
     settings = QSettings(
         str(config_path), 
         QSettings.Format.IniFormat
