@@ -38,7 +38,7 @@ class PlotWindow(QWidget):
         and the grid layout for displaying PlotWidget instances. Initializes
         internal state for available keys, stored data, and active plots.
         '''
-        super().__init__() # heritage from QWidget
+        super().__init__()
 
         self.available_keys = [""]            # inputs and objectives availables
         self.plots: list[PlotWidget] = []     # list of plot widget displayed

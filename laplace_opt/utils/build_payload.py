@@ -64,7 +64,7 @@ def build_data_payload(X: torch.Tensor,
                     the sample candidates of shape (num_shot, n, q, d).
                 
                 inputs: (dict)
-                    the input main informations: 
+                    the input main information: 
                         {name: {"bounds": ..., "address": ..., "position_index": ...}}
                     
                 objectives: (dict)

@@ -28,7 +28,7 @@ class InputWidget(QWidget):
                     the input class. 
                     (must heritate from 'InputStructure')
         '''
-        super().__init__() # heritage from QWidget
+        super().__init__()
         
         self.name = name
         self.instance: InputStructure = cls()  # create a class instance

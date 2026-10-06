@@ -27,7 +27,7 @@ class InitializationPanel(QGroupBox):
     '''
     def __init__(self, source: ModelSource):
 
-        super().__init__("Initialization") # heritage from QGroupBox
+        super().__init__("Initialization")
         self.source = source
         self.init_cls: dict[str, InitializationStructure] = get_classes(   # dict{class_name: class}
             dir=source.root, 

@@ -29,7 +29,7 @@ class PipelinePanel(QGroupBox):
     selection_changed = pyqtSignal()
 
     def __init__(self, source: ModelSource):
-        super().__init__("Pipeline") # heritage from QGroupBox
+        super().__init__("Pipeline")
         self.source = source
 
         # dictionary representing a tuple per column

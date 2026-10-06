@@ -1,15 +1,18 @@
 # libraries
-import pathlib
+from pathlib import Path
 
+from laplace_log import log
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, 
-    QHBoxLayout, QPushButton, QMessageBox, QLabel
+    QMainWindow, QWidget, QLabel, 
+    QPushButton, QMessageBox, 
+    QVBoxLayout, QHBoxLayout
 )
 from PyQt6.QtGui import QIcon
 import qdarkstyle
-from laplace_log import log
+
 
 # project
+from .. import __version__
 from .plotWindow import PlotWindow
 from .panels import (
     ExecutionPanel, InOutPanel,
@@ -17,17 +20,37 @@ from .panels import (
     CriteriumPanel
 )
 from ..core.optManager import OptManager
+from ..utils.model_source import ModelSource
 from ..utils.model_form import make_form, ValidationLevel
 from ..utils.config_helper import get_from_config
 from ..utils.json_encoder import json_style
-from ..utils.model_source import ModelSource
 
 
 class OptWindow(QMainWindow):
+    '''
+    Main window of the optimization interface.
+
+    The OptWindow class provides the graphical interface used to configure,
+    start, monitor, and stop an optimization process. It gathers the
+    configuration from the different interface panels and coordinates their
+    interactions with the OptManager.
+
+    The window also manages the optimization plotting interface and handles
+    the communication between panels.
+    '''
     
     def __init__(self):
+        '''
+        Initialize the optimization window.
 
-        super().__init__() # heritage from QMainWindow
+        Load the configured model path, create the model source, optimization
+        manager, and plotting window, then build the graphical interface and
+        connect the required actions and signals between its components.
+        '''
+        log.info(f"Starting OptWindow... (v{__version__})")
+
+        super().__init__()
+
         model_path = get_from_config(
             module="interface", 
             item="model_path", 
@@ -39,22 +62,20 @@ class OptWindow(QMainWindow):
         self.source = ModelSource(
             external_path=model_path
         )
-        self.opt_manager = OptManager()  # class managing the optimization
-        self.plot_window = PlotWindow()
+        self.opt_manager = OptManager()  # coordination of the optimization
+        self.plot_window = PlotWindow()  # optimization visualization
 
         self.set_up()  # build the window panels and buttons
-
-        self.actions() # defines the actions of the window
+        self.actions() # defines the communications inside the window
 
 
     def set_up(self) -> None:
-        '''
-        Build the panels and buttons of the main opt window.
-        '''        
-        p = pathlib.Path(__file__) # path to the current file
+        '''Build the panels and buttons of the main opt window.'''
+
+        p = Path(__file__) # path to the current file
         
         # set title, geometry and style
-        self.setWindowTitle("Optimization Window")
+        self.setWindowTitle(f"Optimization Window - v{__version__}")
         self.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt6'))
         self.setGeometry(100, 30, 1250, 900)
 
@@ -68,7 +89,7 @@ class OptWindow(QMainWindow):
 
         main_layout = QVBoxLayout(central_widget)
 
-        # Block 1: Server and Reader modes
+        # Block 1: Server and Model modes
         self.execution_panel = ExecutionPanel(source=self.source)
         main_layout.addWidget(self.execution_panel)
 
@@ -90,14 +111,15 @@ class OptWindow(QMainWindow):
         in_out_layout.addWidget(self.objective_panel, stretch=1)
         main_layout.addLayout(in_out_layout)
 
-        # Block 3: criterium and init
-            # criterium
-        crit_init_layout = QHBoxLayout()
+        # Block 3: criterium
         self.criterium_panel = CriteriumPanel()
-        crit_init_layout.addWidget(self.criterium_panel, stretch=1)
             
-            # init
+        # Block 3: init
         self.init_panel = InitializationPanel(source=self.source)
+
+            # criterium / init layout
+        crit_init_layout = QHBoxLayout()
+        crit_init_layout.addWidget(self.criterium_panel, stretch=1)
         crit_init_layout.addWidget(self.init_panel, stretch=1)
         main_layout.addLayout(crit_init_layout)
 
@@ -105,7 +127,7 @@ class OptWindow(QMainWindow):
         self.opt_panel = OptPanel(source=self.source)
         main_layout.addWidget(self.opt_panel, stretch=1)
 
-        # Block 5: Start and Stop buttons
+        # Block 5: PlotWindow, Start and Stop buttons
         bottom_layout = QHBoxLayout()
         self.plot_button = QPushButton("Plot Optimization")
         bottom_layout.addWidget(self.plot_button)
@@ -132,8 +154,8 @@ class OptWindow(QMainWindow):
     
     def actions(self) -> None:
         '''
-        Defines the actions between the several panels and
-        make the bridget with the optimization manager.
+        Defines the communications between panels and
+        make the bridge with the optimization manager.
         '''
         # Start and Stop buttons
         self.start_button.clicked.connect(self.on_start)
@@ -158,7 +180,7 @@ class OptWindow(QMainWindow):
             self.execution_panel.set_path_saving
         )
 
-        # transmit the server address from the server to the ExecutionPanel
+        # send the server address from the server to the ExecutionPanel
         self.opt_manager.on_server_address.connect(
             self.execution_panel.set_server_address
         )
@@ -195,15 +217,15 @@ class OptWindow(QMainWindow):
     def on_start(self) -> None:
         '''
         Function used when 'start_button' is pressed. Create a 
-        config dictionary gathering the panel informations and 
-        transmit it to the optimization manager.
+        config dictionary gathering the panel information and 
+        send it to the optimization manager.
 
-        Check if the panel informations are sufficient to continue,
+        Check if the panel information are sufficient to continue,
         raise error and warning message box if needed.
         '''
         log.debug("Start button pressed.")
 
-        # gather the panel informations
+        # gather the panel information
         execution = self.execution_panel.get_execution()
         inputs = self.input_panel.get_enabled_rows()
         objectives = self.objective_panel.get_enabled_rows()
@@ -251,22 +273,16 @@ class OptWindow(QMainWindow):
 
 
     def on_stop(self) -> None:
-        '''
-        Function used when 'stop_button' is pressed.
-        '''
+        '''Function used when 'stop_button' is pressed.'''
         log.debug("Stop button pressed.")
-
         self.opt_manager.stop_opt()
-
         self.set_opt_state(False)
     
 
     def on_max_iteration_reached(self) -> None:
-        '''
-        Maximum iteration set a initialization is reached.
-        '''
-        log.debug("The maximum number of iterations has been reached. Stopping the process...")
-
+        '''Stop the process when maximum iteration is reached.'''
+        log.debug("The maximum number of iterations has been reached.")
+        log.debug("Stopping the process...")
         self.opt_manager.stop_opt()
         self.set_opt_state(False)
 
@@ -278,9 +294,7 @@ class OptWindow(QMainWindow):
     
 
     def on_step(self, step: int) -> None:
-        '''
-        Update the Step label.
-        '''
+        '''Update the Step label.'''
         is_opt = self.opt_manager.opt_form["opt"]["enabled"]
         if not is_opt:
             self.step_label.setText(f"Step: {str(step)}/1")
@@ -293,6 +307,7 @@ class OptWindow(QMainWindow):
 
     
     def on_plot_window(self) -> None:
+        '''Make (un)visible the plot window.'''
         log.debug("Plot window clicked.")
         self.plot_window.setVisible(not self.plot_window.isVisible())
 
@@ -317,9 +332,9 @@ class OptWindow(QMainWindow):
         
         Close the server stored in 'OptManager'.
         '''
+        # shutdown the server
         if self.execution_panel.is_online_enabled():
             self.opt_manager.server_launch(server_state=False)
         
-        self.plot_window.close()
-        
+        self.plot_window.close()  # close the plotting window
         event.accept()

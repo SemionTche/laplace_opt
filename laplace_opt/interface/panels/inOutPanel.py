@@ -1,4 +1,6 @@
 # librairies
+from typing import Generic, TypeVar
+
 from PyQt6.QtWidgets import (
     QGroupBox, QVBoxLayout, 
     QListWidget, QListWidgetItem
@@ -14,6 +16,7 @@ from ...model_construction import (
     InputStructure, ObjectiveStructure
 )
 
+T = TypeVar("T", InputStructure, ObjectiveStructure)
 AVAILABLE_FOLDERS = ["inputs", "objectives"]
 
 def verify_folder_name(folder_name) -> None:
@@ -52,11 +55,11 @@ class InOutPanel(QGroupBox):
         # define the widget type contained in the panel
         if folder_name == "inputs":
             self.widget_class = InputWidget
-            super().__init__("Available Inputs")  # heritage from QGroupBox
+            super().__init__("Available Inputs")
 
         elif folder_name == "objectives":
             self.widget_class = ObjectiveWidget
-            super().__init__("Available Objectives")  # heritage from QGroupBox
+            super().__init__("Available Objectives")
 
         # dictionary of the widgets stored in the InOutPanel
         self.rows: dict[str, InputWidget | ObjectiveWidget] = {}

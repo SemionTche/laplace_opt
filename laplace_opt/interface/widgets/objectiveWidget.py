@@ -28,7 +28,7 @@ class ObjectiveWidget(QWidget):
                     the objective class.
                     (must heritate from 'ObjectiveStructure')
         '''
-        super().__init__() # heritage from QWidget
+        super().__init__()
 
         self.name = name
         self.instance: ObjectiveStructure = cls()  # make an instance

@@ -45,7 +45,7 @@ class Optimizer(QObject):
                 Dictionary specifying inputs, objectives, initialization, 
                 and optimization pipeline parameters.
         '''
-        super().__init__()         # heritage QObject
+        super().__init__()
         self.model_samples = get_from_config(
             module="plot", 
             item="model_sample", 

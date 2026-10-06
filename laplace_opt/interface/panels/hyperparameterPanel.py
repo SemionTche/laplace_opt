@@ -21,7 +21,7 @@ class HyperparameterPanel(QGroupBox):
     class list given in 'load_from_classes'.
     '''
     def __init__(self):
-        super().__init__("Hyperparameters")   # heritage from QGroupBox
+        super().__init__("Hyperparameters")
         
         self.hyper_layout = QGridLayout(self) # main hyperparameter layout
         self.widgets: dict[tuple[StratOrAcq, str], QWidget] = {} # dict{(class, class_name): widget}

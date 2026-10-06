@@ -34,7 +34,7 @@ class PathStandardWidget(QWidget):
                 file_filter: (str)
                     indicate the files extension.
         '''
-        super().__init__() # heritage from QWidget
+        super().__init__()
 
         self.mode = mode
         self.file_filter = file_filter

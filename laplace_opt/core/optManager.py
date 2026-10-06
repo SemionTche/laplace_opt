@@ -32,7 +32,7 @@ class OptManager(QObject):
 
         Sets up controller objects and internal state flags.
         '''
-        super().__init__() # heritage from QObject
+        super().__init__()
 
         # controller class to emit signals from server
         self.server_controller = ServerController()

@@ -12,11 +12,11 @@ LoggerLHC(
     file_level="debug", 
     console_level="info"
 )
-log.info("Starting OptWindow...")
 
 # set the logging instances
 logging.getLogger(LOGGER_NAME).setLevel(logging.INFO)       # from laplace-server
 logging.getLogger("matplotlib").setLevel(logging.WARNING)   # from matplotlib
+logging.getLogger("qdarkstyle").setLevel(logging.INFO)      # from qdarkstyle
 
 from laplace_log import uncaught_exception    # import that allows to catch PyQt6 exceptions
 

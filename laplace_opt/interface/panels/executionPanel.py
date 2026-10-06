@@ -15,6 +15,7 @@ from ...utils.model_source import ModelSource
 class ExecutionPanel(QGroupBox):
     '''
     Panel handling execution mode and data source configuration.
+    
     A lock button allows to enable / disable every widget.
     '''
     # signal indicating that the server checkbox state changed
@@ -93,13 +94,7 @@ class ExecutionPanel(QGroupBox):
         self.set_path_saving(self.save_path)  # path update when the panel is unlocked
         
             # get and set default model path
-        self.model_path = get_from_config(
-            module="interface",
-            item="model_path",
-            default_value="",
-            type=str
-        )
-        self.set_path_model(self.model_path)
+        self.set_path_model( str(self.source.root) )
 
 
     def actions(self) -> None:
