@@ -1,16 +1,18 @@
 # libraries
+from laplace_log import log
 from PyQt6.QtWidgets import (
     QGroupBox, QVBoxLayout, QComboBox, 
     QWidget, QLabel, QSpinBox, 
     QGridLayout, QDoubleSpinBox, QLineEdit
 )
 
-from laplace_log import log
 
 # project
 from ...utils.getter import get_classes
 from ...utils.standard_widgets import load_standard_widgets
-from ...utils.config_helper import get_from_config, set_in_config
+from ...utils.config_helper import (
+    get_from_config, set_in_config
+)
 from ...utils.path_standard_widget import PathStandardWidget
 from ...utils.model_source import ModelSource
 from ...model_construction import InitializationStructure
@@ -26,7 +28,12 @@ class InitializationPanel(QGroupBox):
     such as the number of points or candidates.
     '''
     def __init__(self, source: ModelSource):
-
+        ''' 
+        Arg:
+            source (ModelSource):
+                Object storing the 'model_construction' folder 
+                location from which the structure is loaded.
+        '''
         super().__init__("Initialization")
         self.source = source
         self.init_cls: dict[str, InitializationStructure] = get_classes(   # dict{class_name: class}
@@ -34,8 +41,7 @@ class InitializationPanel(QGroupBox):
             category="initializations"
         ) 
 
-        self.set_up() # create and set the panel elements
-
+        self.set_up()  # create and set the panel elements
         self.actions() # defines the panel actions
 
 
@@ -74,7 +80,7 @@ class InitializationPanel(QGroupBox):
             config_path=self.source.config
         )
         
-        if default_init:                                # if there is a default init
+        if default_init:                                         # if there is a default init
             for i, cls_name in enumerate(self.init_cls.keys()):  # for every init structure
                 if cls_name == default_init:                     # if it's the default one
                     self.selector.setCurrentIndex(i)             # set the selector
@@ -87,9 +93,8 @@ class InitializationPanel(QGroupBox):
 
 
     def actions(self) -> None:
-        '''
-        Define the actions of the initialization panel.
-        '''
+        '''Define the actions of the initialization panel.'''
+
         # when a new initialization is selected, update the parameter widgets
         self.selector.currentIndexChanged.connect(self.update_parameters)
 
@@ -98,7 +103,7 @@ class InitializationPanel(QGroupBox):
             lambda index: self.selector.setToolTip(list(self.init_cls.values())[index].description)
         )
 
-        # when the new initialization is selected, update the config.ini default init
+        # when the new initialization is selected, update the default init in config.ini
         self.selector.currentIndexChanged.connect(
             lambda index: set_in_config(
                 module="interface",
@@ -110,9 +115,8 @@ class InitializationPanel(QGroupBox):
 
 
     def clear_param(self) -> None:
-        '''
-        Clear the widgets contained in the parameter layout
-        '''
+        '''Clear the widgets contained in the parameter layout.'''
+        
         while self.param_layout.count():        # while there are still widgets
             item = self.param_layout.takeAt(0)  # get the first param layout element
             if item.widget():                   # if it is a widget
