@@ -23,20 +23,28 @@ class OptPanel(QGroupBox):
     hyperparameters of the optimization.
     '''
     def __init__(self, source: ModelSource):
+        ''' 
+        Arg:
+            source (ModelSource):
+                Object storing the 'model_construction' folder 
+                location from which the structure is loaded.
+        '''
         super().__init__("Optimization Model")
         self.source = source
-        self.set_up()  # build the widgets
 
+        self.set_up()                 # build the widgets
         self.update_hyperparameters() # set the hyperparameters
-
-        self.actions()  # defines the actions of the panel
+        self.actions()                # defines the actions of the panel
 
 
     def set_up(self) -> None:
         '''
         Build the widgets of the OptPanel class.
+        
         A check box to enable / disable the widgets
+        
         A PipelinePanel to decide the strategy / acq func
+        
         A HyperparameterPanel to define the hyperparameters
         of the model.
         '''
@@ -71,23 +79,19 @@ class OptPanel(QGroupBox):
 
 
     def on_enabled(self, enabled: bool) -> None:
-        '''
-        Enable / disable the panels in OptPanel.
-        '''
+        '''Enable / disable the panels in OptPanel.'''
         self.pipeline.setEnabled(enabled)
         self.hyperparams.setEnabled(enabled)
 
 
     def update_hyperparameters(self) -> None:
-        '''
-        Update the HyperparameterPanel.
-        '''
+        '''Update the HyperparameterPanel.'''
         # clear all widgets
         if not self.enable_checkbox.isChecked():
             self.hyperparams.clear()
             return
 
-        selected = self.pipeline.get_selection() # get the current strategy / acq func
+        selected = self.pipeline.get_selection()              # get the current strategy / acq func
         self.hyperparams.load_from_classes(selected.values()) # load the corresponding widgets
 
 

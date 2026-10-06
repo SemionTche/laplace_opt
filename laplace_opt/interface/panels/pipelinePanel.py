@@ -1,14 +1,16 @@
 # libraries
+from laplace_log import log
 from PyQt6.QtWidgets import (
     QGroupBox, QGridLayout, QComboBox,
 )
 from PyQt6.QtCore import pyqtSignal
-from laplace_log import log
 
 # project
 from ...utils.getter import get_classes
 from ...utils.standard_widgets import place_labeled_widgets
-from ...utils.config_helper import get_from_config, set_in_config
+from ...utils.config_helper import (
+    get_from_config, set_in_config
+)
 from ...utils.model_source import ModelSource
 from ...model_construction import (
     AcquisitionStructure, StrategyStructure
@@ -29,6 +31,12 @@ class PipelinePanel(QGroupBox):
     selection_changed = pyqtSignal()
 
     def __init__(self, source: ModelSource):
+        ''' 
+        Arg:
+            source (ModelSource):
+                Object storing the 'model_construction' folder 
+                location from which the structure is loaded.
+        '''
         super().__init__("Pipeline")
         self.source = source
 
@@ -68,7 +76,7 @@ class PipelinePanel(QGroupBox):
 
     def set_up(self) -> None:
         '''
-        Build the widgets of the ModelPanel class.
+        Build the widgets of the PipelinePanel class.
         One label and one combo box for the strategy
         and the acquisition function.
         '''
@@ -87,7 +95,7 @@ class PipelinePanel(QGroupBox):
             )
 
             # read the available classes
-            cls_dict = get_classes( dir=self.source.root , category=category)  # dict{class_names, classes}
+            cls_dict = get_classes( dir=self.source.root , category=category )  # dict{class_names, classes}
             self.classes[stage] = cls_dict    # keep an acces to the classes
 
             # add an item in the combo box for each class
@@ -107,8 +115,7 @@ class PipelinePanel(QGroupBox):
             # store the (label, widget) pair for layout
             items.append((title, combo))
 
-        # place the widgets with a maximum of 6 per row,
-        # label on top and centered above the combo box
+        # place the widgets
         place_labeled_widgets(
             self.model_layout,
             items,

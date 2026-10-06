@@ -1,10 +1,9 @@
 # libraries
+from laplace_log import log
 from PyQt6.QtWidgets import (
     QGroupBox, QGridLayout, 
     QWidget, QComboBox
 )
-
-from laplace_log import log
 
 # project
 from ...utils.standard_widgets import load_standard_widgets
@@ -17,23 +16,21 @@ StratOrAcq = StrategyStructure | AcquisitionStructure
 
 class HyperparameterPanel(QGroupBox):
     '''
-    Panel displaying the available hyperparameters, depending on a
-    class list given in 'load_from_classes'.
+    Panel displaying the available hyperparameters, 
+    depending on a class list given in 'load_from_classes'.
     '''
     def __init__(self):
         super().__init__("Hyperparameters")
         
-        self.hyper_layout = QGridLayout(self) # main hyperparameter layout
+        self.hyper_layout = QGridLayout(self)                    # main hyperparameter layout
         self.widgets: dict[tuple[StratOrAcq, str], QWidget] = {} # dict{(class, class_name): widget}
 
 
     def clear(self) -> None:
-        '''
-        Clear all widgets contained in the 'hyper_layout'.
-        '''
+        '''Clear all widgets contained in the 'hyper_layout'.'''
         while self.hyper_layout.count():        # while there still is widget
             item = self.hyper_layout.takeAt(0)  # remove the item '0' from the layout and return it in item
-            if item.widget():                   # if there is a widget
+            if item.widget():                   # if it is a widget
                 item.widget().deleteLater()     # delete it (next event loop)
         self.widgets.clear()                    # clear the widgets dictionary
 
@@ -61,7 +58,7 @@ class HyperparameterPanel(QGroupBox):
 
             widgets, row, col = load_standard_widgets(    # load the standard widgets
                 self.hyper_layout,                        # in the 'hyper_layout'
-                params,                                   # depending on it's parameter dictionary
+                params,                                   # depending on its parameter dictionary
                 max_per_row=6,
                 start_row=row,
                 start_col=col
