@@ -14,9 +14,12 @@ from .model_form import is_date_folder
 def save_opt_form(opt_form: dict) -> bool:
     '''
     Function made to save a dictionary optimization 
-    form as a json file. Assumes the optimization form
-    is correct, including a 'saving_path' entry in the 'exec' 
-    dictionary indicating if and where the form should be saved.
+    form as a json file. 
+    
+    Assumes the optimization form is correct, including 
+    a 'saving_path' entry in the 'exec' dictionary 
+    indicating if and where the form should be saved.
+    
     Return a boolean indicating if the configuration was saved.
     '''
     execution = opt_form.get("exec", {})

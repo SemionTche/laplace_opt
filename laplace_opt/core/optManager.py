@@ -1,36 +1,36 @@
 # libraries
-from PyQt6.QtCore import pyqtSignal, QObject
-
-from laplace_server.server_lhc import ServerLHC
-from laplace_server.protocol import DEVICE_OPT
-from laplace_server.server_controller import ServerController
-
 from laplace_log import log
 
+from laplace_server.protocol import DEVICE_OPT
+from laplace_server.server_lhc import ServerLHC
+from laplace_server.server_controller import ServerController
+from PyQt6.QtCore import pyqtSignal, QObject
+
 # project
-from ..core.optimizer import Optimizer
+from .optimizer import Optimizer
 from ..utils.save_form import save_opt_form
 from ..utils.config_helper import get_from_config
 
 
 class OptManager(QObject):
     '''
-    High-level manager coordinating optimization, server, and UI signals.
+    High-level manager coordinating optimization, 
+    server, and UI signals.
 
-    Handles optimizer lifecycle, server communication, and optimization state.
+    Handles optimizer lifecycle, server communication, 
+    and optimization state.
     '''
-
-    on_server_address = pyqtSignal(str)  # transmit the optimizer server address
-    data_for_plot = pyqtSignal(list)
-    on_max_it_reached = pyqtSignal()
-    step_counter = pyqtSignal(int)
-    posterior_to_plot = pyqtSignal(object)
+    on_server_address = pyqtSignal(str)        # send the optimizer server address (to the OptWindow for the ExecutionPanel)
+    data_for_plot = pyqtSignal(list)           # send the data received (to the OptWindow for the PlotWindow)
+    on_max_it_reached = pyqtSignal()           # send the max it signal (to the OptWindow)
+    step_counter = pyqtSignal(int)             # send the current step (to the OptWindow)
+    posterior_to_plot = pyqtSignal(object)     # send the posterior received (to the OptWindow for the PlotWindow)
 
     def __init__(self):
         '''
         Initialize the optimization manager.
 
-        Sets up controller objects and internal state flags.
+        Set up controller objects and internal state flags.
         '''
         super().__init__()
 
@@ -65,15 +65,13 @@ class OptManager(QObject):
 
             Arg:
                 opt_form: (dict)
-                    the optimization dictionary required to
+                    The optimization dictionary required to
                     start an initialization or an optimization.
         '''
-        self.set_form(opt_form)  # set and save the opt_form
+        self.set_form(opt_form)                    # set and save the opt_form
 
         self.optimizer = Optimizer(self.opt_form)  # make an optimizer drived by this form
-        self.optimizer.set_model_samples(
-            model_samples=self.model_samples
-        )
+
         self.optimizer.max_it_reached.connect(
             self._handle_max_it
         )
@@ -91,7 +89,7 @@ class OptManager(QObject):
                 self.optimizer.update_opt
             )
 
-            # when the server receives a CMD_OPT, transmit it to the plot window
+            # when the server receives a CMD_OPT, send it to the plot window
             self.server_controller.opt_received.connect(
                 self._handle_new_result
             )
@@ -107,23 +105,6 @@ class OptManager(QObject):
             )
 
         self.optimizer.init_opt()   # get the first candidates
-
-
-    def _handle_step(self) -> None:
-        self.step += 1
-        self.step_counter.emit(self.step)
-
-
-    def _handle_max_it(self) -> None:
-        self.on_max_it_reached.emit()
-
-
-    def _handle_new_result(self, data) -> None:
-        results = data.get("results", [])
-        self.data_for_plot.emit(results)
-    
-    def _handle_new_posterior(self, posterior: dict) -> None:
-        self.posterior_to_plot.emit(posterior)
 
 
     def stop_opt(self) -> None:
@@ -150,7 +131,7 @@ class OptManager(QObject):
         Start or stop the optimization server.
         
             Args:
-                server_state: (bool) 
+                server_state (bool):
                     True to start the server, False to stop it.
         '''
         if server_state: # if on
@@ -186,7 +167,7 @@ class OptManager(QObject):
 
             self.serv.start() # start the server
 
-            # emit a signal to transmit the server address to the ExecutionPanel
+            # emit a signal to send the server address to the ExecutionPanel
             self.on_server_address.emit(f"{self.serv.server_ip}:{self.serv.server_port}")
         
         else:                # else means server off
@@ -195,6 +176,27 @@ class OptManager(QObject):
 
 
     ### helpers
+    def _handle_step(self) -> None:
+        '''Increase and emit the step attribute.'''
+        self.step += 1
+        self.step_counter.emit(self.step)
+
+
+    def _handle_max_it(self) -> None:
+        '''Emit the max it signal.'''
+        self.on_max_it_reached.emit()
+
+
+    def _handle_new_result(self, data) -> None:
+        '''Emit the results received from the server.'''
+        results = data.get("results", [])
+        self.data_for_plot.emit(results)
+    
+    def _handle_new_posterior(self, posterior: dict) -> None:
+        '''Emit the posterior received.'''
+        self.posterior_to_plot.emit(posterior)
+
+
     def set_form(self, opt_form: dict) -> None:
         '''Helper setting and saving the 'opt_form' dictionary.'''
         self._opt_form = opt_form                 # set the attribute
@@ -202,6 +204,7 @@ class OptManager(QObject):
 
 
     def set_model_samples(self, model_samples: int) -> None:
+        '''Set the model samples (both in manager and optimizer).'''
         self.model_samples = model_samples
 
         if self.optimizer is not None:
