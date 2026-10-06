@@ -1,6 +1,7 @@
 # librairies
 from PyQt6.QtWidgets import (
-    QGroupBox, QVBoxLayout, QListWidget, QListWidgetItem
+    QGroupBox, QVBoxLayout, 
+    QListWidget, QListWidgetItem
 )
 
 # project
@@ -8,6 +9,7 @@ from ..widgets import (
     InputWidget, ObjectiveWidget
 )
 from ...utils.getter import get_classes
+from ...utils.model_source import ModelSource
 from ...model_construction import (
     InputStructure, ObjectiveStructure
 )
@@ -21,7 +23,8 @@ def verify_folder_name(folder_name) -> None:
     '''
     if folder_name not in AVAILABLE_FOLDERS:
         raise ValueError(
-            f"folder_name '{folder_name}' argument must be chosen among '{AVAILABLE_FOLDERS}'."
+            f"folder_name '{folder_name}' argument" 
+            f"must be chosen among '{AVAILABLE_FOLDERS}'."
         )
 
 
@@ -34,7 +37,7 @@ class InOutPanel(QGroupBox):
     The classes contained in these folders are displayed using InputWidget 
     and ObjectiveWidget in a scrollable QListWidget.
     '''
-    def __init__(self, folder_name: str):
+    def __init__(self, folder_name: str, source: ModelSource):
         '''
             Arg:
                 folder_name: (str)
@@ -44,6 +47,7 @@ class InOutPanel(QGroupBox):
 
         verify_folder_name(folder_name) # verify the folder_name
         self.folder_name = folder_name
+        self.source = source
 
         # define the widget type contained in the panel
         if folder_name == "inputs":
@@ -75,7 +79,10 @@ class InOutPanel(QGroupBox):
         Load the classes from 'folder_name' attribute as 
         widgets and add them to the panel list.
         '''
-        items = get_classes(self.folder_name) # dict['class_name', class] contained in 'folder_name'
+        if self.folder_name == "inputs":
+            items = get_classes( dir=self.source.root, category="inputs" )  # dict['class_name', class] contained in 'folder_name'
+        elif self.folder_name == "objectives":
+            items = get_classes( dir=self.source.root, category="objectives" )
 
         for name, cls in items.items(): # for each class
             

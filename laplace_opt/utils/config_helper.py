@@ -1,24 +1,30 @@
 # libraries
-import pathlib
+from pathlib import Path
 
 from PyQt6.QtCore import QSettings
 
-CONFIG_PATH = pathlib.Path(__file__).parent.parent / "config.ini"
+APP_CONFIG_PATH = Path(__file__).parent.parent / "app_config.ini"
 
 
-def get_config():
-    '''Return the config settings'''
+def get_app_config():
+    '''Return the app config settings'''
     settings = QSettings(
-        str(CONFIG_PATH), 
+        str(APP_CONFIG_PATH), 
         QSettings.Format.IniFormat
     )
     return settings
 
 
-def get_from_config(module: str, item: str, default_value: str | int = "", type: type = str):
+def get_from_config(
+        module: str, 
+        item: str, 
+        default_value: str | int = "", 
+        type: type = str, 
+        config_path: Path | str = APP_CONFIG_PATH):
     '''Get the 'item' stored in 'module' in the config file.'''
+    
     settings = QSettings(
-        str(CONFIG_PATH), 
+        str(config_path), 
         QSettings.Format.IniFormat
     )
     
@@ -31,10 +37,15 @@ def get_from_config(module: str, item: str, default_value: str | int = "", type:
     return val
 
 
-def set_in_config(module: str, item: str, val) -> None:
+def set_in_config(
+        module: str, 
+        item: str, 
+        val,
+        config_path: Path | str = APP_CONFIG_PATH) -> None:
     '''Set the value of 'item' stored in 'module' in the config file.'''
+    
     settings = QSettings(
-        str(CONFIG_PATH), 
+        str(config_path), 
         QSettings.Format.IniFormat
     )
 

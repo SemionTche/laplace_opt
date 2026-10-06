@@ -9,6 +9,7 @@ from laplace_log import log
 from ...utils.getter import get_classes
 from ...utils.standard_widgets import place_labeled_widgets
 from ...utils.config_helper import get_from_config, set_in_config
+from ...utils.model_source import ModelSource
 from ...model_construction import (
     AcquisitionStructure, StrategyStructure
 )
@@ -27,15 +28,16 @@ class PipelinePanel(QGroupBox):
     # emit a signal when any combo box is changed
     selection_changed = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, source: ModelSource):
         super().__init__("Pipeline") # heritage from QGroupBox
-        
+        self.source = source
+
         # dictionary representing a tuple per column
         # the first element is the title, the second the folder
         # in which the classes must be read
         self.stages = {
-            "strategy": ("Strategy", "strategies", "default_strategy_name"),
-            "acquisition": ("Acquisition", "acquisitions", "default_acquisition_name"),
+            "strategy": ("Strategy", "strategies", "strategy_name"),
+            "acquisition": ("Acquisition", "acquisitions", "acquisition_name"),
         }
         # for each stage, there is a dictionary of the corresponding classes
         self.classes: dict[str, dict[str, StratOrAcq]] = {}
@@ -51,7 +53,8 @@ class PipelinePanel(QGroupBox):
                 module="interface", 
                 item=default_in_config, 
                 default_value="", 
-                type=str
+                type=str,
+                config_path=self.source.config
             )
             # for each stage class
             for index, cls_name in enumerate(self.classes[stage].keys()):
@@ -84,7 +87,7 @@ class PipelinePanel(QGroupBox):
             )
 
             # read the available classes
-            cls_dict = get_classes(category)  # dict{class_names, classes}
+            cls_dict = get_classes( dir=self.source.root , category=category)  # dict{class_names, classes}
             self.classes[stage] = cls_dict    # keep an acces to the classes
 
             # add an item in the combo box for each class
@@ -124,7 +127,8 @@ class PipelinePanel(QGroupBox):
         set_in_config(
             module="interface",
             item=default_in_config,
-            val=val
+            val=val,
+            config_path=self.source.config
         )
 
         self.combos[stage].setToolTip(self.classes[stage][val].description)

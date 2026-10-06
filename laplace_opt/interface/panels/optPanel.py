@@ -9,6 +9,7 @@ from .hyperparameterPanel import HyperparameterPanel
 from ...model_construction import (
     AcquisitionStructure, StrategyStructure
 )
+from ...utils.model_source import ModelSource
 
 StratOrAcq = StrategyStructure | AcquisitionStructure
 
@@ -21,9 +22,9 @@ class OptPanel(QGroupBox):
     strategy and acquisition function, allowing to define the
     hyperparameters of the optimization.
     '''
-    def __init__(self):
+    def __init__(self, source: ModelSource):
         super().__init__("Optimization Model")
-
+        self.source = source
         self.set_up()  # build the widgets
 
         self.update_hyperparameters() # set the hyperparameters
@@ -46,7 +47,7 @@ class OptPanel(QGroupBox):
         self.enable_checkbox.setChecked(True)
 
         # creating the panels
-        self.pipeline = PipelinePanel()
+        self.pipeline = PipelinePanel(source=self.source)
         self.hyperparams = HyperparameterPanel()
 
         # add the widgets to the layout

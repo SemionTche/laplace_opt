@@ -1,6 +1,8 @@
 # project
 from laplace_opt.utils.getter import get_classes
+from laplace_opt.utils.model_source import ModelSource
 
+source = ModelSource()
 
 def convert_opt_form_bench(opt_form: dict) -> dict:
     '''
@@ -22,7 +24,7 @@ def convert_opt_form_bench(opt_form: dict) -> dict:
     # ------------------
     # Initialization
     # ------------------
-    init_classes = get_classes("initializations")
+    init_classes = get_classes(dir=source.root, category="initializations")
     init_name, init_params = next(iter(opt_form["init"].items()))
     if init_name not in init_classes:
         raise ImportError(f"Cannot find initialization class {init_name}")
@@ -34,7 +36,7 @@ def convert_opt_form_bench(opt_form: dict) -> dict:
     # ------------------
     # Inputs
     # ------------------
-    input_classes = get_classes("inputs")
+    input_classes = get_classes(dir=source.root, category="inputs")
     new_opt_form["inputs"] = {}
     for name in opt_form["inputs"]:
         if name not in input_classes:
@@ -44,7 +46,7 @@ def convert_opt_form_bench(opt_form: dict) -> dict:
     # ------------------
     # Objectives
     # ------------------
-    obj_classes = get_classes("objectives")
+    obj_classes = get_classes(dir=source.root, category="objectives")
     new_opt_form["obj"] = {}
     for name in opt_form["obj"]:
         if name not in obj_classes:
@@ -59,13 +61,13 @@ def convert_opt_form_bench(opt_form: dict) -> dict:
     
     if is_opt:
         # Acquisition
-        acq_classes = get_classes("acquisitions")
+        acq_classes = get_classes(dir=source.root, category="acquisitions")
         acq_name, acq_params = next(iter(pipeline.get("acquisition", {}).items()))
         if acq_name not in acq_classes:
             raise ImportError(f"Cannot find acquisition class {acq_name}")
 
         # Strategy
-        strat_classes = get_classes("strategies")
+        strat_classes = get_classes(dir=source.root, category="strategies")
         strat_name, strat_params = next(iter(pipeline.get("strategy", {}).items()))
         if strat_name not in strat_classes:
             raise ImportError(f"Cannot find strategy class {strat_name}")

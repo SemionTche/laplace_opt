@@ -12,6 +12,7 @@ from ...utils.getter import get_classes
 from ...utils.standard_widgets import load_standard_widgets
 from ...utils.config_helper import get_from_config, set_in_config
 from ...utils.path_standard_widget import PathStandardWidget
+from ...utils.model_source import ModelSource
 from ...model_construction import InitializationStructure
 
 
@@ -24,11 +25,14 @@ class InitializationPanel(QGroupBox):
     Display the relevant hyperparameters of the init method
     such as the number of points or candidates.
     '''
-    def __init__(self):
+    def __init__(self, source: ModelSource):
 
         super().__init__("Initialization") # heritage from QGroupBox
-
-        self.init_cls: dict[str, InitializationStructure] = get_classes("initializations") # dict{class_name: class}
+        self.source = source
+        self.init_cls: dict[str, InitializationStructure] = get_classes(   # dict{class_name: class}
+            dir=source.root, 
+            category="initializations"
+        ) 
 
         self.set_up() # create and set the panel elements
 
@@ -64,9 +68,10 @@ class InitializationPanel(QGroupBox):
         # get the default initialization structure
         default_init = get_from_config(
             module="interface", 
-            item="default_initialization_name", 
+            item="initialization_name", 
             default_value="",
-            type=str
+            type=str,
+            config_path=self.source.config
         )
         
         if default_init:                                # if there is a default init
@@ -97,8 +102,9 @@ class InitializationPanel(QGroupBox):
         self.selector.currentIndexChanged.connect(
             lambda index: set_in_config(
                 module="interface",
-                item="default_initialization_name",
-                val=list(self.init_cls.keys())[index]
+                item="initialization_name",
+                val=list(self.init_cls.keys())[index],
+                config_path=self.source.config
             )
         )
 
