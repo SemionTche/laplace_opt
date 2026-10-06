@@ -1,12 +1,12 @@
 # libraries
-import pathlib
+from pathlib import Path
 
+from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, QCheckBox, QLabel, QDoubleSpinBox
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-from laplace_log import log
 
 # project
 from ...model_construction import InputStructure
@@ -20,13 +20,13 @@ class InputWidget(QWidget):
     '''
     def __init__(self, name: str, cls: type[InputStructure]):
         '''
-            Args:
-                name: (str)
-                    class name used for this line.
+        Args:
+            name (str):
+                class name used for this line.
 
-                cls: (type)
-                    the input class. 
-                    (must heritate from 'InputStructure')
+            cls (type):
+                the input class. 
+                (must inheritate from 'InputStructure')
         '''
         super().__init__()
         
@@ -50,16 +50,14 @@ class InputWidget(QWidget):
 
 
     def set_up(self) -> None:
-        '''
-        Build the widgets inside InputWidget.
-        '''
+        '''Build the widgets inside InputWidget.'''
         # input line layout
         line_layout = QHBoxLayout(self)
         line_layout.setContentsMargins(4, 2, 4, 2) # widget margin
         line_layout.setSpacing(8)                  # spacing
         self.setLayout(line_layout)                # set layout
 
-        p = pathlib.Path(__file__)              # get the file path
+        p = Path(__file__)                      # get the file path
         icon_path = p.parent.parent / 'icons'   # get the icon folder path
 
         # build the check and uncheck icons
@@ -201,9 +199,7 @@ class InputWidget(QWidget):
 
 
     def update_instance_bounds(self) -> None:
-        '''
-        Update the boundaries in the class instance.
-        '''
+        '''Update the boundaries in the class instance.'''
         if not self.is_enabled():  # if the input is not selected
             return                 # do not change anything
 
@@ -214,9 +210,7 @@ class InputWidget(QWidget):
 
 
     def update_min_max(self) -> None:
-        '''
-        Update the min and max values of the spin boxes.
-        '''
+        '''Update the min and max values of the spin boxes.'''
         safe_lo, safe_hi = self.safe_bounds
         self.min_spin.setRange(safe_lo, self.max_spin.value())
         self.max_spin.setRange(self.min_spin.value(), safe_hi)
