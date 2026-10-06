@@ -1,12 +1,12 @@
 # libraries
-import pathlib
+from pathlib import Path
 
+from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, QCheckBox, QLabel, QComboBox
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIcon
-from laplace_log import log
 
 # project
 from ...model_construction import ObjectiveStructure
@@ -15,18 +15,18 @@ from ...model_construction import ObjectiveStructure
 class ObjectiveWidget(QWidget):
     '''
     Define the objective line. The objective must have 
-    it's own class file in 'model_construction/objectives' 
+    its own class file in 'model_construction/objectives' 
     and respect the 'ObjectiveStructure' format.
     '''
     def __init__(self, name: str, cls: type[ObjectiveStructure]):
         '''
-            Args:
-                name: (str)
-                    name of the class used for this line.
+        Args:
+            name (str): 
+                name of the class used for this line.
 
-                cls: (type)
-                    the objective class.
-                    (must heritate from 'ObjectiveStructure')
+            cls (type): 
+                the objective class.
+                (must inheritate from 'ObjectiveStructure')
         '''
         super().__init__()
 
@@ -43,16 +43,14 @@ class ObjectiveWidget(QWidget):
 
 
     def set_up(self) -> None:
-        '''
-        Build the widgets inside ObjectiveWidget.
-        '''
+        '''Build the widgets inside ObjectiveWidget.'''
         # main objective line layout
         line_layout = QHBoxLayout(self)
         line_layout.setContentsMargins(4, 2, 4, 2)  # widget margin
         line_layout.setSpacing(8)                   # spacing
         self.setLayout(line_layout)                 # set layout
 
-        p = pathlib.Path(__file__)              # get the file path
+        p = Path(__file__)              # get the file path
         icon_path = p.parent.parent / 'icons'   # get the icon folder path
 
         # build the check and uncheck icons
@@ -99,9 +97,7 @@ class ObjectiveWidget(QWidget):
 
 
     def actions(self) -> None:
-        '''
-        Defines the actions of the ObjectiveWidget class.
-        '''
+        '''Defines the actions of the ObjectiveWidget.'''
         # when the state changes, enable / disable the mode and change the icon
         self.state_checkBox.stateChanged.connect(self.on_state_changed)
         
