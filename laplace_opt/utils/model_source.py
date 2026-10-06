@@ -45,6 +45,10 @@ class ModelSource:
         return self.root / "acquisitions"
 
     @property
+    def criterium(self) -> Path:
+        return self.root / "criterium"
+
+    @property
     def config(self) -> Path:
         return self.root / "config.ini"
 

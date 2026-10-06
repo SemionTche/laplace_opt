@@ -112,7 +112,7 @@ class OptWindow(QMainWindow):
         main_layout.addLayout(in_out_layout)
 
         # Block 3: criterium
-        self.criterium_panel = CriteriumPanel()
+        self.criterium_panel = CriteriumPanel(source=self.source)
             
         # Block 3: init
         self.init_panel = InitializationPanel(source=self.source)

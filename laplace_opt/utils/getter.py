@@ -7,8 +7,9 @@ import inspect
 from ..model_construction import (
     InputStructure, ObjectiveStructure,
     AcquisitionStructure, StrategyStructure,
-    InitializationStructure,
+    InitializationStructure, CriteriumStructure
 )
+from ..utils.model_source import ModelSource
 
 
 def get_classes(dir: Path, category: str) -> dict[str, type]:
@@ -81,3 +82,41 @@ def get_structure(category: str):
     elif category == "acquisitions":
         structure = AcquisitionStructure
     return structure
+
+
+def get_criterium_cls(source: ModelSource) -> CriteriumStructure:
+    '''
+    Load and return the CriteriumStructure class from the
+    model_construction/criterium folder.
+    '''
+    folder = source.criterium
+
+    files = list(folder.glob("*.py"))
+
+    if len(files) != 1:
+        raise ValueError(
+            f"Expected exactly one Python file in '{folder}', "
+            f"found {len(files)}."
+        )
+
+    py = files[0]
+
+    spec = importlib.util.spec_from_file_location(
+        f"criterium.{py.stem}",
+        py
+    )
+
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load module from '{py}'.")
+
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    cls = getattr(mod, "CriteriumStructure", None)
+
+    if cls is None or not inspect.isclass(cls):
+        raise TypeError(
+            f"'CriteriumStructure' class not found in '{py}'."
+        )
+
+    return cls

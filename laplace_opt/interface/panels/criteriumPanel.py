@@ -1,61 +1,51 @@
+# libraries
 from PyQt6.QtWidgets import (
-    QGroupBox, QGridLayout, QCheckBox
+    QGroupBox, QGridLayout, 
+    QCheckBox, QComboBox
 )
-from PyQt6.QtCore import Qt
 
-
+# project
+from ...model_construction import CriteriumStructure
 from ...utils.standard_widgets import load_standard_widgets
+from ...utils.getter import get_criterium_cls
+from ...utils.model_source import ModelSource
 
 
 class CriteriumPanel(QGroupBox):
+    '''
+    Panel used to configure the optimization end criterium. 
+    
+    The criterium parameters are loaded from criterium folder of the ModelSource.
+    '''
 
-    def __init__(self):
+    def __init__(self, source: ModelSource):
+        ''' 
+        Arg:
+            source (ModelSource):
+                Object storing the 'model_construction' folder 
+                location from which the structure is loaded.
+        '''
         super().__init__("End criterium")
+        
+        self.source = source
 
-        self.core = {
-            "max_iterations": {
-                "type": int,
-                "default": 2,
-                "min": 0,
-                "max": 10_000,
-                "label": "Max iterations",
-                "description": "Maximum number of model iterations (init + opt).\n'0' meaning endless."
-            },
+        # get the criterium class
+        self.crit_cls: CriteriumStructure = get_criterium_cls(self.source)
+        self.crit_cls = self.crit_cls()   # instanciate the criterium class
 
-            "n_repeats": {
-                "type": int,
-                "default": 2,
-                "min": 1,
-                "max": 1000,
-                "label": "Number sample repeats",
-                "description": "Number of repeated evaluations per candidate."
-            },
-
-            "save_period": {
-                "type": int,
-                "default": 1,
-                "min": 0,
-                "max": 100,
-                "label": "Saving period",
-                "description": (
-                    "Number of optimization steps between automatic saves.\n"
-                    "Set to '0' to disable."
-                )
-            },
-        }
-
-        self.widgets = {}
+        self.widgets = {}   # dict of param widgets 
         self.set_up()
 
 
     def set_up(self) -> None:
+        '''Build and configure the criterium panel.'''
         layout = QGridLayout()
         self.setLayout(layout)
 
         # build widgets
         self.widgets, row, col = load_standard_widgets(
             layout,
-            self.core,
+            self.crit_cls.parameters,
             max_per_row=6,
             start_row=1,
             start_col=0
@@ -70,10 +60,7 @@ class CriteriumPanel(QGroupBox):
 
 
     def get_criterium(self)-> dict:
-        """
-        Return all criterium values as a plain Python dictionary.
-        """
-
+        '''Return criterium parameters in a dictionary.'''
         criterium = {}
 
         for name, widget in self.widgets.items():
