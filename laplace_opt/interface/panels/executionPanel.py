@@ -24,6 +24,12 @@ class ExecutionPanel(QGroupBox):
     server_state_changed = pyqtSignal(bool)
 
     def __init__(self, source: ModelSource):
+        '''
+        Arg:
+            source (ModelSource):
+                Object storing the 'model_construction' 
+                folder location
+        '''
         super().__init__("Execution & Data Configuration")
         self.source = source
         self.set_up()           # build the elements

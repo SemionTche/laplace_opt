@@ -1,6 +1,4 @@
 # librairies
-from typing import Generic, TypeVar
-
 from PyQt6.QtWidgets import (
     QGroupBox, QVBoxLayout, 
     QListWidget, QListWidgetItem
@@ -16,7 +14,6 @@ from ...model_construction import (
     InputStructure, ObjectiveStructure
 )
 
-T = TypeVar("T", InputStructure, ObjectiveStructure)
 AVAILABLE_FOLDERS = ["inputs", "objectives"]
 
 def verify_folder_name(folder_name) -> None:
@@ -42,13 +39,16 @@ class InOutPanel(QGroupBox):
     '''
     def __init__(self, folder_name: str, source: ModelSource):
         '''
-            Arg:
-                folder_name: (str)
-                    the folder in 'model_construction' from
-                    which the classes must be extracted.
+        Arg:
+            folder_name (str):
+                The folder in 'model_construction' from
+                which the classes must be extracted.
+            
+            source (ModelSource):
+                Object storing the 'model_construction' 
+                folder location
         '''
-
-        verify_folder_name(folder_name) # verify the folder_name
+        verify_folder_name(folder_name)
         self.folder_name = folder_name
         self.source = source
 
@@ -69,25 +69,29 @@ class InOutPanel(QGroupBox):
 
     
     def set_up(self) -> None:
-        '''
-        Build the panel widgets.
-        '''
-        panel_layout = QVBoxLayout(self)   # create the layout
-        self.list_widget = QListWidget()   # create the widget list
+        '''Build the panel widgets.'''
+        panel_layout = QVBoxLayout(self)          # create the layout
+        self.list_widget = QListWidget()          # create the widget list
         panel_layout.addWidget(self.list_widget)  # add the widget list to the layout
 
     
     def load_widgets(self) -> None:
         '''
-        Load the classes from 'folder_name' attribute as 
+        Load the classes from 'folder_name' as 
         widgets and add them to the panel list.
         '''
         if self.folder_name == "inputs":
-            items = get_classes( dir=self.source.root, category="inputs" )  # dict['class_name', class] contained in 'folder_name'
+            items = get_classes(             # dict['class_name', class] contained in 'folder_name'
+                dir=self.source.root, 
+                category="inputs" 
+            )  
         elif self.folder_name == "objectives":
-            items = get_classes( dir=self.source.root, category="objectives" )
+            items = get_classes( 
+                dir=self.source.root, 
+                category="objectives" 
+            )
 
-        for name, cls in items.items(): # for each class
+        for name, cls in items.items():               # for each class
             
             new_widget = self.widget_class(name, cls) # define a new widget
             
@@ -108,7 +112,7 @@ class InOutPanel(QGroupBox):
         '''
         for widget in self.rows.values():                             # for every widget
             if isinstance(widget, (InputWidget, ObjectiveWidget)):    # if it is an 'InputWidget' or an 'ObjectiveWidget'
-                widget.enable_ip_port(enable)                     # enable / disable the ip:port and position index
+                widget.enable_ip_port(enable)                         # enable / disable the ip:port and position index
 
 
     ### getters
