@@ -82,7 +82,6 @@ def check_form(form: dict) -> tuple[ValidationLevel, str]:
             )
         
         acq = opt["pipeline"]["acquisition"]["cls"]
-        print(f"acq = {acq}")
         if nb_obj < acq.nb_min_obj_required:
             return(
                 ValidationLevel.ERROR,
@@ -97,6 +96,12 @@ def check_form(form: dict) -> tuple[ValidationLevel, str]:
             )
 
     execution = form["exec"]
+    if not execution["is_online"]:
+        return(
+            ValidationLevel.ERROR,
+            "Your server is off.\n"
+            "There is no way to contact your optimizer."
+        )
 
     # saving_path warning / error
     saving_path = execution.get("saving_path", "")

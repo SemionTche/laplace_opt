@@ -56,7 +56,7 @@ def build_data_payload(X: torch.Tensor,
                         is_init: bool,
                         is_opt: bool) -> dict:
         '''
-        Build the payload dictionary to be transmited through
+        Build the payload dictionary to be sent through
         the server.
 
             Args:
