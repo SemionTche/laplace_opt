@@ -1,7 +1,6 @@
 # libraries
-import pathlib
+from pathlib import Path
 
-import qdarkstyle
 from laplace_log import log
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton,
@@ -10,21 +9,25 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QIcon
+import qdarkstyle
 
 # project
 from .widgets import PlotWidget
-from ..utils.config_helper import get_from_config, set_in_config
+from ..utils.config_helper import (
+    get_from_config, set_in_config
+)
 
 
 class PlotWindow(QWidget):
     '''
     A window widget for live visualization of optimization results.
 
-    The PlotWindow manages multiple PlotWidget instances in a grid layout,
+    PlotWindow manages multiple PlotWidget instances in a grid layout,
     allowing the user to monitor the evolution of inputs and objectives
-    during an optimization process. It supports dynamic addition and removal
-    of plots, automatic updates when new results are received, and selection
-    of variables for the X and Y axes.
+    during an optimization process. 
+    
+    It supports dynamic addition and removal of plots, 
+    automatic updates when new results are received.
     '''
     MAX_ROWS = 3
     MAX_COLS = 4
@@ -34,7 +37,7 @@ class PlotWindow(QWidget):
         '''
         Initialize the PlotWindow instance.
 
-        Sets up the GUI, including the "+" button for adding new plots
+        Set up the GUI, including the "+" button for adding new plots
         and the grid layout for displaying PlotWidget instances. Initializes
         internal state for available keys, stored data, and active plots.
         '''
@@ -48,13 +51,8 @@ class PlotWindow(QWidget):
 
 
     def set_up(self) -> None:
-        '''
-        Configure the window layout and appearance.
-
-        Sets the window title, size, icon, stylesheet, and initializes
-        the main vertical layout containing the "+" button and the plot grid.
-        '''
-        p = pathlib.Path(__file__)
+        '''Configure the window layout and appearance.'''
+        p = Path(__file__)
 
         # window
         self.setWindowTitle("Live Optimization Plot")
@@ -102,20 +100,20 @@ class PlotWindow(QWidget):
 
 
     def actions(self) -> None:
-        '''
-        Connect widget signals to their corresponding actions.
-        '''
+        '''Connect signals to their corresponding actions.'''
         # when the add button is clicked, use the add_plot method
         self.add_button.clicked.connect(
             self.add_plot
         )
 
+        # when the model sample spin box is changed, save and emit the value
         self.model_sample_spin.valueChanged.connect(
             self.on_model_sample
         )
 
 
     def on_model_sample(self) -> None:
+        '''Save and emit the current model_sample value.'''
         val = self.model_sample_spin.value()
         set_in_config(
             module="plot",
@@ -130,9 +128,11 @@ class PlotWindow(QWidget):
         '''
         Add a new PlotWidget to the window.
 
-        Creates a PlotWidget using the currently available keys, connects
-        its deletion signal, appends it to the list of plots, and refreshes
-        the grid layout. Does nothing if the maximum number of plots is reached.
+        Creates a PlotWidget using the currently available keys, 
+        connects its deletion signal, appends it to the list of plots, 
+        and refreshes the grid layout. 
+        
+        Does nothing if the maximum number of plots is reached.
         '''
         if len(self.plots) >= self.MAX_ROWS * self.MAX_COLS:  # if there are more plots than expected
             msg = "Maximum number of plots reached."
@@ -157,7 +157,8 @@ class PlotWindow(QWidget):
                 means=self.means,
                 stds=self.stds,
                 input_list=self.input_list,
-                x_grid=self.x_grid
+                x_grid=self.x_grid,
+                bounds=self.bounds
             )
 
 
@@ -166,7 +167,7 @@ class PlotWindow(QWidget):
         Remove a PlotWidget from the window.
 
         Arg:
-            plot_widget: (PlotWidget)
+            plot_widget (PlotWidget): 
                 The plot widget to be removed. The widget is deleted
                 and the grid layout is refreshed.
         '''
@@ -183,8 +184,8 @@ class PlotWindow(QWidget):
         '''
         Reorganize the PlotWidget grid layout.
 
-        Clears the current grid layout and re-adds all PlotWidgets
-        according to their current order, respecting MAX_COLS.
+        Clears the current grid layout and re-adds all 
+        PlotWidgets according to their current order.
         '''
         # Clear the grid
         for i in reversed(range(self.grid.count())):
@@ -203,12 +204,12 @@ class PlotWindow(QWidget):
         Update internal data with new optimization results.
 
         Arg:
-            result_list: (list of dict)
-                List of result dictionaries from the optimizer. Each dictionary
-                must contain 'inputs' and 'outputs' mappings. Data is extracted
-                using input_map and objective_map metadata and appended to the
-                corresponding lists in self.data. Notifies all PlotWidgets
-                to refresh their visualization.
+            result_list (list of dict): 
+                List of result dictionaries from the optimizer. 
+                Each dictionary must contain 'inputs' and 'outputs' mappings. 
+                Data is extracted using input_map and objective_map metadata 
+                and appended to the corresponding lists in self.data. 
+                Notifies all PlotWidgets to refresh their visualization.
         '''
         for result in result_list:  # for each measure
             
@@ -236,7 +237,7 @@ class PlotWindow(QWidget):
                     payload = outputs[address]  # get the values
 
                     if key in payload:            # if the key is in the values
-                        value = payload[key]#[0]
+                        value = payload[key]
                         self.data[display_name].append(value)   # add the value in the corresponding list
 
         self.data["iteration"] = range(len(self.data[display_name]))    # make an iteration list
@@ -250,11 +251,12 @@ class PlotWindow(QWidget):
         Reset the plotting window using a new optimization form.
 
         Arg:
-            form: (dict)
+            form (dict):
                 The optimization form dictionary containing inputs and objectives.
                 Extracts input and objective variable metadata and initializes
-                data containers for plotting. Clears any existing plots and
-                updates the available_keys list.
+                data containers for plotting. 
+                
+                Clears any existing plots and updates the available_keys list.
         '''
         # Clear data and plot list
         self.data = {}
@@ -305,6 +307,7 @@ class PlotWindow(QWidget):
 
 
     def set_posterior(self, posterior: dict) -> None:
+        '''Set the posterior elements and send it to PlotWidgets.'''
         self.means = posterior["means"]
         self.stds = posterior["stds"]
         self.input_list = posterior["input_list"]
