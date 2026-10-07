@@ -1,5 +1,6 @@
 # libraries
 from collections import defaultdict
+
 import torch
 
 
@@ -11,17 +12,27 @@ def get_inputs(input_opt: dict) -> tuple[dict[str, tuple], torch.Tensor]:
     Return both a dictionary where the boundaries, input addresses
     and position_index are stored using there names and a 'Torch.Tensor' 
     to gather the boundaries in botorch format.
+
+    Returns:
+            {
+                'input name': {
+                    'address': ...,
+                    'bounds': ...,
+                    'position_index': ...
+                }
+            },
+
+            bounds: (2 x d) torch tensor
     '''
     bounds = []        # gather the boundaries
     inputs = {}        # information about the inputs
             
-    for name, cls in input_opt.items():  # for each element
-        bounds.append(cls.bounds)     # add the boundaries in the list
-        # create the field to gather the address and the boundaries
-        inputs[name] = {
-            "address": cls.ip_port,
-            "bounds": cls.bounds, 
-            "position_index": cls.position_index
+    for name, cls in input_opt.items():             # for each element
+        bounds.append(cls.bounds)                   # add the boundaries in the list
+        inputs[name] = {                            # create the field to gather  and 
+            "address": cls.ip_port,                 # the address
+            "bounds": cls.bounds,                   # the boundaries
+            "position_index": cls.position_index    # the index of the input
         }
     
     bounds = torch.Tensor(bounds).T   # convert the list to a tensor. The tensor must be 2 x d (d = input dimension)
@@ -31,7 +42,8 @@ def get_inputs(input_opt: dict) -> tuple[dict[str, tuple], torch.Tensor]:
 
 def get_objectives(objective_opt) -> dict[str, list[str]]:
     '''
-    Build objective specification grouped by address.
+    Build objective specification grouped by address,
+    which represents the list of output key by address.
 
     Returns:
         {
@@ -60,19 +72,19 @@ def build_data_payload(X: torch.Tensor,
         the server.
 
             Args:
-                X: (torch.Tensor)
-                    the sample candidates of shape (num_shot, n, q, d).
+                X (torch.Tensor):
+                    the sample candidates of shape (number_of_repeat, n, q, d).
                 
-                inputs: (dict)
+                inputs (dict):
                     the input main information: 
                         {name: {"bounds": ..., "address": ..., "position_index": ...}}
                     
-                objectives: (dict)
+                objectives (dict):
 
-                is_init: (bool)
+                is_init (bool):
                     indicating if it is the initialization suggested points.
                 
-                is_opt: (bool)
+                is_opt (bool):
                     indicating if it is the optimization suggested points.
         '''
         payload = {}
@@ -119,8 +131,8 @@ def build_data_payload(X: torch.Tensor,
 
 def compute_address_sizes(inputs: dict) -> dict[str, int]:
     '''
-    Helper returning a dictionary indicating for each address
-    the size of the position list.
+    Helper returning a dictionary indicating for each 
+    address the size of the position list.
     '''
     sizes = defaultdict(int)
 

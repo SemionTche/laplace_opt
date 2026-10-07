@@ -26,15 +26,19 @@ def place_labeled_widgets(layout: QGridLayout,
         widget    ...
     
         Args:
-            layout: (QGridLayout)
+            layout (QGridLayout):
                 the layout in which place the items.
             
-            items: (list of tuple(str, QWidget))
+            items (list of tuple(str, QWidget)):
                 list of the label and widget pairs to place.
             
-            max_per_row: (int)
+            max_per_row (int):
                 the maximum number of element per row.
                 (default 6)
+            
+            start_row, start_col (int):
+                the row and column from which the widget
+                should be placed.
     '''
     row = start_row
     col = start_col
@@ -64,14 +68,14 @@ def create_standard_widget(name: str, meta: dict) -> QWidget:
     define the corresponding widget.
 
         Args:
-            name: (str)
+            name (str):
                 the parameter name. (used for path widget)
             
-            meta: (dict)
+            meta (dict):
                 the metadata containing the parameter default options.
         
         Returns:
-            w: (QWidget)
+            w (QWidget):
                 the standard widget build according to the meta 'type' field.
     '''
     ptype = meta.get("type", None)
@@ -134,17 +138,21 @@ def load_standard_widgets(layout: QGridLayout,
     Create and place parameter widgets in a given grid layout.
 
         Args:
-            layout: (QGridLayout)
+            layout (QGridLayout):
                 the layout in which the parameters must be placed.
             
-            parameters: (dict[str, dict])
+            parameters (dict[str, dict]):
                 the parameters dictionary, containing a dictionary of
                 default configurations for each parameter name.
             
-            max_per_row: (int)
+            max_per_row (int):
                 the maximum number of element per row.
                 (default 6)
-        
+
+            start_row, start_col (int):
+                the row and column from which the widget
+                should be placed.
+
         Returns:
             widgets: (dict[str, QWidget])
                 the dictionary {param_name, widget} of the placed widgets.

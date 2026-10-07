@@ -1,7 +1,7 @@
 # libraries
 from enum import Enum
 from datetime import datetime, date
-import pathlib
+from pathlib import Path
 
 # project
 from ..model_construction import (
@@ -20,7 +20,7 @@ class ValidationLevel(Enum):
     ERROR = "error"
 
 
-def is_date_folder(path: pathlib.Path) -> bool:
+def is_date_folder(path: Path) -> bool:
     '''
     Helper that return True if there is a 'yyyy-mm-dd' expression
     in the given path and False otherwise.
@@ -44,12 +44,12 @@ def make_form(exec: dict[str, bool | str],
     '''
     # add current date and time to the optimization form
     now = datetime.now()
-    saved_date = now.date().isoformat()
-    saved_time = now.time().isoformat(timespec="seconds")
+    start_date = now.date().isoformat()
+    start_time = now.time().isoformat(timespec="seconds")
 
     form = {
-        "saved_date": saved_date,
-        "saved_time": saved_time,
+        "start_date": start_date,
+        "start_time": start_time,
         "exec": exec,
         "inputs": inputs,
         "obj": obj,
@@ -66,6 +66,8 @@ def make_form(exec: dict[str, bool | str],
 def check_form(form: dict) -> tuple[ValidationLevel, str]:
     '''
     Verify the dictionary given in argument for an optimization.
+
+    Returns a validation level along with the corresponding message.
     '''
     inputs = form["inputs"]
     if len(inputs) < 1:
@@ -134,7 +136,7 @@ def check_form(form: dict) -> tuple[ValidationLevel, str]:
 
         return ValidationLevel.WARNING, msg
 
-    path = pathlib.Path(saving_path).expanduser() # making a user path
+    path = Path(saving_path).expanduser() # making a user path
     if is_date_folder(path):                      # if there is a 'yyyy-mm-dd' patern in the path
         today = date.today().isoformat()          # get today
         if path.name != today:                    # if the date patern does not correspond

@@ -1,11 +1,11 @@
 # libraries
+from pathlib import Path
+
 from PyQt6.QtWidgets import (
     QWidget, QHBoxLayout, QLineEdit, 
     QPushButton, QFileDialog,
 )
 from typing import Literal
-
-import pathlib
 
 
 class PathStandardWidget(QWidget):
@@ -88,4 +88,4 @@ class PathStandardWidget(QWidget):
         self.path_line.setText(text)
 
     def is_valid(self) -> bool:
-        return pathlib.Path(self.text()).exists()
+        return Path(self.text()).exists()

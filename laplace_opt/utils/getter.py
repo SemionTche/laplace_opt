@@ -18,7 +18,6 @@ def get_classes(dir: Path, category: str) -> dict[str, type]:
     contained in the 'model_construction/category' folder.
     '''
     # folder path
-    # dir = Path(__file__).parent.parent / "model_construction" / category
     dir = dir / category
 
     result: dict[str, type] = {} # {class_name: class}

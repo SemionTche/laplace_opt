@@ -1,6 +1,6 @@
 # libraries
 from datetime import date
-import pathlib
+from pathlib import Path
 import json
 import re
 
@@ -30,7 +30,7 @@ def save_opt_form(opt_form: dict) -> bool:
         return False        # do not save
     
     # make an absolute user path
-    base_path = pathlib.Path(saving_path_str).expanduser().resolve()
+    base_path = Path(saving_path_str).expanduser().resolve()
     try:
         base_path.mkdir(parents=True, exist_ok=True)  # create the directory
     except Exception as e:
@@ -46,7 +46,11 @@ def save_opt_form(opt_form: dict) -> bool:
     if not json_folder.exists():                           # if it does not exist
         json_folder.mkdir(exist_ok=True)                   # create it
 
-    index = get_next_optimization_index("optimization_form_", json_folder, "json")  # get the index optimization form
+    index = get_next_optimization_index(     # get the index optimization form
+        file_name_="optimization_form_", 
+        folder=json_folder, 
+        ext="json"
+    )
 
     filename = f"optimization_form_{index:06d}.json"  # json file name
     output_file = json_folder / filename
@@ -59,7 +63,7 @@ def save_opt_form(opt_form: dict) -> bool:
 
 
 def get_next_optimization_index(file_name_: str, 
-                                folder: pathlib.Path, 
+                                folder: Path, 
                                 ext: str) -> int:
     '''
     Given a file name, a folder path, and an extension, 
