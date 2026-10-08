@@ -11,7 +11,7 @@ from botorch.utils.transforms import normalize, unnormalize
 from .optimizerContext import OptimizationContext, Observation
 from .modelSaver import ModelSaver
 from ..utils.json_encoder import (
-    json_style, print_evaluations, format_candidate_batch
+    json_style, format_candidate_batch
 )
 from ..utils.build_payload import (
     get_inputs, get_objectives, build_data_payload
@@ -32,7 +32,7 @@ class Optimizer(QObject):
     '''
     
     new_candidates = pyqtSignal(dict)     # emit input positions to sample
-    max_it_reached = pyqtSignal()
+    max_it_reached = pyqtSignal()         # emit when the max number of step (init + opt) is reached
     new_posterior = pyqtSignal(object)    # emit posterior values to plotting window
 
     def __init__(self, opt_form: dict):
@@ -191,16 +191,16 @@ class Optimizer(QObject):
                 f"Y={tuple(Y.shape)} {Y.dtype}"
             )
 
-        # build the model
-        model = build_model(
+        
+        model = build_model(            # build the model
             strat=self.strat,
             context=self.context
         )
-        self.model_fit = fit_model(
+        self.model_fit = fit_model(     # fit the model
             strat=self.strat,
             model=model
         )
-        posterior = build_posterior(
+        posterior = build_posterior(    # build the posterior
             model_fit=self.model_fit,
             inputs_opt=self.inputs_opt,
             objectives_opt=self.objectives_opt,
@@ -208,9 +208,9 @@ class Optimizer(QObject):
             bounds=self.bounds,
             model_samples=self.model_samples
         )
-        self.new_posterior.emit(posterior)
+        self.new_posterior.emit(posterior)    # emit posterior (for plot window)
 
-        self.acquisition = build_acq(
+        self.acquisition = build_acq(    # build the acquisition function  
             acq=self.acq,
             context=self.context,
             model_fit=self.model_fit
@@ -222,12 +222,6 @@ class Optimizer(QObject):
         if self.n_repeats > 1:
             candidates = candidates.repeat_interleave(self.n_repeats, dim=0)
             log.debug("Repetition made.")
-
-        # for i, gp in enumerate(self.model.models):
-        #     print(f"\nHyperparameters")
-        #     print(f"Objective {i}")
-        #     print("lengthscale:", gp.covar_module.lengthscale.detach())
-        #     print("noise:", gp.likelihood.noise.detach())
         
         self.suggestion_history.append(candidates.detach().clone())
 
@@ -250,7 +244,7 @@ class Optimizer(QObject):
         )
         log.debug(
             f"Optimization completed. "
-            f"Number of candidates: {params.get('q_candidates', 1)}"
+            f"Number of candidates: {candidate_norm.shape[0]}"
         )
         
         # value of the candidates for debuging
@@ -262,16 +256,11 @@ class Optimizer(QObject):
 
 
 
-    def update_opt(self, data: dict) -> None:
+    def update_opt(self, observations: list[Observation]) -> None:
         '''
         Add the received data to the context, looks for new suggestions
         and emit a signal to send the new requested points. 
         '''
-        log.debug(f"Data received:\n" + 
-                 print_evaluations(data.get("results", []), self.inputs)
-        )
-        
-        observations = self._parse_results(data)   # make the tensor observations
 
         if self.context.n_init == -1:                   # if the number of initial points was not set
             self.context.n_init = len(observations)     # this is the initial size
@@ -292,8 +281,7 @@ class Optimizer(QObject):
                 self.max_it_reached.emit()
                 return
 
-        candidates = self.suggest_candidates() # else suggest candidates
-
+        candidates = self.suggest_candidates()      # else suggest candidates
         best_results = self.compute_best_results()  # compute best results so far
 
         self.model_saver.save(
@@ -329,55 +317,6 @@ class Optimizer(QObject):
         # print(f"[best results] best_results = {json_style(best_results)}")
         
         return best_results
-
-
-    def _parse_results(self, data: dict) -> list[Observation]:
-        '''
-        Extract the data received from the server to make
-        the observation tensors.
-        '''
-        observations = []
-        # print(f"in parse, data = {data}")
-        # print(f"and results = {data['results']}")
-        for r in data["results"]:  # for every results
-            
-            # build x (the input position)
-            x_vals = []
-            for name in self.inputs:
-                info = self.inputs[name]
-                addr = info["address"]
-                pos = info["position_index"]
-                x_vals.append(r["inputs"][addr][pos])
-
-            x = torch.tensor(x_vals, dtype=torch.double)
-
-            # build y (the objective values)
-            y_vals = torch.full(               # make the 'nan' torch tensor
-                (len(self.objective_list),), 
-                float("nan"),
-                dtype=torch.double
-            )
-
-            outputs = r["outputs"]
-            # print(f"outputs = {outputs} for results = {r}")
-            for i, obj in enumerate(self.objective_list):   # for every objective
-                addr = obj.address
-                key = obj.output_key
-
-                if addr in outputs and key in outputs[addr]:
-                    y_vals[i] = outputs[addr][key]#[0]       # fill the torch tensor
-            
-            shot_number = r["shot_number_from_master"]
-
-            observations.append(Observation(x=x, y=y_vals, shot_number=shot_number))  # add the observations
-        
-        log.debug(
-            f"Parsed {len(observations)} observations "
-            f"(inputs_dim={observations[0].x.numel() if observations else 'n/a'}, "
-            f"n_obj={len(self.objective_list)})"
-        )
-
-        return observations
 
 
     def save_end(self) -> None:

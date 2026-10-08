@@ -10,6 +10,8 @@ from PyQt6.QtCore import pyqtSignal, QObject
 from .optimizer import Optimizer
 from ..utils.save_form import save_opt_form
 from ..utils.config_helper import get_from_config
+from ..utils.parse_observations import parse_results
+from ..utils.json_encoder import print_evaluations
 
 
 class OptManager(QObject):
@@ -85,9 +87,9 @@ class OptManager(QObject):
         if self.is_online: # if dealing with a server
 
             # when the server receives a CMD_OPT, update the optimizer
-            self.server_controller.opt_received.connect(
-                self.optimizer.update_opt
-            )
+            # self.server_controller.opt_received.connect(
+            #     self.optimizer.update_opt
+            # )
 
             # when the server receives a CMD_OPT, send it to the plot window
             self.server_controller.opt_received.connect(
@@ -189,8 +191,22 @@ class OptManager(QObject):
 
     def _handle_new_result(self, data) -> None:
         '''Emit the results received from the server.'''
+        log.debug(f"Data received:\n" + 
+            print_evaluations(
+                data.get("results", []), 
+                self.optimizer.inputs
+            )
+        )
+
         results = data.get("results", [])
+        observations = parse_results(
+            results=results,
+            inputs=self.optimizer.inputs,
+            objective_list=self.optimizer.objective_list,
+        )
+
         self.data_for_plot.emit(results)
+        self.optimizer.update_opt(observations=observations)
     
     def _handle_new_posterior(self, posterior: dict) -> None:
         '''Emit the posterior received.'''

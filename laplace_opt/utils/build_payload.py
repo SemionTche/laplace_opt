@@ -1,10 +1,11 @@
 # libraries
 from collections import defaultdict
+from typing import Any
 
 import torch
 
 
-def get_inputs(input_opt: dict) -> tuple[dict[str, tuple], torch.Tensor]:
+def get_inputs(input_opt: dict) -> tuple[dict[str, dict[str, Any]], torch.Tensor]:
     '''
     Helper that extract the boundaries from the 'input_opt' dictionary
     stored in the optimization form.
