@@ -215,6 +215,7 @@ class ModelSaver:
                 "model_state_dict": model_state,  # technically already in the corresponding history, kept for legacy compatibility (and low cost)
                 "model_state_history": self.model_state_history,
                 "model_object_history": self.model_object_history,
+                "info": "the model object is the fitted model."
             },
             
             "acquisition": {

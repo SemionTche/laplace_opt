@@ -5,7 +5,7 @@ class CriteriumStructure:
         self.parameters = {
             "max_iterations": {
                 "type": int,
-                "default": 2,
+                "default": 5,
                 "min": 0,
                 "max": 10_000,
                 "label": "Max iterations",

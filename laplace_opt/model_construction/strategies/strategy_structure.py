@@ -124,6 +124,6 @@ class StrategyStructure(ABC):
         '''
 
     @abstractmethod
-    def posterior(self, names: list[str], model: Model, X_norm: torch.Tensor) -> tuple[dict, dict, dict]:
+    def posterior(self, model: Model, X_norm: torch.Tensor) -> tuple[dict, dict, dict]:
         '''        
         '''

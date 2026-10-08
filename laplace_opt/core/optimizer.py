@@ -1,9 +1,8 @@
 # libraries
-import pathlib
+from pathlib import Path
+
 from laplace_log import log
-
 from PyQt6.QtCore import pyqtSignal, QObject
-
 import torch
 from botorch.optim import optimize_acqf
 from botorch.utils.transforms import normalize, unnormalize
@@ -11,7 +10,6 @@ from botorch.utils.transforms import normalize, unnormalize
 # project
 from .optimizerContext import OptimizationContext, Observation
 from .modelSaver import ModelSaver
-from ..utils.make_grid import make_grid
 from ..utils.json_encoder import (
     json_style, print_evaluations, format_candidate_batch
 )
@@ -19,22 +17,23 @@ from ..utils.build_payload import (
     get_inputs, get_objectives, build_data_payload
 )
 from ..utils.config_helper import get_from_config
-from ..model_construction import (
-    StrategyStructure, AcquisitionStructure
+from ..utils.build_opt import(
+    build_model, fit_model, 
+    build_acq, build_posterior
 )
 
 
 class Optimizer(QObject):
     '''
-    Manages candidate generation, model building, and acquisition optimization.
+    Handles candidate generation through model and acquisition build.
 
     Uses an OptimizationContext to store training data and objectives, 
     supports initialization strategies, and emits new candidates via signals.
     '''
     
-    new_candidates = pyqtSignal(dict)
+    new_candidates = pyqtSignal(dict)     # emit input positions to sample
     max_it_reached = pyqtSignal()
-    new_posterior = pyqtSignal(object)
+    new_posterior = pyqtSignal(object)    # emit posterior values to plotting window
 
     def __init__(self, opt_form: dict):
         '''
@@ -52,7 +51,7 @@ class Optimizer(QObject):
             default_value=1000, 
             type=int
         )
-        self.opt_form = opt_form   # the optimization form
+        self.opt_form = opt_form                        # the optimization form
         self.is_opt: bool = opt_form["opt"]["enabled"]  # whether to make an optimization or not
 
         # inputs and outputs of the model: {class_name: class()}
@@ -72,11 +71,13 @@ class Optimizer(QObject):
             # strategy and acquisition function
             self.strat: dict = opt_form["opt"]["pipeline"]["strategy"]
             self.acq: dict = opt_form["opt"]["pipeline"]["acquisition"]
-        
-        self.inputs, self.bounds = get_inputs(self.inputs_opt) # get the boundaries from the input dictionary
+
+        # get the boundaries from the input dictionary
+        self.inputs, self.bounds = get_inputs(self.inputs_opt)  # {name: {address:..., bounds:..., position_idx:...}, ... } and 2 x d torch boundaries
         log.debug("Optimization inputs:\n" + json_style(self.inputs))
-        
-        self.objectives = get_objectives(self.objectives_opt)
+
+        # get the objectives from objective dictionary
+        self.objectives = get_objectives(self.objectives_opt)  # {address 1: [output key, ...], }
         log.debug("Optimization objectives:\n" + json_style(self.objectives))
 
         self.suggestion_history = []
@@ -88,7 +89,7 @@ class Optimizer(QObject):
         )
 
         self.model_saver = ModelSaver(
-            save_folder=pathlib.Path(opt_form["exec"]["saving_path"]), 
+            save_folder=Path(opt_form["exec"]["saving_path"]), 
             save_period=self.save_period,
             is_saving=bool(opt_form["exec"]["saving_path"])
         )
@@ -97,7 +98,7 @@ class Optimizer(QObject):
     def init_opt(self) -> None:
         '''
         Use the initialization refered in the 'opt_form' dictrionary
-        to provide the first candidates to sampled.
+        to provide the first candidates to be sampled.
         '''
         if not self.opt_form:   # if there is no optimization form
             return              # do not continue
@@ -122,13 +123,13 @@ class Optimizer(QObject):
                 # repeat suggestions
                 if self.n_repeats > 1:
                     self.init_x = self.init_x.repeat_interleave(self.n_repeats, dim=0)
-                    log.debug("Repetition made on inputs.")
+                    log.debug("Repetition made on init inputs.")
 
                 # make the payload for the server
                 data = build_data_payload(
-                    self.init_x,
-                    self.inputs,
-                    self.objectives,
+                    X=self.init_x,
+                    inputs=self.inputs,
+                    objectives=self.objectives,
                     is_init=True,
                     is_opt=False,
                 )
@@ -156,9 +157,9 @@ class Optimizer(QObject):
                     candidates = self.suggest_candidates()      # generate new candidates
 
                     payload = build_data_payload(
-                        candidates.unsqueeze(1),
-                        self.inputs,
-                        self.objectives,
+                        X=candidates.unsqueeze(1),
+                        inputs=self.inputs,
+                        objectives=self.objectives,
                         is_opt=True,
                         is_init=False,
                     )
@@ -168,64 +169,69 @@ class Optimizer(QObject):
         except Exception as e:
             log.error(f"Error during 'init_opt': {e}")
 
+
+    def suggest_candidates(self) -> torch.Tensor:
+        '''Make the suggestion of new candidates.'''
+        log.debug("Suggesting new candidates...")
+
+        # get the context values
+        X_list = self.context.X_by_objective()
+        Y_list = self.context.Y_by_objective()
+
+        if all(X.numel() == 0 for X in X_list):       # verify if all objectives got positions
+            log.warning(
+                "Some objectives have no data yet; "
+                "optimization may be unstable"
+            )
     
-    def build_model(self, context: OptimizationContext) -> None:
-        log.debug(
-            f"Building model using strategy "
-            f"{self.strat['cls'].__name__}"
-        )
-        self.strategy_cls: StrategyStructure = self.strat["cls"]()
-        strategy_params = self.strat.get("params", {})
+        for i, (X, Y) in enumerate(zip(X_list, Y_list)):    # for each objective
+            log.debug(                                      # print the shape of inputs / outputs for debuging
+                f"Objective {i}: "
+                f"X={tuple(X.shape)} {X.dtype}, "
+                f"Y={tuple(Y.shape)} {Y.dtype}"
+            )
 
-        self.model = self.strategy_cls.build_model(
-            context=context,
-            **strategy_params,
+        # build the model
+        model = build_model(
+            strat=self.strat,
+            context=self.context
         )
-        self.model = self.strategy_cls.fit_model(self.model)
-        log.debug("Model built.")
-        self.build_posterior(self.model, self.strategy_cls)
-
-    
-    def build_posterior(self, model, strategy) -> None:
-        names = [obj.__class__.__qualname__ for obj in self.objective_list]
-        # print(f'names in post = {names}')
-
-        X_grid = make_grid(self.bounds, n_per_dim=self.model_samples)
-        X_norm = normalize(X_grid, self.bounds)
-        
-        posts, means, stds = strategy.posterior(
-            names=names,
-            model=model,
-            X_norm=X_norm
+        self.model_fit = fit_model(
+            strat=self.strat,
+            model=model
         )
-        log.debug(f"Posterior built.")
-        input_names = [inp.__class__.__qualname__ for inp in self.inputs_opt.values()]
-        # print(f"input names in post = {input_names}")
-        posterior = {
-            "means": means,
-            "stds": stds,
-            "input_list": input_names,
-            "x_grid": X_grid,
-            "bounds": self.bounds
-        }
+        posterior = build_posterior(
+            model_fit=self.model_fit,
+            inputs_opt=self.inputs_opt,
+            objectives_opt=self.objectives_opt,
+            strat=self.strat,
+            bounds=self.bounds,
+            model_samples=self.model_samples
+        )
         self.new_posterior.emit(posterior)
 
-
-
-    def build_acquisition(self, context: OptimizationContext) -> None:
-        log.debug(
-            f"Building acquisition using "
-            f"{self.acq['cls'].__name__}"
+        self.acquisition = build_acq(
+            acq=self.acq,
+            context=self.context,
+            model_fit=self.model_fit
         )
-        acq_cls: AcquisitionStructure = self.acq["cls"]()
-        acq_params = self.acq.get("params", {})
 
-        self.acquisition = acq_cls.build_acq(
-            model=self.model,
-            context=context,
-            **acq_params,
-        )
-        log.debug("Acquisition built.")
+        candidates = self.optimize()  # optimize the model
+        
+        # repeat samples
+        if self.n_repeats > 1:
+            candidates = candidates.repeat_interleave(self.n_repeats, dim=0)
+            log.debug("Repetition made.")
+
+        # for i, gp in enumerate(self.model.models):
+        #     print(f"\nHyperparameters")
+        #     print(f"Objective {i}")
+        #     print("lengthscale:", gp.covar_module.lengthscale.detach())
+        #     print("noise:", gp.likelihood.noise.detach())
+        
+        self.suggestion_history.append(candidates.detach().clone())
+
+        return candidates
 
 
     def optimize(self) -> torch.Tensor:
@@ -254,50 +260,6 @@ class Optimizer(QObject):
 
         return candidates_physical # return the candidates in physical space
 
-
-    def suggest_candidates(self) -> torch.Tensor:
-        '''
-        Make the suggestion of new candidates.
-        '''
-        log.debug("Suggesting new candidates...")
-
-        # get the context values
-        X_list = self.context.X_by_objective()
-        Y_list = self.context.Y_by_objective()
-
-        if all(X.numel() == 0 for X in X_list):       # verify if all objectives got positions
-            log.warning(
-                "Some objectives have no data yet; "
-                "optimization may be unstable"
-            )
-    
-        for i, (X, Y) in enumerate(zip(X_list, Y_list)):    # for each objective
-            log.debug(                                      # print the shape of inputs / outputs for debuging
-                f"Objective {i}: "
-                f"X={tuple(X.shape)} {X.dtype}, "
-                f"Y={tuple(Y.shape)} {Y.dtype}"
-            )
-
-        # build the model
-        self.build_model(self.context)
-        self.build_acquisition(self.context)
-
-        candidates = self.optimize()  # optimize the model
-        
-        # repeat samples
-        if self.n_repeats > 1:
-            candidates = candidates.repeat_interleave(self.n_repeats, dim=0)
-            log.debug("Repetition made.")
-
-        # for i, gp in enumerate(self.model.models):
-        #     print(f"\nHyperparameters")
-        #     print(f"Objective {i}")
-        #     print("lengthscale:", gp.covar_module.lengthscale.detach())
-        #     print("noise:", gp.likelihood.noise.detach())
-        
-        self.suggestion_history.append(candidates.detach().clone())
-
-        return candidates
 
 
     def update_opt(self, data: dict) -> None:
@@ -338,7 +300,7 @@ class Optimizer(QObject):
             context=self.context, 
             opt_form=self.opt_form, 
             suggestion_history=self.suggestion_history, 
-            model=self.model, 
+            model=self.model_fit, 
             acq_func=self.acquisition, 
             best_results=best_results,
             is_stop=False
@@ -359,9 +321,10 @@ class Optimizer(QObject):
 
 
     def compute_best_results(self) -> list[dict[str, int | str | bool | float | list[float]]]:
+        strategy_cls = self.strat["cls"]()
         strategy_params = self.strat.get("params", {})
-        best_results = self.strategy_cls.get_best_results(
-            context=self.context, model=self.model, **strategy_params
+        best_results = strategy_cls.get_best_results(
+            context=self.context, model=self.model_fit, **strategy_params
         )
         # print(f"[best results] best_results = {json_style(best_results)}")
         
@@ -426,7 +389,7 @@ class Optimizer(QObject):
             context=self.context,
             opt_form=self.opt_form,
             suggestion_history=self.suggestion_history,
-            model=self.model,
+            model=self.model_fit,
             acq_func=self.acquisition,
             best_results= self.compute_best_results(),
             is_stop=True
