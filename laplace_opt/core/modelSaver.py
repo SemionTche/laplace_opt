@@ -2,7 +2,7 @@
 from datetime import datetime
 from copy import deepcopy
 from typing import Any
-import pathlib
+from pathlib import Path
 import json
 
 from laplace_log import log
@@ -30,7 +30,7 @@ class ModelSaver:
     '''
 
     def __init__(self, 
-                 save_folder: pathlib.Path, 
+                 save_folder: Path, 
                  save_period: int, 
                  is_saving: bool):
         '''
@@ -70,16 +70,17 @@ class ModelSaver:
             self.model_folder.mkdir(exist_ok=True)
 
         # get the optimization index
-        idx = get_next_optimization_index(
+        self.base_index = get_next_optimization_index(
             file_name_="model_observations_", 
             folder=self.model_folder, 
             ext="pt"
         )
-        self.base_index = idx
 
         # store the model and acquisition hyperparameters
         self.model_state_history: dict[int, dict[str, Any]] = {}
+        self.model_object_history: dict[int, Model]= {}
         self.acq_state_history: dict[int, dict[str, Any]] = {}
+        self.acq_object_history: dict[int, AcquisitionFunction] = {}
 
 
     def save(self, 
@@ -138,7 +139,9 @@ class ModelSaver:
         model_state = model.state_dict()
         acq_state = acq_func.state_dict()
         self.model_state_history[self.counter + 1] = deepcopy(model_state)
+        self.model_object_history[self.counter + 1] = deepcopy(model)
         self.acq_state_history[self.counter + 1] = deepcopy(acq_state)
+        self.acq_object_history[self.counter + 1] = deepcopy(acq_func)
 
         # make the checkpoit to save
         checkpoint = {
@@ -209,8 +212,9 @@ class ModelSaver:
                     + "." 
                     + model.__class__.__qualname__
                 ),
-                "model_state_dict": model_state,
-                "model_state_history": self.model_state_history
+                "model_state_dict": model_state,  # technically already in the corresponding history, kept for legacy compatibility (and low cost)
+                "model_state_history": self.model_state_history,
+                "model_object_history": self.model_object_history,
             },
             
             "acquisition": {
@@ -220,7 +224,8 @@ class ModelSaver:
                     acq_func.__class__.__qualname__
                 ),
                 "acquisition_state_dict": acq_state,
-                "acq_state_history": self.acq_state_history
+                "acq_state_history": self.acq_state_history,
+                "acq_object_history": self.acq_object_history,
             },
 
             "best_results": best_results,
