@@ -19,7 +19,8 @@ from ..utils.build_payload import (
 from ..utils.config_helper import get_from_config
 from ..utils.build_opt import(
     build_model, fit_model, 
-    build_acq, build_posterior
+    build_acq, build_posterior,
+    get_best_results
 )
 
 
@@ -190,7 +191,6 @@ class Optimizer(QObject):
                 f"X={tuple(X.shape)} {X.dtype}, "
                 f"Y={tuple(Y.shape)} {Y.dtype}"
             )
-
         
         model = build_model(            # build the model
             strat=self.strat,
@@ -208,6 +208,12 @@ class Optimizer(QObject):
             bounds=self.bounds,
             model_samples=self.model_samples
         )
+        self.best_results = get_best_results(   # compute best results so far
+            strat=self.strat,
+            context=self.context,
+            model_fit=self.model_fit
+        )  
+
         self.new_posterior.emit(posterior)    # emit posterior (for plot window)
 
         self.acquisition = build_acq(    # build the acquisition function  
@@ -255,7 +261,6 @@ class Optimizer(QObject):
         return candidates_physical # return the candidates in physical space
 
 
-
     def update_opt(self, observations: list[Observation]) -> None:
         '''
         Add the received data to the context, looks for new suggestions
@@ -282,7 +287,6 @@ class Optimizer(QObject):
                 return
 
         candidates = self.suggest_candidates()      # else suggest candidates
-        best_results = self.compute_best_results()  # compute best results so far
 
         self.model_saver.save(
             context=self.context, 
@@ -290,7 +294,7 @@ class Optimizer(QObject):
             suggestion_history=self.suggestion_history, 
             model=self.model_fit, 
             acq_func=self.acquisition, 
-            best_results=best_results,
+            best_results=self.best_results,
             is_stop=False
         )
         self.context.step += 1
@@ -308,15 +312,6 @@ class Optimizer(QObject):
         self.new_candidates.emit(payload)  # look for new candidates
 
 
-    def compute_best_results(self) -> list[dict[str, int | str | bool | float | list[float]]]:
-        strategy_cls = self.strat["cls"]()
-        strategy_params = self.strat.get("params", {})
-        best_results = strategy_cls.get_best_results(
-            context=self.context, model=self.model_fit, **strategy_params
-        )
-        # print(f"[best results] best_results = {json_style(best_results)}")
-        
-        return best_results
 
 
     def save_end(self) -> None:
@@ -324,13 +319,29 @@ class Optimizer(QObject):
         Save the last observations and model without 
         incrementing the step.
         '''
+        model = build_model(
+            strat=self.strat, 
+            context=self.context
+        )
+        model_fit = fit_model(
+            strat=self.strat, 
+            model=model
+        )
+        best_results = get_best_results(
+            strat=self.strat,
+            context=self.context,
+            model_fit=model_fit
+        )
+
+        print(f"last best results: {best_results}")
+
         self.model_saver.save(
             context=self.context,
             opt_form=self.opt_form,
             suggestion_history=self.suggestion_history,
             model=self.model_fit,
             acq_func=self.acquisition,
-            best_results= self.compute_best_results(),
+            best_results=best_results,
             is_stop=True
         )
         log.info("Final model saved.")

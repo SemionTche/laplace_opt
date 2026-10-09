@@ -96,33 +96,6 @@ class StrategyStructure(ABC):
         Fit the model
         '''
 
-
-    @abstractmethod
-    def get_best_results(self,
-                         context: OptimizationContext,
-                         model: Model | None,
-                         **params) -> list[dict]:
-        '''
-        Return best sampled point for each objective of the model.
-
-        Args:
-            context: (OptimizationContext)
-                Optimization context providing observations, bounds, 
-                and objective structure required to build the model.
-            
-            model:
-                
-
-            **params:
-                Additional keyword arguments defining model-specific
-                hyperparameters (e.g., kernel type, output transforms).
-
-        Returns:
-             list[dict]:
-                A dictionary per objective, gathering its best value,
-                the uncertainty and the position when sampling.
-        '''
-
     @abstractmethod
     def posterior(self, model: Model, X_norm: torch.Tensor) -> tuple[dict, dict, dict]:
         '''        

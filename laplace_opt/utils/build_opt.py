@@ -6,7 +6,7 @@ function for the optimizer.
 # libraries
 from laplace_log import log
 
-from torch import Tensor
+import torch
 from botorch.models.model import Model
 from botorch.acquisition import AcquisitionFunction
 from botorch.utils.transforms import normalize
@@ -77,7 +77,7 @@ def build_posterior(model_fit: Model,
                     inputs_opt: dict[str, InputStructure], 
                     objectives_opt: dict[str, ObjectiveStructure],
                     strat: dict[str, StrategyStructure | dict],
-                    bounds: Tensor,
+                    bounds: torch.Tensor,
                     model_samples: int) -> dict:
     
     strat_cls = strat["cls"]()
@@ -108,3 +108,34 @@ def build_posterior(model_fit: Model,
     }
 
     return r
+
+
+def get_best_results(
+        strat: dict[str, type[StrategyStructure] | dict],
+        context: OptimizationContext,
+        model_fit: Model,) -> list[dict]:
+
+    X = context.X_physical
+    X_norm = normalize(X, context.bounds)
+
+    strat_cls = strat["cls"]()
+    _, means, stds = strat_cls.posterior(model_fit, X_norm)
+
+    best_results = []
+
+    for i, (name, obj) in enumerate(context.objectives.items()):
+        mean = means[i].reshape(-1)
+        std = stds[i].reshape(-1)
+
+        best_idx = mean.argmin() if obj.minimize else mean.argmax()
+
+        best_results.append({
+            "objective": i,
+            "name": name,
+            "maximize": not obj.minimize,
+            "best_x": X[best_idx].tolist(),
+            "best_y": mean[best_idx].item(),
+            "uncertainty": std[best_idx].item(),
+        })
+
+    return best_results
