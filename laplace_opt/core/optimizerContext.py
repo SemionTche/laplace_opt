@@ -2,22 +2,23 @@
 from dataclasses import dataclass
 from typing import Sequence
 
+from laplace_log import log
 import torch
 from botorch.utils.transforms import normalize
 
-from laplace_log import log
 
 @dataclass
 class Observation:
     '''
-    Represents a single evaluation result of the optimizer.
-
+    Represents a single evaluation result.
+    (physical space)
+    
     Attributes:
-        x: (torch.Tensor)
+        x (torch.Tensor): 
             Input vector for the evaluation.
-        y: (torch.Tensor)
+        y (torch.Tensor):
             Corresponding objective values.
-        shot_number: (list[int])
+        shot_number (list[int]):
             Corresponding shot.
     '''
     x: torch.Tensor    # shape [d]
