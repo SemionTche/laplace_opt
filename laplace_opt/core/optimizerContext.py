@@ -129,7 +129,7 @@ class OptimizationContext:
                 Input vector of shape [d].
             y: (torch.Tensor)
                 Corresponding objective values of shape [n_obj].
-                (take the opposite value in case of minimization)
+                (this method will apply the opposite value in case of minimization)
         '''
         y_corrected = y.clone()
         for i, obj in enumerate(self.objectives.values()):

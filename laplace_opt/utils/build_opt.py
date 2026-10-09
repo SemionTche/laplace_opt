@@ -116,7 +116,7 @@ def get_best_results(
         model_fit: Model,) -> list[dict]:
 
     X = context.X_physical
-    X_norm = normalize(X, context.bounds)
+    X_norm = context.X_normalized
 
     strat_cls = strat["cls"]()
     _, means, stds = strat_cls.posterior(model_fit, X_norm)

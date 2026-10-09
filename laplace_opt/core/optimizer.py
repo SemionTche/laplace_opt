@@ -29,7 +29,7 @@ class Optimizer(QObject):
     Handles candidate generation through model and acquisition build.
 
     Uses an OptimizationContext to store training data and objectives, 
-    supports initialization strategies, and emits new candidates via signals.
+    and emits new candidates and posteriors via signals.
     '''
     
     new_candidates = pyqtSignal(dict)     # emit input positions to sample
@@ -60,10 +60,9 @@ class Optimizer(QObject):
         self.objectives_opt: dict = opt_form["obj"]
         self.objective_list = list(self.objectives_opt.values())
         
-        self.criterium: dict = opt_form["criterium"]
-        self.save_period = self.criterium.get("save_period", 1)
-        self.max_it = self.criterium.get("max_iterations", 100)
-        self.n_repeats = self.criterium.get("n_repeats", 1)
+        self.save_period = opt_form["criterium"].get("save_period", 1)
+        self.max_it = opt_form["criterium"].get("max_iterations", 100)
+        self.n_repeats = opt_form["criterium"].get("n_repeats", 1)
 
         # the initialization process
         self.init: dict = opt_form["init"]
@@ -92,7 +91,7 @@ class Optimizer(QObject):
         self.model_saver = ModelSaver(
             save_folder=Path(opt_form["exec"]["saving_path"]), 
             save_period=self.save_period,
-            is_saving=bool(opt_form["exec"]["saving_path"])
+            is_saving=bool(opt_form["exec"]["saving_path"]),
         )
 
 
@@ -104,10 +103,9 @@ class Optimizer(QObject):
         if not self.opt_form:   # if there is no optimization form
             return              # do not continue
         
-        if self.is_opt:                                     # if there is an optimization
-            params: dict = self.strat.get("params", {})     # get the parameters from the strategy
-            torch.manual_seed(params.get("seed", 0))        # fix the torch seed
-
+        if self.is_opt:                                 # if there is an optimization
+            params = self.strat.get("params", {})       # get the parameters from the strategy
+            torch.manual_seed(params.get("seed", 0))    # fix the torch seed
 
         init_cls = self.init["cls"]()      # create an instance of the initialization
         init_params = self.init["params"]  # load the initialization parameters
@@ -149,9 +147,9 @@ class Optimizer(QObject):
                 
                 for x, y in zip(self.init_x, self.init_y):      # fulfil the context
                     self.context.add_observation(
-                        x.double(),
-                        y.double(),
-                        -1
+                        x=x.double(),
+                        y=y.double(),
+                        shot_number=-1
                     )
 
                 if self.is_opt:                                 # if we want to optimize
@@ -172,7 +170,7 @@ class Optimizer(QObject):
 
 
     def suggest_candidates(self) -> torch.Tensor:
-        '''Make the suggestion of new candidates.'''
+        '''Compute the suggestion of new candidates.'''
         log.debug("Suggesting new candidates...")
 
         # get the context values
@@ -243,7 +241,7 @@ class Optimizer(QObject):
 
         candidate_norm, acq_value = optimize_acqf(
             acq_function=self.acquisition,
-            bounds=normalize(self.bounds, self.bounds),
+            bounds=normalize(self.bounds, self.bounds),     # normalized space in [0, 1]
             q=params.get("q_candidates", 1),
             num_restarts=params.get("num_restarts", None),
             raw_samples=params.get("raw_samples", None),
@@ -276,10 +274,10 @@ class Optimizer(QObject):
         log.debug(f"Context updated: total_observations={len(self.context._observations)}")
 
         if not self.is_opt:  # if there is no optimization
-            log.debug("Optimization disabled: no suggestion available.")
-            return           # end here
+            log.debug("Optimization disabled: no suggestion available.")   # end here
+            return           
 
-        log.debug(f"model_saver.counter = {self.model_saver.counter} + 1 (for init), max_it = {self.max_it}")
+        log.debug(f"model_saver counter = {self.model_saver.counter} + 1 (for init), max_it = {self.max_it}")
         if self.max_it > 0:
             if self.max_it <= self.model_saver.counter + 1:
                 log.info("Optimization reached the maximum number of (init + optimization) step.")
@@ -312,8 +310,6 @@ class Optimizer(QObject):
         self.new_candidates.emit(payload)  # look for new candidates
 
 
-
-
     def save_end(self) -> None:
         '''
         Save the last observations and model without 
@@ -339,7 +335,7 @@ class Optimizer(QObject):
             context=self.context,
             opt_form=self.opt_form,
             suggestion_history=self.suggestion_history,
-            model=self.model_fit,
+            model=model_fit,
             acq_func=self.acquisition,
             best_results=best_results,
             is_stop=True
@@ -348,4 +344,5 @@ class Optimizer(QObject):
 
 
     def set_model_samples(self, model_samples: int) -> None:
+        '''Set the model_samples.'''
         self.model_samples = model_samples

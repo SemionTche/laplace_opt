@@ -81,6 +81,8 @@ def build_data_payload(X: torch.Tensor,
                         {name: {"bounds": ..., "address": ..., "position_index": ...}}
                     
                 objectives (dict):
+                    the objective information:
+                        {ip1: [list of keys], ...}
 
                 is_init (bool):
                     indicating if it is the initialization suggested points.
